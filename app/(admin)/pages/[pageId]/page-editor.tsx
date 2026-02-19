@@ -170,6 +170,7 @@ type DuplicateBulkAudit = {
   insertedCount: number
   skippedCount: number
   failedCount: number
+  noOpMessage?: string
   results: DuplicateBulkPageResult[]
 }
 
@@ -261,7 +262,7 @@ function SortableSectionItem({
   currentPageId: string
   pages: CmsPageRow[]
   pagesLoading: boolean
-  ensurePagesLoaded: () => Promise<void>
+  ensurePagesLoaded: () => Promise<CmsPageRow[]>
   duplicateLoading: boolean
   sectionCount: number
   defaults?: SectionTypeDefaultsMap
@@ -533,7 +534,8 @@ export function PageEditor({ pageId }: { pageId: string }) {
   const [allPages, setAllPages] = useState<CmsPageRow[]>([])
   const [allPagesLoading, setAllPagesLoading] = useState(false)
   const allPagesLoadedRef = useRef(false)
-  const allPagesPromiseRef = useRef<Promise<void> | null>(null)
+  const allPagesRef = useRef<CmsPageRow[]>([])
+  const allPagesPromiseRef = useRef<Promise<CmsPageRow[]> | null>(null)
 
   function getPublishedFor(sectionId: string) {
     return versions.find((v) => v.section_id === sectionId && v.status === "published") ?? null
@@ -554,29 +556,31 @@ export function PageEditor({ pageId }: { pageId: string }) {
     return pubTitle || null
   }
 
-  const ensurePagesLoaded = useCallback(async () => {
-    if (allPagesLoadedRef.current) return
-    if (allPagesPromiseRef.current) {
-      await allPagesPromiseRef.current
-      return
-    }
+  const ensurePagesLoaded = useCallback(async (): Promise<CmsPageRow[]> => {
+    if (allPagesLoadedRef.current) return allPagesRef.current
+    if (allPagesPromiseRef.current) return allPagesPromiseRef.current
+
     setAllPagesLoading(true)
-    const p = (async () => {
+    const p = (async (): Promise<CmsPageRow[]> => {
       try {
         const { data, error } = await supabase
           .from("pages")
           .select("id, slug, title")
           .order("slug", { ascending: true })
         if (error) throw new Error(error.message)
-        setAllPages((data ?? []) as CmsPageRow[])
+        const pages = (data ?? []) as CmsPageRow[]
+        allPagesRef.current = pages
+        setAllPages(pages)
         allPagesLoadedRef.current = true
+        return pages
       } finally {
         setAllPagesLoading(false)
         allPagesPromiseRef.current = null
       }
     })()
+
     allPagesPromiseRef.current = p
-    await p
+    return p
   }, [supabase])
 
   type BaseRow = {
@@ -732,8 +736,8 @@ export function PageEditor({ pageId }: { pageId: string }) {
     setError(null)
     setDuplicateLoadingId(source.id)
     try {
-      await ensurePagesLoaded()
-      const targetPages = allPages.filter((p) => p.id !== normalizedPageId)
+      const pages = await ensurePagesLoaded()
+      const targetPages = pages.filter((p) => p.id !== normalizedPageId)
       const sourceBase = await fetchSourceBase(source.id)
       const sourceFingerprint = buildDuplicateFingerprint({
         sectionType: source.section_type,
@@ -741,6 +745,26 @@ export function PageEditor({ pageId }: { pageId: string }) {
         title: sourceBase?.title ?? null,
         content: sourceBase?.content ?? null,
       })
+      if (!targetPages.length) {
+        const audit: DuplicateBulkAudit = {
+          sourceSectionId: source.id,
+          sourcePageId: normalizedPageId,
+          sourceFingerprint,
+          attemptedAt: new Date().toISOString(),
+          placementMode: "same_relative_index",
+          duplicateRule:
+            "section_type + normalized key + normalized title + stable content hash (latest draft else published)",
+          insertedCount: 0,
+          skippedCount: 0,
+          failedCount: 0,
+          noOpMessage: "No eligible target pages found. The current page is excluded from bulk duplication.",
+          results: [],
+        }
+        setBulkAudit(audit)
+        setBulkAuditOpen(true)
+        return
+      }
+
       const results: DuplicateBulkPageResult[] = []
 
       for (const targetPage of targetPages) {
@@ -1249,18 +1273,29 @@ export function PageEditor({ pageId }: { pageId: string }) {
               <Badge color="yellow" variant="light">Skipped {bulkAudit.skippedCount}</Badge>
               <Badge color="red" variant="light">Failed {bulkAudit.failedCount}</Badge>
             </Group>
+            {bulkAudit.noOpMessage ? (
+              <Text size="sm" c="yellow">
+                {bulkAudit.noOpMessage}
+              </Text>
+            ) : null}
             <Paper withBorder radius="md" p="sm">
               <Stack gap={6}>
-                {bulkAudit.results.map((row) => (
-                  <Group key={row.pageId} justify="space-between" align="start" gap="sm">
-                    <Text size="sm" fw={500}>
-                      {row.pageTitle} ({row.pageSlug})
-                    </Text>
-                    <Text size="xs" c={row.outcome === "failed" ? "red" : row.outcome === "skipped" ? "yellow" : "teal"}>
-                      {row.outcome}: {row.message}
-                    </Text>
-                  </Group>
-                ))}
+                {bulkAudit.results.length ? (
+                  bulkAudit.results.map((row) => (
+                    <Group key={row.pageId} justify="space-between" align="start" gap="sm">
+                      <Text size="sm" fw={500}>
+                        {row.pageTitle} ({row.pageSlug})
+                      </Text>
+                      <Text size="xs" c={row.outcome === "failed" ? "red" : row.outcome === "skipped" ? "yellow" : "teal"}>
+                        {row.outcome}: {row.message}
+                      </Text>
+                    </Group>
+                  ))
+                ) : (
+                  <Text size="sm" c="dimmed">
+                    No page-level operations were performed.
+                  </Text>
+                )}
               </Stack>
             </Paper>
           </Stack>
