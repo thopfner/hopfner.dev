@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { cn } from "@/lib/utils"
 
 export function FaqSection({
@@ -17,7 +18,7 @@ export function FaqSection({
   sectionClassName?: string
   containerClassName?: string
   title: string
-  items: Array<{ question: string; answerHtml: string }>
+  items: Array<{ question: string; answerHtml: string; answer?: string }>
 }) {
   return (
     <section
@@ -41,10 +42,14 @@ export function FaqSection({
                 {item.question}
               </AccordionTrigger>
               <AccordionContent className="pb-3 text-muted-foreground">
-                <div
-                  className="text-sm [&_a]:underline [&_li]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-6 [&_ul]:list-disc [&_ul]:pl-5"
-                  dangerouslySetInnerHTML={{ __html: item.answerHtml }}
-                />
+                {item.answerHtml.trim() ? (
+                  <div
+                    className={cn("text-sm", RICH_TEXT_CLASS)}
+                    dangerouslySetInnerHTML={{ __html: item.answerHtml }}
+                  />
+                ) : (
+                  <p className="text-sm">{item.answer}</p>
+                )}
               </AccordionContent>
             </AccordionItem>
           ))}
