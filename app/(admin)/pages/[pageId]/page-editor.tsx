@@ -736,123 +736,33 @@ export function PageEditor({ pageId }: { pageId: string }) {
     setError(null)
     setDuplicateLoadingId(source.id)
     try {
-      const pages = await ensurePagesLoaded()
-      const targetPages = pages.filter((p) => p.id !== normalizedPageId)
-      const sourceBase = await fetchSourceBase(source.id)
-      const sourceFingerprint = buildDuplicateFingerprint({
-        sectionType: source.section_type,
-        key: source.key,
-        title: sourceBase?.title ?? null,
-        content: sourceBase?.content ?? null,
-      })
-      if (!targetPages.length) {
-        const audit: DuplicateBulkAudit = {
+      const response = await fetch("/api/content/sections/duplicate-all", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
           sourceSectionId: source.id,
           sourcePageId: normalizedPageId,
-          sourceFingerprint,
-          attemptedAt: new Date().toISOString(),
-          placementMode: "same_relative_index",
-          duplicateRule:
-            "section_type + normalized key + normalized title + stable content hash (latest draft else published)",
-          insertedCount: 0,
-          skippedCount: 0,
-          failedCount: 0,
-          noOpMessage: "No eligible target pages found. The current page is excluded from bulk duplication.",
-          results: [],
-        }
-        setBulkAudit(audit)
-        setBulkAuditOpen(true)
-        return
+          sourcePosition: source.position,
+        }),
+      })
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean
+        error?: string
+        audit?: DuplicateBulkAudit
       }
 
-      const results: DuplicateBulkPageResult[] = []
-
-      for (const targetPage of targetPages) {
-        try {
-          const { data: targetSections, error: targetErr } = await supabase
-            .from("sections")
-            .select("id, section_type, key")
-            .eq("page_id", targetPage.id)
-          if (targetErr) throw new Error(targetErr.message)
-
-          const targetSectionIds = ((targetSections ?? []) as Array<{ id: string; section_type: string; key: string | null }>).map((s) => s.id)
-          let targetVersions: Array<{ section_id: string; status: string; version: number; title: string | null; content: Record<string, unknown> | null }> = []
-
-          if (targetSectionIds.length) {
-            const { data: versionsData, error: versionsErr } = await supabase
-              .from("section_versions")
-              .select("section_id, status, version, title, content")
-              .in("section_id", targetSectionIds)
-              .in("status", ["draft", "published"])
-              .order("version", { ascending: false })
-            if (versionsErr) throw new Error(versionsErr.message)
-            targetVersions = (versionsData ?? []) as typeof targetVersions
-          }
-
-          const latestBySection = new Map<string, { title: string | null; content: Record<string, unknown> | null }>()
-          for (const v of targetVersions) {
-            if (!latestBySection.has(v.section_id)) latestBySection.set(v.section_id, { title: v.title, content: v.content })
-          }
-
-          const hasConflict = ((targetSections ?? []) as Array<{ id: string; section_type: string; key: string | null }>).some((row) => {
-            const latest = latestBySection.get(row.id)
-            const fp = buildDuplicateFingerprint({
-              sectionType: normalizeSectionType(row.section_type) ?? source.section_type,
-              key: row.key,
-              title: latest?.title ?? null,
-              content: latest?.content ?? null,
-            })
-            return fp === sourceFingerprint
-          })
-
-          if (hasConflict) {
-            results.push({
-              pageId: targetPage.id,
-              pageSlug: targetPage.slug,
-              pageTitle: targetPage.title,
-              outcome: "skipped",
-              message: "Skipped by duplicate rule fingerprint match.",
-            })
-            continue
-          }
-
-          const { newSection } = await duplicateSectionToPage(source, targetPage.id)
-          results.push({
-            pageId: targetPage.id,
-            pageSlug: targetPage.slug,
-            pageTitle: targetPage.title,
-            outcome: "duplicated",
-            message: `Inserted at relative index ${Math.min(source.position, targetSectionIds.length)}.`,
-            insertedSectionId: newSection.id,
-          })
-        } catch (err) {
-          results.push({
-            pageId: targetPage.id,
-            pageSlug: targetPage.slug,
-            pageTitle: targetPage.title,
-            outcome: "failed",
-            message: err instanceof Error ? err.message : "Unknown duplication error",
-          })
-        }
+      if (!response.ok || !payload?.ok || !payload.audit) {
+        throw new Error(payload?.error || "Failed to duplicate section to all pages.")
       }
 
-      const audit: DuplicateBulkAudit = {
-        sourceSectionId: source.id,
-        sourcePageId: normalizedPageId,
-        sourceFingerprint,
-        attemptedAt: new Date().toISOString(),
-        placementMode: "same_relative_index",
-        duplicateRule:
-          "section_type + normalized key + normalized title + stable content hash (latest draft else published)",
-        insertedCount: results.filter((r) => r.outcome === "duplicated").length,
-        skippedCount: results.filter((r) => r.outcome === "skipped").length,
-        failedCount: results.filter((r) => r.outcome === "failed").length,
-        results,
-      }
-
-      console.info("[CMS] bulk-section-duplicate-audit", audit)
-      setBulkAudit(audit)
+      console.info("[CMS] bulk-section-duplicate-audit", payload.audit)
+      setBulkAudit(payload.audit)
       setBulkAuditOpen(true)
+
+      if (payload.audit.insertedCount > 0) {
+        await load()
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to duplicate section to all pages.")
     } finally {
