@@ -15,6 +15,7 @@ type CmsSectionType =
   | "label_value_list"
   | "faq_list"
   | "cta_block"
+  | "footer_grid"
 
 type DuplicateOutcome = "duplicated" | "skipped" | "failed"
 

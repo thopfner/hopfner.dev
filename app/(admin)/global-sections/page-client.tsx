@@ -19,7 +19,7 @@ import {
 import { SectionEditorDrawer } from "@/components/section-editor-drawer"
 import { createClient } from "@/lib/supabase/browser"
 
-const SECTION_TYPES: CmsSectionType[] = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block"]
+const SECTION_TYPES: CmsSectionType[] = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block", "footer_grid"]
 
 function normalizeSectionType(raw: string): CmsSectionType | null {
   switch (raw) {
@@ -32,6 +32,7 @@ function normalizeSectionType(raw: string): CmsSectionType | null {
     case "label_value_list":
     case "faq_list":
     case "cta_block":
+    case "footer_grid":
       return raw
     default:
       return null
@@ -64,6 +65,7 @@ type CmsSectionType =
   | "label_value_list"
   | "faq_list"
   | "cta_block"
+  | "footer_grid"
 
 type ImpactRow = { total_references: number; enabled_references: number; distinct_pages: number }
 type UsageRow = { global_section_id: string; page_slug: string; page_title: string; section_key: string | null }

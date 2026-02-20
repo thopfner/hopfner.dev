@@ -61,6 +61,7 @@ type CmsSectionType =
   | "label_value_list"
   | "faq_list"
   | "cta_block"
+  | "footer_grid"
 
 type SectionTypeDefault = {
   section_type: CmsSectionType
@@ -90,6 +91,7 @@ const SECTION_TYPES: CmsSectionType[] = [
   "label_value_list",
   "faq_list",
   "cta_block",
+  "footer_grid",
 ]
 
 function normalizeSectionType(raw: string): CmsSectionType | null {
@@ -103,6 +105,7 @@ function normalizeSectionType(raw: string): CmsSectionType | null {
     case "label_value_list":
     case "faq_list":
     case "cta_block":
+    case "footer_grid":
       return raw
     case "header_nav":
       return "nav_links"

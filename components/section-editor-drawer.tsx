@@ -8,6 +8,7 @@ import {
   Button,
   Checkbox,
   Drawer,
+  Divider,
   Group,
   Loader,
   Menu,
@@ -61,6 +62,7 @@ type CmsSectionType =
   | "label_value_list"
   | "faq_list"
   | "cta_block"
+  | "footer_grid"
 
 type SectionTypeDefault = {
   section_type: CmsSectionType
@@ -242,6 +244,7 @@ function normalizeSectionType(raw: string): CmsSectionType | null {
     case "label_value_list":
     case "faq_list":
     case "cta_block":
+    case "footer_grid":
       return raw
     case "header_nav":
       return "nav_links"
@@ -1435,6 +1438,10 @@ export function SectionEditorDrawer({
   const navLinks = asArray<Record<string, unknown>>(content.links)
   const navLogo = asRecord(content.logo)
   const navLogoUrl = asString(navLogo.url)
+  const footerCards = asArray<Record<string, unknown>>(content.cards)
+  const footerLegal = asRecord(content.legal)
+  const footerLegalLinks = asArray<Record<string, unknown>>(footerLegal.links)
+  const footerBrandText = asString(content.brandText)
   const navLogoAlt = asString(navLogo.alt, "Site logo")
   const navLogoWidthRaw = Number(navLogo.widthPx)
   const navLogoWidth = Number.isFinite(navLogoWidthRaw)
@@ -2601,6 +2608,492 @@ export function SectionEditorDrawer({
                   onChange={(next) => setContent((c) => ({ ...c, bodyRichText: next }))}
                   onError={setError}
                 />
+              ) : null}
+
+              {type === "footer_grid" ? (
+                <Stack gap="sm">
+                  <Group justify="space-between">
+                    <Text size="sm" fw={600}>
+                      Footer cards (1-2)
+                    </Text>
+                    <Button
+                      size="xs"
+                      variant="default"
+                      leftSection={<IconPlus size={14} />}
+                      disabled={footerCards.length >= 2}
+                      onClick={() =>
+                        setContent((c) => ({
+                          ...c,
+                          cards: [
+                            ...footerCards,
+                            {
+                              title: "",
+                              body: "",
+                              linksMode: "flat",
+                              links: [{ label: "New link", href: "#" }],
+                              groups: [],
+                              subscribe: { enabled: false, placeholder: "Email Address", buttonLabel: "Subscribe" },
+                              ctaPrimary: { label: "", href: "" },
+                              ctaSecondary: { label: "", href: "" },
+                            },
+                          ],
+                        }))
+                      }
+                    >
+                      Add card
+                    </Button>
+                  </Group>
+
+                  <Stack gap="xs">
+                    {footerCards.map((card, idx) => {
+                      const r = asRecord(card)
+                      const cardTitle = asString(r.title)
+                      const linksMode = asString(r.linksMode) === "grouped" ? "grouped" : "flat"
+                      const flatLinks = asArray<Record<string, unknown>>(r.links)
+                      const groups = asArray<Record<string, unknown>>(r.groups)
+                      const subscribe = asRecord(r.subscribe)
+                      const ctaPrimary = asRecord(r.ctaPrimary)
+                      const ctaSecondary = asRecord(r.ctaSecondary)
+
+                      return (
+                        <Paper key={idx} withBorder p="sm" radius="md">
+                          <Stack gap="xs">
+                            <Group justify="space-between">
+                              <Badge size="sm" variant="default">
+                                {cardTitle.trim() || "Footer"}
+                              </Badge>
+                              <ActionIcon
+                                variant="default"
+                                aria-label="Remove card"
+                                disabled={footerCards.length <= 1}
+                                onClick={() =>
+                                  setContent((c) => ({
+                                    ...c,
+                                    cards: footerCards.filter((_, i) => i !== idx),
+                                  }))
+                                }
+                              >
+                                <IconX size={16} />
+                              </ActionIcon>
+                            </Group>
+
+                            <TextInput
+                              label="Card title (optional)"
+                              value={cardTitle}
+                              onChange={(e) => {
+                                const next = footerCards.slice()
+                                next[idx] = { ...r, title: e.currentTarget.value }
+                                setContent((c) => ({ ...c, cards: next }))
+                              }}
+                            />
+
+                            <Textarea
+                              label="Body"
+                              value={asString(r.body)}
+                              onChange={(e) => {
+                                const next = footerCards.slice()
+                                next[idx] = { ...r, body: e.currentTarget.value }
+                                setContent((c) => ({ ...c, cards: next }))
+                              }}
+                              autosize
+                              minRows={2}
+                            />
+
+                            <SegmentedControl
+                              size="xs"
+                              value={linksMode}
+                              data={[
+                                { label: "Flat links", value: "flat" },
+                                { label: "Grouped links", value: "grouped" },
+                              ]}
+                              onChange={(mode) => {
+                                const next = footerCards.slice()
+                                next[idx] = { ...r, linksMode: mode === "grouped" ? "grouped" : "flat" }
+                                setContent((c) => ({ ...c, cards: next }))
+                              }}
+                            />
+
+                            {linksMode === "flat" ? (
+                              <Stack gap="xs">
+                                <Group justify="space-between">
+                                  <Text size="sm" fw={500}>Links</Text>
+                                  <Button
+                                    size="xs"
+                                    variant="default"
+                                    leftSection={<IconPlus size={14} />}
+                                    onClick={() => {
+                                      const next = footerCards.slice()
+                                      next[idx] = { ...r, links: [...flatLinks, { label: "", href: "" }] }
+                                      setContent((c) => ({ ...c, cards: next }))
+                                    }}
+                                  >
+                                    Add link
+                                  </Button>
+                                </Group>
+                                {flatLinks.map((lnk, linkIdx) => {
+                                  const link = asRecord(lnk)
+                                  return (
+                                    <Paper key={linkIdx} withBorder p="xs" radius="md">
+                                      <Group grow align="end">
+                                        <TextInput
+                                          label="Label"
+                                          value={asString(link.label)}
+                                          onChange={(e) => {
+                                            const nextLinks = flatLinks.slice()
+                                            nextLinks[linkIdx] = { ...link, label: e.currentTarget.value }
+                                            const nextCards = footerCards.slice()
+                                            nextCards[idx] = { ...r, links: nextLinks }
+                                            setContent((c) => ({ ...c, cards: nextCards }))
+                                          }}
+                                        />
+                                        <LinkMenuField
+                                          label="Link"
+                                          value={asString(link.href)}
+                                          onChange={(nextHref) => {
+                                            const nextLinks = flatLinks.slice()
+                                            nextLinks[linkIdx] = { ...link, href: nextHref }
+                                            const nextCards = footerCards.slice()
+                                            nextCards[idx] = { ...r, links: nextLinks }
+                                            setContent((c) => ({ ...c, cards: nextCards }))
+                                          }}
+                                          currentPageId={section?.page_id ?? ""}
+                                          pages={pages}
+                                          pagesLoading={pagesLoading}
+                                          anchorsByPageId={anchorsByPageId}
+                                          anchorsLoadingByPageId={anchorsLoadingByPageId}
+                                          ensurePagesLoaded={ensurePagesLoaded}
+                                          ensureAnchorsLoaded={ensureAnchorsLoaded}
+                                        />
+                                        <ActionIcon
+                                          variant="default"
+                                          aria-label="Remove link"
+                                          onClick={() => {
+                                            const nextLinks = flatLinks.filter((_, i) => i !== linkIdx)
+                                            const nextCards = footerCards.slice()
+                                            nextCards[idx] = { ...r, links: nextLinks }
+                                            setContent((c) => ({ ...c, cards: nextCards }))
+                                          }}
+                                        >
+                                          <IconX size={16} />
+                                        </ActionIcon>
+                                      </Group>
+                                    </Paper>
+                                  )
+                                })}
+                              </Stack>
+                            ) : (
+                              <Stack gap="xs">
+                                <Group justify="space-between">
+                                  <Text size="sm" fw={500}>Link groups</Text>
+                                  <Button
+                                    size="xs"
+                                    variant="default"
+                                    leftSection={<IconPlus size={14} />}
+                                    onClick={() => {
+                                      const next = footerCards.slice()
+                                      next[idx] = { ...r, groups: [...groups, { title: "", links: [{ label: "", href: "" }] }] }
+                                      setContent((c) => ({ ...c, cards: next }))
+                                    }}
+                                  >
+                                    Add group
+                                  </Button>
+                                </Group>
+
+                                {groups.map((grp, groupIdx) => {
+                                  const group = asRecord(grp)
+                                  const groupLinks = asArray<Record<string, unknown>>(group.links)
+                                  return (
+                                    <Paper key={groupIdx} withBorder p="xs" radius="md">
+                                      <Stack gap="xs">
+                                        <Group justify="space-between">
+                                          <TextInput
+                                            label="Group title"
+                                            value={asString(group.title)}
+                                            onChange={(e) => {
+                                              const nextGroups = groups.slice()
+                                              nextGroups[groupIdx] = { ...group, title: e.currentTarget.value }
+                                              const nextCards = footerCards.slice()
+                                              nextCards[idx] = { ...r, groups: nextGroups }
+                                              setContent((c) => ({ ...c, cards: nextCards }))
+                                            }}
+                                          />
+                                          <ActionIcon
+                                            variant="default"
+                                            aria-label="Remove group"
+                                            onClick={() => {
+                                              const nextGroups = groups.filter((_, i) => i !== groupIdx)
+                                              const nextCards = footerCards.slice()
+                                              nextCards[idx] = { ...r, groups: nextGroups }
+                                              setContent((c) => ({ ...c, cards: nextCards }))
+                                            }}
+                                          >
+                                            <IconX size={16} />
+                                          </ActionIcon>
+                                        </Group>
+
+                                        <Button
+                                          size="xs"
+                                          variant="default"
+                                          leftSection={<IconPlus size={14} />}
+                                          onClick={() => {
+                                            const nextLinks = [...groupLinks, { label: "", href: "" }]
+                                            const nextGroups = groups.slice()
+                                            nextGroups[groupIdx] = { ...group, links: nextLinks }
+                                            const nextCards = footerCards.slice()
+                                            nextCards[idx] = { ...r, groups: nextGroups }
+                                            setContent((c) => ({ ...c, cards: nextCards }))
+                                          }}
+                                        >
+                                          Add group link
+                                        </Button>
+
+                                        {groupLinks.map((lnk, linkIdx) => {
+                                          const link = asRecord(lnk)
+                                          return (
+                                            <Group key={linkIdx} grow align="end">
+                                              <TextInput
+                                                label="Label"
+                                                value={asString(link.label)}
+                                                onChange={(e) => {
+                                                  const nextLinks = groupLinks.slice()
+                                                  nextLinks[linkIdx] = { ...link, label: e.currentTarget.value }
+                                                  const nextGroups = groups.slice()
+                                                  nextGroups[groupIdx] = { ...group, links: nextLinks }
+                                                  const nextCards = footerCards.slice()
+                                                  nextCards[idx] = { ...r, groups: nextGroups }
+                                                  setContent((c) => ({ ...c, cards: nextCards }))
+                                                }}
+                                              />
+                                              <LinkMenuField
+                                                label="Link"
+                                                value={asString(link.href)}
+                                                onChange={(nextHref) => {
+                                                  const nextLinks = groupLinks.slice()
+                                                  nextLinks[linkIdx] = { ...link, href: nextHref }
+                                                  const nextGroups = groups.slice()
+                                                  nextGroups[groupIdx] = { ...group, links: nextLinks }
+                                                  const nextCards = footerCards.slice()
+                                                  nextCards[idx] = { ...r, groups: nextGroups }
+                                                  setContent((c) => ({ ...c, cards: nextCards }))
+                                                }}
+                                                currentPageId={section?.page_id ?? ""}
+                                                pages={pages}
+                                                pagesLoading={pagesLoading}
+                                                anchorsByPageId={anchorsByPageId}
+                                                anchorsLoadingByPageId={anchorsLoadingByPageId}
+                                                ensurePagesLoaded={ensurePagesLoaded}
+                                                ensureAnchorsLoaded={ensureAnchorsLoaded}
+                                              />
+                                              <ActionIcon
+                                                variant="default"
+                                                aria-label="Remove group link"
+                                                onClick={() => {
+                                                  const nextLinks = groupLinks.filter((_, i) => i !== linkIdx)
+                                                  const nextGroups = groups.slice()
+                                                  nextGroups[groupIdx] = { ...group, links: nextLinks }
+                                                  const nextCards = footerCards.slice()
+                                                  nextCards[idx] = { ...r, groups: nextGroups }
+                                                  setContent((c) => ({ ...c, cards: nextCards }))
+                                                }}
+                                              >
+                                                <IconX size={16} />
+                                              </ActionIcon>
+                                            </Group>
+                                          )
+                                        })}
+                                      </Stack>
+                                    </Paper>
+                                  )
+                                })}
+                              </Stack>
+                            )}
+
+                            <Group align="center" gap="xs">
+                              <Checkbox
+                                label="Show subscribe input"
+                                checked={subscribe.enabled === true}
+                                onChange={(e) => {
+                                  const next = footerCards.slice()
+                                  next[idx] = {
+                                    ...r,
+                                    subscribe: {
+                                      ...subscribe,
+                                      enabled: e.currentTarget.checked,
+                                      placeholder: asString(subscribe.placeholder) || "Email Address",
+                                      buttonLabel: asString(subscribe.buttonLabel) || "Subscribe",
+                                    },
+                                  }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                              />
+                            </Group>
+
+                            {subscribe.enabled === true ? (
+                              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                                <TextInput
+                                  label="Subscribe placeholder"
+                                  value={asString(subscribe.placeholder)}
+                                  onChange={(e) => {
+                                    const next = footerCards.slice()
+                                    next[idx] = { ...r, subscribe: { ...subscribe, placeholder: e.currentTarget.value } }
+                                    setContent((c) => ({ ...c, cards: next }))
+                                  }}
+                                />
+                                <TextInput
+                                  label="Subscribe button label"
+                                  value={asString(subscribe.buttonLabel)}
+                                  onChange={(e) => {
+                                    const next = footerCards.slice()
+                                    next[idx] = { ...r, subscribe: { ...subscribe, buttonLabel: e.currentTarget.value } }
+                                    setContent((c) => ({ ...c, cards: next }))
+                                  }}
+                                />
+                              </SimpleGrid>
+                            ) : null}
+
+                            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                              <TextInput
+                                label="CTA 1 label"
+                                value={asString(ctaPrimary.label)}
+                                onChange={(e) => {
+                                  const next = footerCards.slice()
+                                  next[idx] = { ...r, ctaPrimary: { ...ctaPrimary, label: e.currentTarget.value } }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                              />
+                              <LinkMenuField
+                                label="CTA 1 link"
+                                value={asString(ctaPrimary.href)}
+                                onChange={(nextHref) => {
+                                  const next = footerCards.slice()
+                                  next[idx] = { ...r, ctaPrimary: { ...ctaPrimary, href: nextHref } }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                                currentPageId={section?.page_id ?? ""}
+                                pages={pages}
+                                pagesLoading={pagesLoading}
+                                anchorsByPageId={anchorsByPageId}
+                                anchorsLoadingByPageId={anchorsLoadingByPageId}
+                                ensurePagesLoaded={ensurePagesLoaded}
+                                ensureAnchorsLoaded={ensureAnchorsLoaded}
+                              />
+                              <TextInput
+                                label="CTA 2 label"
+                                value={asString(ctaSecondary.label)}
+                                onChange={(e) => {
+                                  const next = footerCards.slice()
+                                  next[idx] = { ...r, ctaSecondary: { ...ctaSecondary, label: e.currentTarget.value } }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                              />
+                              <LinkMenuField
+                                label="CTA 2 link"
+                                value={asString(ctaSecondary.href)}
+                                onChange={(nextHref) => {
+                                  const next = footerCards.slice()
+                                  next[idx] = { ...r, ctaSecondary: { ...ctaSecondary, href: nextHref } }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                                currentPageId={section?.page_id ?? ""}
+                                pages={pages}
+                                pagesLoading={pagesLoading}
+                                anchorsByPageId={anchorsByPageId}
+                                anchorsLoadingByPageId={anchorsLoadingByPageId}
+                                ensurePagesLoaded={ensurePagesLoaded}
+                                ensureAnchorsLoaded={ensureAnchorsLoaded}
+                              />
+                            </SimpleGrid>
+                          </Stack>
+                        </Paper>
+                      )
+                    })}
+                  </Stack>
+
+                  <Divider />
+
+                  <TextInput
+                    label="Brand watermark text"
+                    value={footerBrandText}
+                    onChange={(e) => {
+                      const nextValue = inputValueFromEvent(e)
+                      setContent((c) => ({ ...c, brandText: nextValue }))
+                    }}
+                    placeholder="YourBrand"
+                  />
+
+                  <TextInput
+                    label="Copyright"
+                    value={asString(footerLegal.copyright)}
+                    onChange={(e) => {
+                      const nextLegal = { ...footerLegal, copyright: e.currentTarget.value }
+                      setContent((c) => ({ ...c, legal: nextLegal }))
+                    }}
+                    placeholder="© 2026 Your Company"
+                  />
+
+                  <Group justify="space-between">
+                    <Text size="sm" fw={600}>Legal links</Text>
+                    <Button
+                      size="xs"
+                      variant="default"
+                      leftSection={<IconPlus size={14} />}
+                      onClick={() => {
+                        const nextLegal = { ...footerLegal, links: [...footerLegalLinks, { label: "", href: "" }] }
+                        setContent((c) => ({ ...c, legal: nextLegal }))
+                      }}
+                    >
+                      Add legal link
+                    </Button>
+                  </Group>
+
+                  <Stack gap="xs">
+                    {footerLegalLinks.map((lnk, idx) => {
+                      const r = asRecord(lnk)
+                      return (
+                        <Group key={idx} grow align="end">
+                          <TextInput
+                            label="Label"
+                            value={asString(r.label)}
+                            onChange={(e) => {
+                              const nextLinks = footerLegalLinks.slice()
+                              nextLinks[idx] = { ...r, label: e.currentTarget.value }
+                              const nextLegal = { ...footerLegal, links: nextLinks }
+                              setContent((c) => ({ ...c, legal: nextLegal }))
+                            }}
+                          />
+                          <LinkMenuField
+                            label="Link"
+                            value={asString(r.href)}
+                            onChange={(nextHref) => {
+                              const nextLinks = footerLegalLinks.slice()
+                              nextLinks[idx] = { ...r, href: nextHref }
+                              const nextLegal = { ...footerLegal, links: nextLinks }
+                              setContent((c) => ({ ...c, legal: nextLegal }))
+                            }}
+                            currentPageId={section?.page_id ?? ""}
+                            pages={pages}
+                            pagesLoading={pagesLoading}
+                            anchorsByPageId={anchorsByPageId}
+                            anchorsLoadingByPageId={anchorsLoadingByPageId}
+                            ensurePagesLoaded={ensurePagesLoaded}
+                            ensureAnchorsLoaded={ensureAnchorsLoaded}
+                          />
+                          <ActionIcon
+                            variant="default"
+                            aria-label="Remove legal link"
+                            onClick={() => {
+                              const nextLinks = footerLegalLinks.filter((_, i) => i !== idx)
+                              const nextLegal = { ...footerLegal, links: nextLinks }
+                              setContent((c) => ({ ...c, legal: nextLegal }))
+                            }}
+                          >
+                            <IconX size={16} />
+                          </ActionIcon>
+                        </Group>
+                      )
+                    })}
+                  </Stack>
+                </Stack>
               ) : null}
 
               {type === "nav_links" ? (
