@@ -241,6 +241,7 @@ function SortableSectionItem({
   onDelete,
   onDuplicate,
   onDuplicateToAllPages,
+  onDetach,
   onMove,
   currentPageId,
   pages,
@@ -259,6 +260,7 @@ function SortableSectionItem({
   onDelete: (section: SectionRow) => void
   onDuplicate: (section: SectionRow, targetPageId: string) => Promise<void>
   onDuplicateToAllPages: (section: SectionRow) => Promise<void>
+  onDetach: (section: SectionRow) => Promise<void>
   onMove: (sectionId: string, direction: "up" | "down") => Promise<void>
   currentPageId: string
   pages: CmsPageRow[]
@@ -415,6 +417,14 @@ function SortableSectionItem({
                   >
                     Duplicate…
                   </Menu.Item>
+                  {section.global_section_id ? (
+                    <Menu.Item
+                      closeMenuOnClick
+                      onClick={() => void onDetach(section)}
+                    >
+                      Detach from global (fork local)
+                    </Menu.Item>
+                  ) : null}
                   <Menu.Item
                     color="red"
                     leftSection={<IconTrash size={14} />}
@@ -891,6 +901,19 @@ export function PageEditor({ pageId }: { pageId: string }) {
     }
   }
 
+  async function detachGlobalSection(source: SectionRow) {
+    setError(null)
+    try {
+      const { error } = await supabase.rpc("detach_global_section_to_local", {
+        p_section_id: source.id,
+      })
+      if (error) throw new Error(error.message)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to detach global section.")
+    }
+  }
+
   async function onConfirmDelete() {
     if (!deleteTarget) return
     const id = deleteTarget.id
@@ -1112,6 +1135,7 @@ export function PageEditor({ pageId }: { pageId: string }) {
                     onDelete={setDeleteTarget}
                     onDuplicate={duplicateSection}
                     onDuplicateToAllPages={duplicateSectionToAllPages}
+                    onDetach={detachGlobalSection}
                     onMove={moveSectionByButton}
                     currentPageId={normalizedPageId}
                     pages={allPages}
