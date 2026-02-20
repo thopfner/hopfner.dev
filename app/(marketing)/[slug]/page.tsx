@@ -138,6 +138,52 @@ function accentDerivedVars(accentColor: string): Record<string, string> {
   }
 }
 
+function tailwindSpacingToCssValue(spacingToken: string): string | undefined {
+  const token = spacingToken.trim()
+  const arbitrary = token.match(/^\[(.+)\]$/)
+  if (arbitrary) return arbitrary[1]
+  if (token === "px") return "1px"
+  if (token === "0") return "0px"
+  if (/^\d+(?:\.\d+)?$/.test(token)) return `calc(var(--spacing) * ${token})`
+  return undefined
+}
+
+function spacingTokenToMarginStyle(
+  spacingTop?: string,
+  spacingBottom?: string,
+  outerSpacing?: string
+): CSSProperties {
+  const style: CSSProperties = {}
+  const applyToken = (tokenRaw: string) => {
+    const token = tokenRaw.trim()
+    if (!token) return
+    const mt = token.match(/^mt-(.+)$/)
+    if (mt) {
+      const value = tailwindSpacingToCssValue(mt[1])
+      if (value) style.marginTop = value
+      return
+    }
+    const mb = token.match(/^mb-(.+)$/)
+    if (mb) {
+      const value = tailwindSpacingToCssValue(mb[1])
+      if (value) style.marginBottom = value
+      return
+    }
+    const my = token.match(/^my-(.+)$/)
+    if (my) {
+      const value = tailwindSpacingToCssValue(my[1])
+      if (value) style.marginBlock = value
+    }
+  }
+
+  ;[spacingTop, spacingBottom, outerSpacing].forEach((raw) => {
+    if (!raw) return
+    raw.split(/\s+/).forEach(applyToken)
+  })
+
+  return style
+}
+
 function sectionContainerProps(
   formatting: Record<string, unknown>,
   whitelist: Set<string>,
@@ -187,7 +233,7 @@ function sectionContainerProps(
   if (backgroundColor) (containerStyle as CSSProperties & Record<string, string>)["--background"] = backgroundColor
   ;(panelStyle as CSSProperties & Record<string, string>)["--section-shadow-color"] =
     asString(formatting.shadowColorToken) || "var(--section-shadow-color)"
-  panelStyle.boxShadow = "var(--shadow-sm)"
+  panelStyle.boxShadow = "var(--section-shadow-ambient), var(--section-shadow-lift)"
 
   const widthMode = asString(formatting.widthMode)
   const align = asString(formatting.alignment)
@@ -195,9 +241,11 @@ function sectionContainerProps(
   const spacingBottom = asString(formatting.spacingBottom)
   const outerSpacing = asString(formatting.outerSpacing)
 
+  Object.assign(sectionStyle, spacingTokenToMarginStyle(spacingTop, spacingBottom, outerSpacing))
+
   return {
     sectionId: sectionKey ?? undefined,
-    sectionClassName: cn(f.paddingY || "py-6", spacingTop, spacingBottom, outerSpacing, f.sectionClass),
+    sectionClassName: cn(f.paddingY || "py-6", f.sectionClass),
     containerClassName: cn(
       widthMode === "full" ? "max-w-none" : f.maxWidth || "max-w-5xl",
       align === "left" ? "ml-0 mr-auto" : align === "right" ? "ml-auto mr-0" : "mx-auto",
@@ -292,9 +340,11 @@ export default async function MarketingPage({
     ["--radius" as string]: `${(0.625 * rootRadiusScale).toFixed(3)}rem`,
     ["--spacing" as string]: `${(0.25 * rootSpacingScale).toFixed(4)}rem`,
     ["--section-shadow-color" as string]: rootShadowColor || "#000",
-    ["--shadow-sm" as string]: `0 ${Math.round(1 * rootShadowScale)}px ${Math.round(2 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 45%, transparent)`,
-    ["--shadow" as string]: `0 ${Math.round(4 * rootShadowScale)}px ${Math.round(12 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 40%, transparent)`,
-    ["--shadow-lg" as string]: `0 ${Math.round(12 * rootShadowScale)}px ${Math.round(28 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 36%, transparent)`,
+    ["--section-shadow-ambient" as string]: `0 0 ${Math.round(14 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 20%, transparent)`,
+    ["--section-shadow-lift" as string]: `0 ${Math.round(10 * rootShadowScale)}px ${Math.round(26 * rootShadowScale)}px -${Math.round(8 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 42%, transparent)`,
+    ["--shadow-sm" as string]: `0 ${Math.round(1 * rootShadowScale)}px ${Math.round(3 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 32%, transparent)`,
+    ["--shadow" as string]: `0 ${Math.round(6 * rootShadowScale)}px ${Math.round(18 * rootShadowScale)}px -${Math.round(6 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 36%, transparent)`,
+    ["--shadow-lg" as string]: `0 ${Math.round(14 * rootShadowScale)}px ${Math.round(32 * rootShadowScale)}px -${Math.round(10 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 40%, transparent)`,
     ...accentDerivedVars(rootAccentColor),
   }
   if (rootTextColor) (rootStyle as Record<string, string>)["--foreground"] = rootTextColor
