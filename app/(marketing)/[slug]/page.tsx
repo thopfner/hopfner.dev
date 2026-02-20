@@ -462,6 +462,7 @@ export default async function MarketingPage({
                 <HeroSection
                   key={section.id}
                   {...props}
+                  fullBleed={asString(formatting.widthMode) === "full"}
                   headline={pickText(v.title, defaults?.default_title)}
                   subheadline={pickText(v.subtitle, defaults?.default_subtitle)}
                   bullets={asStringArray(content.bullets)}

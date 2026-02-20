@@ -13,6 +13,7 @@ export function HeroSection({
   sectionStyle,
   containerStyle,
   panelStyle,
+  fullBleed,
   headline,
   subheadline,
   bullets,
@@ -26,6 +27,7 @@ export function HeroSection({
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
   panelStyle?: CSSProperties
+  fullBleed?: boolean
   headline: string
   subheadline: string
   bullets: string[]
@@ -39,13 +41,13 @@ export function HeroSection({
       className={cn("scroll-mt-16 py-6", sectionClassName)}
     style={sectionStyle}
     >
-      <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
-        <Card className="relative overflow-hidden border-border/60 bg-card/40 py-4" style={panelStyle}>
+      <div className={cn(fullBleed ? "mx-auto max-w-none px-0" : "mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
+        <Card className={cn("relative overflow-hidden border-border/60 bg-card/40 py-4", fullBleed ? "rounded-none border-x-0" : undefined)} style={panelStyle}>
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(800px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_60%)]"
           />
-          <CardContent className="relative space-y-4 px-4 sm:px-6">
+          <CardContent className={cn("relative space-y-4 px-4 sm:px-6", fullBleed ? "mx-auto w-full max-w-5xl" : undefined)}>
             <div className="space-y-2 text-center">
               <h1 className="text-pretty text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
                 {headline}
