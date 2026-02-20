@@ -1,5 +1,6 @@
 import { FaqSection } from "@/components/landing/faq-section"
 import { FinalCtaSection } from "@/components/landing/final-cta-section"
+import { FooterGridSection } from "@/components/landing/footer-grid-section"
 import { HeroSection } from "@/components/landing/hero-section"
 import { HowItWorksSection } from "@/components/landing/how-it-works-section"
 import { SiteHeader, type HeaderNavLink } from "@/components/landing/site-header"
@@ -330,7 +331,11 @@ export default async function MarketingPage({
 
   const header = sections.find((s) => s.section_type === "nav_links") ?? null
   const bodySections = sections.filter((s) => s.section_type !== "nav_links")
-  const firstBodyIsHero = bodySections[0]?.section_type === "hero_cta"
+  const orderedBodySections = [
+    ...bodySections.filter((s) => s.section_type !== "footer_grid"),
+    ...bodySections.filter((s) => s.section_type === "footer_grid"),
+  ]
+  const firstBodyIsHero = orderedBodySections[0]?.section_type === "hero_cta"
 
   function defaultsFor(type: string): CmsSectionTypeDefault | undefined {
     return sectionTypeDefaults[type as keyof typeof sectionTypeDefaults]
@@ -441,7 +446,7 @@ export default async function MarketingPage({
       ) : null}
 
       <main className={cn("pb-10", firstBodyIsHero ? "pt-0" : "pt-4")}>
-        {bodySections.map((section) => {
+        {orderedBodySections.map((section) => {
           const v = section.published
           const defaults = defaultsFor(section.section_type)
           const content = deepMerge(
@@ -602,6 +607,67 @@ export default async function MarketingPage({
                   secondaryCta={{
                     label: pickText(v.cta_secondary_label, defaults?.default_cta_secondary_label),
                     href: pickText(v.cta_secondary_href, defaults?.default_cta_secondary_href) || "#services",
+                  }}
+                />
+              )
+            }
+            case "footer_grid": {
+              const cards = asRecordArray(content.cards)
+                .slice(0, 2)
+                .map((card) => {
+                  const cardRec = asRecord(card)
+                  return {
+                    title: asString(cardRec.title),
+                    body: asString(cardRec.body),
+                    linksMode: (asString(cardRec.linksMode) === "grouped" ? "grouped" : "flat") as "flat" | "grouped",
+                    links: asRecordArray(cardRec.links).map((lnk) => {
+                      const linkRec = asRecord(lnk)
+                      return { label: asString(linkRec.label), href: asString(linkRec.href) }
+                    }),
+                    groups: asRecordArray(cardRec.groups).map((grp) => {
+                      const grpRec = asRecord(grp)
+                      return {
+                        title: asString(grpRec.title),
+                        links: asRecordArray(grpRec.links).map((lnk) => {
+                          const linkRec = asRecord(lnk)
+                          return { label: asString(linkRec.label), href: asString(linkRec.href) }
+                        }),
+                      }
+                    }),
+                    subscribe: (() => {
+                      const sub = asRecord(cardRec.subscribe)
+                      return {
+                        enabled: sub.enabled === true,
+                        placeholder: asString(sub.placeholder),
+                        buttonLabel: asString(sub.buttonLabel),
+                      }
+                    })(),
+                    ctaPrimary: (() => {
+                      const cta = asRecord(cardRec.ctaPrimary)
+                      return { label: asString(cta.label), href: asString(cta.href) }
+                    })(),
+                    ctaSecondary: (() => {
+                      const cta = asRecord(cardRec.ctaSecondary)
+                      return { label: asString(cta.label), href: asString(cta.href) }
+                    })(),
+                  }
+                })
+
+              const legal = asRecord(content.legal)
+              const legalLinks = asRecordArray(legal.links).map((lnk) => {
+                const linkRec = asRecord(lnk)
+                return { label: asString(linkRec.label), href: asString(linkRec.href) }
+              })
+
+              return (
+                <FooterGridSection
+                  key={section.id}
+                  {...props}
+                  cards={cards}
+                  brandText={asString(content.brandText)}
+                  legal={{
+                    copyright: asString(legal.copyright),
+                    links: legalLinks,
                   }}
                 />
               )
