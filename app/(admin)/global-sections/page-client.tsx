@@ -113,6 +113,7 @@ export function GlobalSectionsPage() {
   const [textColor, setTextColor] = useState("")
   const [accentColor, setAccentColor] = useState("")
   const [backgroundColor, setBackgroundColor] = useState("")
+  const [cardBackgroundColor, setCardBackgroundColor] = useState("")
 
   const [impactByGlobalId, setImpactByGlobalId] = useState<Record<string, ImpactRow>>({})
   const [usageByGlobalId, setUsageByGlobalId] = useState<Record<string, UsageRow[]>>({})
@@ -192,6 +193,7 @@ export function GlobalSectionsPage() {
     setTextColor(String(tokens.textColor ?? ""))
     setAccentColor(String(tokens.accentColor ?? ""))
     setBackgroundColor(String(tokens.backgroundColor ?? ""))
+    setCardBackgroundColor(String(tokens.cardBackgroundColor ?? ""))
 
     setLoading(false)
   }
@@ -216,6 +218,7 @@ export function GlobalSectionsPage() {
           textColor: textColor.trim() || null,
           accentColor: accentColor.trim() || null,
           backgroundColor: backgroundColor.trim() || null,
+          cardBackgroundColor: cardBackgroundColor.trim() || null,
         },
       },
     })
@@ -293,15 +296,16 @@ export function GlobalSectionsPage() {
             <ColorInput label="Accent color" value={accentColor} onChange={setAccentColor} placeholder="#4f46e5" />
             <ColorInput label="Shadow color" value={shadowColor} onChange={setShadowColor} placeholder="#111827" />
             <ColorInput label="Background color" value={backgroundColor} onChange={setBackgroundColor} placeholder="#ffffff" />
+            <ColorInput label="Card background color" value={cardBackgroundColor} onChange={setCardBackgroundColor} placeholder="#1f2937" />
           </Group>
 
           <Paper withBorder p="sm" radius="md" style={{ fontFamily: effectiveFontFamily || undefined, fontSize: `${fontScale}rem`, color: textColor || undefined, background: backgroundColor || undefined }}>
             <Text fw={600}>Live preview (frontend token mapping)</Text>
             <Stack gap={Math.max(6, Math.round(spaceScale * 8))} mt={8}>
-              <div style={{ padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 36%, transparent)`, border: `1px solid ${accentColor ? `color-mix(in srgb, ${accentColor} 45%, transparent)` : "rgba(127,127,127,.35)"}` }}>
+              <div style={{ padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 36%, transparent)`, border: `1px solid ${accentColor ? `color-mix(in srgb, ${accentColor} 45%, transparent)` : "rgba(127,127,127,.35)"}`, background: cardBackgroundColor || undefined }}>
                 Shadow + radius sample card
               </div>
-              <div style={{ paddingInline: `${Math.round(spaceScale * 16)}px`, paddingBlock: `${Math.round(spaceScale * 10)}px`, borderRadius: `${Math.round(radiusScale * 8)}px`, border: "1px dashed rgba(127,127,127,.45)" }}>
+              <div style={{ paddingInline: `${Math.round(spaceScale * 16)}px`, paddingBlock: `${Math.round(spaceScale * 10)}px`, borderRadius: `${Math.round(radiusScale * 8)}px`, border: "1px dashed rgba(127,127,127,.45)", background: cardBackgroundColor || undefined }}>
                 Spacing sample block (tracks spaceScale)
               </div>
             </Stack>
