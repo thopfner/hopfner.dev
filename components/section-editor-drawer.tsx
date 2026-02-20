@@ -115,6 +115,7 @@ type FormattingState = {
   maxWidth: "" | "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl"
   textAlign: "" | "left" | "center"
   widthMode: "content" | "full"
+  heroMinHeight: "auto" | "70svh" | "100svh"
   shadowMode: "inherit" | "on" | "off"
   innerShadowMode: "inherit" | "on" | "off"
   innerShadowStrength: number
@@ -133,6 +134,7 @@ const DEFAULT_FORMATTING: FormattingState = {
   maxWidth: "max-w-5xl",
   textAlign: "left",
   widthMode: "content",
+  heroMinHeight: "auto",
   shadowMode: "inherit",
   innerShadowMode: "inherit",
   innerShadowStrength: 0,
@@ -679,6 +681,10 @@ function normalizeFormatting(raw: Record<string, unknown>): FormattingState {
     maxWidth: (asString(raw.maxWidth) as FormattingState["maxWidth"]) || "",
     textAlign: (asString(raw.textAlign) as FormattingState["textAlign"]) || "",
     widthMode: asString(raw.widthMode) === "full" ? "full" : "content",
+    heroMinHeight:
+      asString(raw.heroMinHeight) === "70svh" || asString(raw.heroMinHeight) === "100svh"
+        ? (asString(raw.heroMinHeight) as FormattingState["heroMinHeight"])
+        : "auto",
     shadowMode: rawShadowMode === "off" || rawShadowMode === "on" ? rawShadowMode : "inherit",
     innerShadowMode:
       rawInnerShadowMode === "off" || rawInnerShadowMode === "on"
@@ -713,6 +719,7 @@ function formattingToJsonb(state: FormattingState) {
     maxWidth: state.maxWidth,
     textAlign: state.textAlign,
     widthMode: state.widthMode,
+    heroMinHeight: state.heroMinHeight,
     shadowMode: state.shadowMode,
     innerShadowMode: state.innerShadowMode,
     innerShadowStrength: state.innerShadowStrength,
@@ -1784,21 +1791,39 @@ export function SectionEditorDrawer({
                   }
                 />
                 {type === "hero_cta" ? (
-                  <Select
-                    label="Hero width mode"
-                    comboboxProps={{ withinPortal: false }}
-                    data={[
-                      { value: "content", label: "Contained" },
-                      { value: "full", label: "Full-bleed" },
-                    ]}
-                    value={formatting.widthMode}
-                    onChange={(v) =>
-                      setFormatting((s) => ({
-                        ...s,
-                        widthMode: v === "full" ? "full" : "content",
-                      }))
-                    }
-                  />
+                  <>
+                    <Select
+                      label="Hero width mode"
+                      comboboxProps={{ withinPortal: false }}
+                      data={[
+                        { value: "content", label: "Contained" },
+                        { value: "full", label: "Full-bleed" },
+                      ]}
+                      value={formatting.widthMode}
+                      onChange={(v) =>
+                        setFormatting((s) => ({
+                          ...s,
+                          widthMode: v === "full" ? "full" : "content",
+                        }))
+                      }
+                    />
+                    <Select
+                      label="Hero min height"
+                      comboboxProps={{ withinPortal: false }}
+                      data={[
+                        { value: "auto", label: "Auto" },
+                        { value: "70svh", label: "70% viewport" },
+                        { value: "100svh", label: "100% viewport" },
+                      ]}
+                      value={formatting.heroMinHeight}
+                      onChange={(v) =>
+                        setFormatting((s) => ({
+                          ...s,
+                          heroMinHeight: v === "70svh" || v === "100svh" ? v : "auto",
+                        }))
+                      }
+                    />
+                  </>
                 ) : null}
                 <Select
                   label="Section shadow"
