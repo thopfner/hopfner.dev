@@ -343,6 +343,7 @@ export default async function MarketingPage({
   const rootTextColor = asString(mergedTokens.textColor)
   const rootAccentColor = asString(mergedTokens.accentColor)
   const rootBackgroundColor = asString(mergedTokens.backgroundColor)
+  const rootCardBackgroundColor = asString(mergedTokens.cardBackgroundColor)
   const rootShadowColor = asString(mergedTokens.shadowColor) || (rootAccentColor ? `color-mix(in srgb, ${rootAccentColor} 28%, black)` : "")
 
   const rootStyle: CSSProperties = {
@@ -371,6 +372,7 @@ export default async function MarketingPage({
   }
   if (rootTextColor) (rootStyle as Record<string, string>)["--foreground"] = rootTextColor
   if (rootBackgroundColor) (rootStyle as Record<string, string>)["--background"] = rootBackgroundColor
+  if (rootCardBackgroundColor) (rootStyle as Record<string, string>)["--card"] = rootCardBackgroundColor
 
   return (
     <div className="relative min-h-dvh bg-background" style={rootStyle}>

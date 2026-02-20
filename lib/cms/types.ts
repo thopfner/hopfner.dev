@@ -116,6 +116,7 @@ export type SiteFormattingSettings = {
     textColor?: string
     accentColor?: string
     backgroundColor?: string
+    cardBackgroundColor?: string
   }
   backgroundType?: "none" | "color" | "gradient" | "image"
   backgroundColor?: string
