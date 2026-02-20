@@ -66,6 +66,7 @@ export type CmsPage = {
   id: string
   slug: string
   title: string
+  formatting_override?: Record<string, unknown>
 }
 
 export type CmsSectionRow = {
@@ -75,6 +76,8 @@ export type CmsSectionRow = {
   key: string | null
   enabled: boolean
   position: number
+  global_section_id?: string | null
+  formatting_override?: Record<string, unknown>
 }
 
 export type CmsSectionVersionRow = {
@@ -97,6 +100,20 @@ export type CmsSectionVersionRow = {
 
 export type CmsPublishedSection = CmsSectionRow & {
   published: CmsSectionVersionRow
+  source: "page" | "global"
+}
+
+export type SiteFormattingSettings = {
+  fontFamily?: string
+  fontScale?: number
+  backgroundType?: "none" | "color" | "gradient" | "image"
+  backgroundColor?: string
+  gradientFrom?: string
+  gradientTo?: string
+  gradientDirection?: "to bottom" | "to right" | "135deg"
+  backgroundImageUrl?: string
+  backgroundSize?: "cover" | "contain" | "auto"
+  backgroundPosition?: "center" | "top" | "bottom"
 }
 
 export type TailwindWhitelist = Set<string>

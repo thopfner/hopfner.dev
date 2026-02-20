@@ -17,6 +17,7 @@ import type {
 } from "@/lib/cms/types"
 import { cn } from "@/lib/utils"
 import { notFound } from "next/navigation"
+import type { CSSProperties } from "react"
 
 export const dynamic = "force-dynamic"
 
@@ -111,14 +112,34 @@ function sectionContainerProps(
   sectionKey?: string | null
 ) {
   const f = getSafeFormatting(formatting, whitelist)
+  const backgroundType = asString(formatting.backgroundType)
+  const sectionStyle: CSSProperties = {}
+  if (backgroundType === "color") {
+    sectionStyle.background = asString(formatting.backgroundColor)
+  } else if (backgroundType === "gradient") {
+    const from = asString(formatting.gradientFrom)
+    const to = asString(formatting.gradientTo)
+    const dir = asString(formatting.gradientDirection) || "to bottom"
+    if (from && to) sectionStyle.backgroundImage = `linear-gradient(${dir}, ${from}, ${to})`
+  } else if (backgroundType === "image") {
+    const imageUrl = asString(formatting.backgroundImageUrl)
+    if (imageUrl) {
+      sectionStyle.backgroundImage = `url(${imageUrl})`
+      sectionStyle.backgroundSize = asString(formatting.backgroundSize) || "cover"
+      sectionStyle.backgroundPosition = asString(formatting.backgroundPosition) || "center"
+    }
+  }
+
+  const containerStyle: CSSProperties = {}
+  const fontFamily = asString(formatting.fontFamily)
+  if (fontFamily) containerStyle.fontFamily = fontFamily
+
   return {
     sectionId: sectionKey ?? undefined,
     sectionClassName: cn(f.paddingY || "py-6", f.sectionClass),
-    containerClassName: cn(
-      f.maxWidth || "max-w-5xl",
-      f.containerClass,
-      f.textAlignClass
-    ),
+    containerClassName: cn(f.maxWidth || "max-w-5xl", f.containerClass, f.textAlignClass),
+    sectionStyle,
+    containerStyle,
   }
 }
 
@@ -134,12 +155,16 @@ export default async function MarketingPage({
   let sections: CmsPublishedSection[]
   let tailwindWhitelist: Set<string>
   let sectionTypeDefaults: CmsSectionTypeDefaultsMap
+  let siteFormattingSettings: Record<string, unknown>
+  let pageFormattingOverride: Record<string, unknown>
 
   try {
     const res = await getPublishedPageBySlug(slug)
     sections = res.sections
     tailwindWhitelist = res.tailwindWhitelist
     sectionTypeDefaults = res.sectionTypeDefaults
+    siteFormattingSettings = asRecord(res.siteFormattingSettings)
+    pageFormattingOverride = asRecord(res.page.formatting_override)
   } catch {
     notFound()
   }
@@ -194,8 +219,11 @@ export default async function MarketingPage({
           containerClassName={cn(
             sectionContainerProps(
               deepMerge(
-                asRecord(headerDefaults?.default_formatting),
-                asRecord(header.published.formatting)
+                deepMerge(
+                  deepMerge(siteFormattingSettings, pageFormattingOverride),
+                  asRecord(headerDefaults?.default_formatting)
+                ),
+                deepMerge(asRecord(header.formatting_override), asRecord(header.published.formatting))
               ),
               tailwindWhitelist,
               header.key
@@ -213,8 +241,11 @@ export default async function MarketingPage({
             asRecord(v.content)
           )
           const formatting = deepMerge(
-            asRecord(defaults?.default_formatting),
-            asRecord(v.formatting)
+            deepMerge(
+              deepMerge(siteFormattingSettings, pageFormattingOverride),
+              asRecord(defaults?.default_formatting)
+            ),
+            deepMerge(asRecord(section.formatting_override), asRecord(v.formatting))
           )
           const props = sectionContainerProps(formatting, tailwindWhitelist, section.key)
 

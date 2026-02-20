@@ -8,72 +8,91 @@ import type {
   CmsSectionTypeDefault,
   CmsSectionTypeDefaultsMap,
   TailwindWhitelist,
+  SiteFormattingSettings,
 } from "@/lib/cms/types"
 import { normalizeSectionType } from "@/lib/cms/types"
-
-type SectionRowWithVersions = CmsSectionRow & {
-  section_versions: CmsSectionVersionRow[]
-}
 
 export async function getPublishedPageBySlug(slug: string): Promise<{
   page: CmsPage
   sections: CmsPublishedSection[]
   tailwindWhitelist: TailwindWhitelist
   sectionTypeDefaults: CmsSectionTypeDefaultsMap
+  siteFormattingSettings: SiteFormattingSettings
 }> {
   const supabase = getSupabasePublicClient()
 
   const { data: page, error: pageError } = await supabase
     .from("pages")
-    .select("id, slug, title")
+    .select("id, slug, title, formatting_override")
     .eq("slug", slug)
     .single()
 
-  if (pageError || !page) {
-    throw new Error(pageError?.message ?? `Page not found: ${slug}`)
-  }
+  if (pageError || !page) throw new Error(pageError?.message ?? `Page not found: ${slug}`)
 
   const { data: sectionData, error: sectionError } = await supabase
     .from("sections")
-    .select(
-      "id, page_id, section_type, key, enabled, position, section_versions!inner ( id, section_id, version, status, title, subtitle, cta_primary_label, cta_primary_href, cta_secondary_label, cta_secondary_href, background_media_url, formatting, content, created_at, published_at )"
-    )
+    .select("id, page_id, section_type, key, enabled, position, global_section_id, formatting_override")
     .eq("page_id", page.id)
     .eq("enabled", true)
-    .eq("section_versions.status", "published")
     .order("position", { ascending: true })
 
-  if (sectionError) {
-    throw new Error(sectionError.message)
+  if (sectionError) throw new Error(sectionError.message)
+
+  const sectionRows = ((sectionData ?? []) as Array<CmsSectionRow & { section_type: string }>).map((s) => {
+    const normalized = normalizeSectionType(String(s.section_type))
+    if (!normalized) return null
+    return { ...s, section_type: normalized as CmsSectionType }
+  }).filter(Boolean) as CmsSectionRow[]
+
+  const sectionIds = sectionRows.map((s) => s.id)
+  const globalIds = Array.from(new Set(sectionRows.map((s) => s.global_section_id).filter(Boolean) as string[]))
+
+  const localPublishedBySectionId = new Map<string, CmsSectionVersionRow>()
+  if (sectionIds.length) {
+    const { data, error } = await supabase
+      .from("section_versions")
+      .select("id, section_id, version, status, title, subtitle, cta_primary_label, cta_primary_href, cta_secondary_label, cta_secondary_href, background_media_url, formatting, content, created_at, published_at")
+      .in("section_id", sectionIds)
+      .eq("status", "published")
+    if (error) throw new Error(error.message)
+    ;((data ?? []) as CmsSectionVersionRow[]).forEach((row) => localPublishedBySectionId.set(row.section_id, row))
   }
 
-  const sections = ((sectionData ?? []) as SectionRowWithVersions[])
+  const globalPublishedById = new Map<string, CmsSectionVersionRow>()
+  if (globalIds.length) {
+    const { data, error } = await supabase
+      .from("global_section_versions")
+      .select("id, global_section_id, version, status, title, subtitle, cta_primary_label, cta_primary_href, cta_secondary_label, cta_secondary_href, background_media_url, formatting, content, created_at, published_at")
+      .in("global_section_id", globalIds)
+      .eq("status", "published")
+    if (error) throw new Error(error.message)
+    ;((data ?? []) as Array<CmsSectionVersionRow & { global_section_id: string }>).forEach((row) => {
+      globalPublishedById.set(row.global_section_id, {
+        ...row,
+        section_id: row.global_section_id,
+      })
+    })
+  }
+
+  const sections = sectionRows
     .map((s) => {
-      const published = s.section_versions?.[0]
+      const localPublished = localPublishedBySectionId.get(s.id)
+      const globalPublished = s.global_section_id ? globalPublishedById.get(s.global_section_id) : undefined
+      const published = localPublished ?? globalPublished
       if (!published) return null
-      const normalized = normalizeSectionType(String(s.section_type))
-      if (!normalized) return null
       return {
-        id: s.id,
-        page_id: s.page_id,
-        section_type: normalized as CmsSectionType,
-        key: s.key,
-        enabled: s.enabled,
-        position: s.position,
+        ...s,
         published,
+        source: localPublished ? "page" : "global",
       } satisfies CmsPublishedSection
     })
     .filter(Boolean) as CmsPublishedSection[]
 
   const { data: defaultsData, error: defaultsError } = await supabase
     .from("section_type_defaults")
-    .select(
-      "section_type, label, description, default_title, default_subtitle, default_cta_primary_label, default_cta_primary_href, default_cta_secondary_label, default_cta_secondary_href, default_background_media_url, default_formatting, default_content, capabilities"
-    )
+    .select("section_type, label, description, default_title, default_subtitle, default_cta_primary_label, default_cta_primary_href, default_cta_secondary_label, default_cta_secondary_href, default_background_media_url, default_formatting, default_content, capabilities")
 
-  if (defaultsError) {
-    throw new Error(defaultsError.message)
-  }
+  if (defaultsError) throw new Error(defaultsError.message)
 
   const defaultsRows = (defaultsData ?? []) as CmsSectionTypeDefault[]
   const sectionTypeDefaults = defaultsRows.reduce((acc, row) => {
@@ -83,16 +102,21 @@ export async function getPublishedPageBySlug(slug: string): Promise<{
     return acc
   }, {} as CmsSectionTypeDefaultsMap)
 
-  const { data: wlData, error: wlError } = await supabase
-    .from("tailwind_class_whitelist")
-    .select("class")
+  const { data: wlData, error: wlError } = await supabase.from("tailwind_class_whitelist").select("class")
+  if (wlError) throw new Error(wlError.message)
+  const tailwindWhitelist = new Set(((wlData ?? []) as Array<{ class: string }>).map((r) => r.class))
 
-  if (wlError) {
-    throw new Error(wlError.message)
+  const { data: siteFmtData } = await supabase
+    .from("site_formatting_settings")
+    .select("settings")
+    .eq("id", "default")
+    .maybeSingle()
+
+  return {
+    page: page as CmsPage,
+    sections,
+    tailwindWhitelist,
+    sectionTypeDefaults,
+    siteFormattingSettings: (siteFmtData?.settings as SiteFormattingSettings) ?? {},
   }
-
-  const rows = (wlData ?? []) as Array<{ class: string }>
-  const tailwindWhitelist = new Set(rows.map((r) => r.class))
-
-  return { page: page as CmsPage, sections, tailwindWhitelist, sectionTypeDefaults }
 }
