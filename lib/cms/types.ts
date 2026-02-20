@@ -106,6 +106,13 @@ export type CmsPublishedSection = CmsSectionRow & {
 export type SiteFormattingSettings = {
   fontFamily?: string
   fontScale?: number
+  tokens?: {
+    fontFamily?: string
+    fontScale?: number
+    spaceScale?: number
+    radiusScale?: number
+    shadowScale?: number
+  }
   backgroundType?: "none" | "color" | "gradient" | "image"
   backgroundColor?: string
   gradientFrom?: string
@@ -114,6 +121,14 @@ export type SiteFormattingSettings = {
   backgroundImageUrl?: string
   backgroundSize?: "cover" | "contain" | "auto"
   backgroundPosition?: "center" | "top" | "bottom"
+  backgroundFocalX?: number
+  backgroundFocalY?: number
+  overlayColor?: string
+  overlayOpacity?: number
+  widthMode?: "content" | "full"
+  alignment?: "left" | "center" | "right"
+  spacingTop?: string
+  spacingBottom?: string
 }
 
 export type TailwindWhitelist = Set<string>

@@ -114,6 +114,12 @@ function sectionContainerProps(
   const f = getSafeFormatting(formatting, whitelist)
   const backgroundType = asString(formatting.backgroundType)
   const sectionStyle: CSSProperties = {}
+  const overlayColor = asString(formatting.overlayColor)
+  const overlayOpacityRaw = Number(formatting.overlayOpacity)
+  const overlayOpacity = Number.isFinite(overlayOpacityRaw)
+    ? Math.min(1, Math.max(0, overlayOpacityRaw))
+    : 0
+
   if (backgroundType === "color") {
     sectionStyle.background = asString(formatting.backgroundColor)
   } else if (backgroundType === "gradient") {
@@ -123,10 +129,17 @@ function sectionContainerProps(
     if (from && to) sectionStyle.backgroundImage = `linear-gradient(${dir}, ${from}, ${to})`
   } else if (backgroundType === "image") {
     const imageUrl = asString(formatting.backgroundImageUrl)
+    const focalX = Number(formatting.backgroundFocalX)
+    const focalY = Number(formatting.backgroundFocalY)
+    const x = Number.isFinite(focalX) ? Math.min(100, Math.max(0, focalX)) : 50
+    const y = Number.isFinite(focalY) ? Math.min(100, Math.max(0, focalY)) : 50
     if (imageUrl) {
-      sectionStyle.backgroundImage = `url(${imageUrl})`
+      const gradientOverlay = overlayColor && overlayOpacity > 0
+        ? `linear-gradient(color-mix(in srgb, ${overlayColor} ${Math.round(overlayOpacity * 100)}%, transparent), color-mix(in srgb, ${overlayColor} ${Math.round(overlayOpacity * 100)}%, transparent)), `
+        : ""
+      sectionStyle.backgroundImage = `${gradientOverlay}url(${imageUrl})`
       sectionStyle.backgroundSize = asString(formatting.backgroundSize) || "cover"
-      sectionStyle.backgroundPosition = asString(formatting.backgroundPosition) || "center"
+      sectionStyle.backgroundPosition = `${x}% ${y}%`
     }
   }
 
@@ -134,10 +147,20 @@ function sectionContainerProps(
   const fontFamily = asString(formatting.fontFamily)
   if (fontFamily) containerStyle.fontFamily = fontFamily
 
+  const widthMode = asString(formatting.widthMode)
+  const align = asString(formatting.alignment)
+  const spacingTop = asString(formatting.spacingTop)
+  const spacingBottom = asString(formatting.spacingBottom)
+
   return {
     sectionId: sectionKey ?? undefined,
-    sectionClassName: cn(f.paddingY || "py-6", f.sectionClass),
-    containerClassName: cn(f.maxWidth || "max-w-5xl", f.containerClass, f.textAlignClass),
+    sectionClassName: cn(f.paddingY || "py-6", spacingTop, spacingBottom, f.sectionClass),
+    containerClassName: cn(
+      widthMode === "full" ? "max-w-none" : f.maxWidth || "max-w-5xl",
+      align === "left" ? "ml-0 mr-auto" : align === "right" ? "ml-auto mr-0" : "mx-auto",
+      f.containerClass,
+      f.textAlignClass
+    ),
     sectionStyle,
     containerStyle,
   }
@@ -205,8 +228,13 @@ export default async function MarketingPage({
     href: pickText(header?.published.cta_primary_href, headerDefaults?.default_cta_primary_href) || "#contact",
   }
 
+  const siteTokens = asRecord(siteFormattingSettings.tokens)
+  const rootFontFamily = asString(siteTokens.fontFamily) || asString(siteFormattingSettings.fontFamily)
+  const rootFontScaleRaw = Number(siteTokens.fontScale ?? siteFormattingSettings.fontScale ?? 1)
+  const rootFontScale = Number.isFinite(rootFontScaleRaw) ? Math.min(1.4, Math.max(0.8, rootFontScaleRaw)) : 1
+
   return (
-    <div className="relative min-h-dvh bg-background">
+    <div className="relative min-h-dvh bg-background" style={{ fontFamily: rootFontFamily || undefined, fontSize: `${rootFontScale}rem` }}>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_55%),radial-gradient(700px_circle_at_50%_100%,hsl(var(--foreground)/0.06),transparent_50%)]"
