@@ -370,10 +370,15 @@ export function GlobalSectionsPage() {
           </Group>
 
           <Paper withBorder p="sm" radius="md" style={{ fontFamily: effectiveFontFamily || undefined, fontSize: `${fontScale}rem`, color: textColor || undefined, background: backgroundColor || undefined }}>
-            <Text fw={600}>Live preview</Text>
-            <div style={{ marginTop: 8, padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 36%, transparent)`, border: `1px solid ${accentColor ? `color-mix(in srgb, ${accentColor} 45%, transparent)` : "rgba(127,127,127,.35)"}` }}>
-              This preview reflects font, radius/shadow and color tokens before saving.
-            </div>
+            <Text fw={600}>Live preview (frontend token mapping)</Text>
+            <Stack gap={Math.max(6, Math.round(spaceScale * 8))} mt={8}>
+              <div style={{ padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 36%, transparent)`, border: `1px solid ${accentColor ? `color-mix(in srgb, ${accentColor} 45%, transparent)` : "rgba(127,127,127,.35)"}` }}>
+                Shadow + radius sample card
+              </div>
+              <div style={{ paddingInline: `${Math.round(spaceScale * 16)}px`, paddingBlock: `${Math.round(spaceScale * 10)}px`, borderRadius: `${Math.round(radiusScale * 8)}px`, border: "1px dashed rgba(127,127,127,.45)" }}>
+                Spacing sample block (tracks spaceScale)
+              </div>
+            </Stack>
           </Paper>
 
           <Group justify="end">
