@@ -232,6 +232,7 @@ function sectionContainerProps(
 
   const containerStyle: CSSProperties = {}
   const panelStyle: CSSProperties = {}
+  const cssVars = containerStyle as CSSProperties & Record<string, string>
   const fontFamily = asString(formatting.fontFamily)
   if (fontFamily) containerStyle.fontFamily = fontFamily
   const textColor = asString(formatting.textColor)
@@ -240,11 +241,14 @@ function sectionContainerProps(
   const shadowMode = asString(formatting.shadowMode)
   const innerShadowMode = asString(formatting.innerShadowMode)
   const innerShadowStrength = clampNumber(formatting.innerShadowStrength, 0, 1.8, 0)
-  if (textColor) containerStyle.color = textColor
-  Object.assign(containerStyle as CSSProperties & Record<string, string>, accentDerivedVars(accentColor))
-  if (backgroundColor) (containerStyle as CSSProperties & Record<string, string>)["--background"] = backgroundColor
-
-  const cssVars = containerStyle as CSSProperties & Record<string, string>
+  if (textColor) {
+    containerStyle.color = textColor
+    cssVars["--foreground"] = textColor
+    cssVars["--card-foreground"] = textColor
+    cssVars["--muted-foreground"] = `color-mix(in srgb, ${textColor} 72%, transparent)`
+  }
+  Object.assign(cssVars, accentDerivedVars(accentColor))
+  if (backgroundColor) cssVars["--background"] = backgroundColor
   const outerShadowOn = shadowMode !== "off"
   const innerShadowOn =
     innerShadowMode === "on"
@@ -400,7 +404,11 @@ export default async function MarketingPage({
       : `0 ${Math.round(14 * rootShadowScale)}px ${Math.round(32 * rootShadowScale)}px -${Math.round(10 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 40%, transparent)`,
     ...accentDerivedVars(rootAccentColor),
   }
-  if (rootTextColor) (rootStyle as Record<string, string>)["--foreground"] = rootTextColor
+  if (rootTextColor) {
+    ;(rootStyle as Record<string, string>)["--foreground"] = rootTextColor
+    ;(rootStyle as Record<string, string>)["--card-foreground"] = rootTextColor
+    ;(rootStyle as Record<string, string>)["--muted-foreground"] = `color-mix(in srgb, ${rootTextColor} 72%, transparent)`
+  }
   if (rootBackgroundColor) (rootStyle as Record<string, string>)["--background"] = rootBackgroundColor
   if (rootCardBackgroundColor) (rootStyle as Record<string, string>)["--card"] = rootCardBackgroundColor
 
