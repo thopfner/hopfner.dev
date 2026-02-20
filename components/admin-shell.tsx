@@ -34,13 +34,25 @@ export function AdminShell({
               {email}
             </Text>
           </Group>
-          <Group gap={6} wrap="nowrap" style={{ minWidth: 0, overflowX: "auto" }}>
+          <Group
+            gap={6}
+            wrap="nowrap"
+            style={{
+              minWidth: 0,
+              overflowX: "auto",
+              overflowY: "hidden",
+              WebkitOverflowScrolling: "touch",
+              overscrollBehaviorX: "contain",
+              scrollbarGutter: "stable both-edges",
+            }}
+          >
             <Button
               size="xs"
               variant="default"
               component={Link}
               href="/"
               aria-label="Pages"
+              style={{ flexShrink: 0 }}
             >
               Pages
             </Button>
@@ -50,6 +62,7 @@ export function AdminShell({
               component={Link}
               href="/global-sections"
               aria-label="Global sections"
+              style={{ flexShrink: 0 }}
             >
               Global
             </Button>
@@ -59,6 +72,7 @@ export function AdminShell({
               component={Link}
               href="/media"
               aria-label="Media"
+              style={{ flexShrink: 0 }}
             >
               Media
             </Button>
@@ -67,6 +81,7 @@ export function AdminShell({
               variant="outline"
               onClick={onSignOut}
               aria-label="Sign out"
+              style={{ flexShrink: 0 }}
             >
               Sign out
             </Button>
