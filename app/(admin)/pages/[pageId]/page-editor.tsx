@@ -135,6 +135,7 @@ type SectionRow = {
   enabled: boolean
   position: number
   updated_at: string
+  global_section_id?: string | null
 }
 
 type SectionVersionRow = {
@@ -297,8 +298,8 @@ function SortableSectionItem({
       onClick={() => onOpen(section)}
       className="cursor-pointer select-none"
     >
-      <Group justify="space-between" align="center" gap="sm">
-        <Group align="start" gap="sm">
+      <Group justify="space-between" align="center" gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+        <Group align="start" gap="sm" style={{ minWidth: 0, flex: 1 }}>
           <div
             {...attributes}
             {...listeners}
@@ -329,6 +330,7 @@ function SortableSectionItem({
                   {showTypeLine ? (
                     <Group gap="xs">
                       <TypeBadge type={section.section_type} defaults={defaults} />
+                      {section.global_section_id ? <Badge size="xs" variant="light" color="blue">global</Badge> : null}
                     </Group>
                   ) : null}
                 </>
@@ -350,6 +352,8 @@ function SortableSectionItem({
 
         <Group
           gap="xs"
+          wrap="nowrap"
+          style={{ flexShrink: 0 }}
           // Prevent click/pointer events on controls from opening the drawer.
           onPointerDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
@@ -523,6 +527,9 @@ export function PageEditor({ pageId }: { pageId: string }) {
   const [addOpen, setAddOpen] = useState(false)
   const [newType, setNewType] = useState<CmsSectionType>("hero_cta")
   const [newKey, setNewKey] = useState("")
+  const [addSource, setAddSource] = useState<"local" | "global">("local")
+  const [globalSections, setGlobalSections] = useState<Array<{ id: string; key: string; section_type: CmsSectionType }>>([])
+  const [selectedGlobalId, setSelectedGlobalId] = useState<string | null>(null)
 
   const [activeSection, setActiveSection] = useState<SectionRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SectionRow | null>(null)
@@ -667,7 +674,7 @@ export function PageEditor({ pageId }: { pageId: string }) {
         enabled: source.enabled,
         position: insertAt,
       })
-      .select("id, page_id, section_type, key, enabled, position, updated_at")
+      .select("id, page_id, section_type, key, enabled, position, updated_at, global_section_id")
       .single()
 
     if (insertSectionError) throw new Error(insertSectionError.message)
@@ -736,24 +743,39 @@ export function PageEditor({ pageId }: { pageId: string }) {
     setError(null)
     setDuplicateLoadingId(source.id)
     try {
-      const response = await fetch("/api/content/sections/duplicate-all", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          sourceSectionId: source.id,
-          sourcePageId: normalizedPageId,
-          sourcePosition: source.position,
-        }),
+      const endpoints = ["/api/content/sections/duplicate-all", "/admin/api/content/sections/duplicate-all"]
+      const requestBody = JSON.stringify({
+        sourceSectionId: source.id,
+        sourcePageId: normalizedPageId,
+        sourcePosition: source.position,
       })
 
-      const payload = (await response.json().catch(() => ({}))) as {
-        ok?: boolean
-        error?: string
-        audit?: DuplicateBulkAudit
+      let payload: { ok?: boolean; error?: string; audit?: DuplicateBulkAudit } | null = null
+      let lastError = "Failed to duplicate section to all pages."
+
+      for (const endpoint of endpoints) {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: requestBody,
+        })
+
+        const parsed = (await response.json().catch(() => ({}))) as {
+          ok?: boolean
+          error?: string
+          audit?: DuplicateBulkAudit
+        }
+
+        if (response.ok && parsed?.ok && parsed.audit) {
+          payload = parsed
+          break
+        }
+
+        if (parsed?.error) lastError = parsed.error
       }
 
-      if (!response.ok || !payload?.ok || !payload.audit) {
-        throw new Error(payload?.error || "Failed to duplicate section to all pages.")
+      if (!payload?.audit) {
+        throw new Error(lastError)
       }
 
       console.info("[CMS] bulk-section-duplicate-audit", payload.audit)
@@ -785,11 +807,12 @@ export function PageEditor({ pageId }: { pageId: string }) {
         { data: pageData, error: pageError },
         { data: sectionData, error: sectionError },
         { data: defaultsData, error: defaultsError },
+        { data: globalData, error: globalError },
       ] = await Promise.all([
         supabase.from("pages").select("id, slug, title").eq("id", targetPageId).single(),
         supabase
           .from("sections")
-          .select("id, page_id, section_type, key, enabled, position, updated_at")
+          .select("id, page_id, section_type, key, enabled, position, updated_at, global_section_id")
           .eq("page_id", targetPageId)
           .order("position", { ascending: true }),
         supabase
@@ -797,6 +820,7 @@ export function PageEditor({ pageId }: { pageId: string }) {
           .select(
             "section_type, label, description, default_title, default_subtitle, default_cta_primary_label, default_cta_primary_href, default_cta_secondary_label, default_cta_secondary_href, default_background_media_url, default_formatting, default_content, capabilities"
           ),
+        supabase.from("global_sections").select("id, key, section_type").eq("enabled", true).order("key", { ascending: true }),
       ])
 
       if (pageError) {
@@ -811,6 +835,10 @@ export function PageEditor({ pageId }: { pageId: string }) {
         setError(defaultsError.message)
         return
       }
+      if (globalError) {
+        setError(globalError.message)
+        return
+      }
 
       setPage(pageData)
 
@@ -822,6 +850,14 @@ export function PageEditor({ pageId }: { pageId: string }) {
         return acc
       }, {} as SectionTypeDefaultsMap)
       setTypeDefaults(defaultsMap)
+      setGlobalSections(
+        ((globalData ?? []) as Array<{ id: string; key: string; section_type: string }>)
+          .map((g) => {
+            const normalized = normalizeSectionType(g.section_type)
+            return normalized ? { ...g, section_type: normalized } : null
+          })
+          .filter(Boolean) as Array<{ id: string; key: string; section_type: CmsSectionType }>
+      )
 
       const typedSections = (sectionData ?? [])
         .map((s) => {
@@ -953,16 +989,21 @@ export function PageEditor({ pageId }: { pageId: string }) {
       setError("Cannot add sections without a valid page.")
       return
     }
+
+    const globalSelected = addSource === "global" ? globalSections.find((g) => g.id === selectedGlobalId) ?? null : null
+    const sectionType = globalSelected?.section_type ?? newType
+
     const { data, error: insertError } = await supabase
       .from("sections")
       .insert({
         page_id: normalizedPageId,
-        section_type: newType,
+        section_type: sectionType,
         key,
         enabled: true,
         position,
+        global_section_id: globalSelected?.id ?? null,
       })
-      .select("id, page_id, section_type, key, enabled, position, updated_at")
+      .select("id, page_id, section_type, key, enabled, position, updated_at, global_section_id")
       .single()
 
     if (insertError) {
@@ -971,30 +1012,27 @@ export function PageEditor({ pageId }: { pageId: string }) {
     }
 
     const section = data as SectionRow
-    const defaults = typeDefaults[newType]
+    const defaults = typeDefaults[sectionType]
 
-    // Create an initial draft version so the editor can open immediately.
     const { error: versionError } = await supabase.from("section_versions").insert({
       section_id: section.id,
       version: 1,
       status: "draft",
-      title: defaults?.default_title ?? null,
-      subtitle: defaults?.default_subtitle ?? null,
-      cta_primary_label: defaults?.default_cta_primary_label ?? null,
-      cta_primary_href: defaults?.default_cta_primary_href ?? null,
-      cta_secondary_label: defaults?.default_cta_secondary_label ?? null,
-      cta_secondary_href: defaults?.default_cta_secondary_href ?? null,
-      background_media_url: defaults?.default_background_media_url ?? null,
-      formatting:
-        defaults?.default_formatting ?? { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left" },
-      content: defaults?.default_content ?? {},
+      title: globalSelected ? null : defaults?.default_title ?? null,
+      subtitle: globalSelected ? null : defaults?.default_subtitle ?? null,
+      cta_primary_label: globalSelected ? null : defaults?.default_cta_primary_label ?? null,
+      cta_primary_href: globalSelected ? null : defaults?.default_cta_primary_href ?? null,
+      cta_secondary_label: globalSelected ? null : defaults?.default_cta_secondary_label ?? null,
+      cta_secondary_href: globalSelected ? null : defaults?.default_cta_secondary_href ?? null,
+      background_media_url: globalSelected ? null : defaults?.default_background_media_url ?? null,
+      formatting: globalSelected ? {} : defaults?.default_formatting ?? { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left" },
+      content: globalSelected ? {} : defaults?.default_content ?? {},
     })
-    if (versionError) {
-      setError(versionError.message)
-    }
+    if (versionError) setError(versionError.message)
 
     setAddOpen(false)
     setNewKey("")
+    setSelectedGlobalId(null)
     await load()
   }
 
@@ -1009,7 +1047,7 @@ export function PageEditor({ pageId }: { pageId: string }) {
 
   return (
     <Stack gap="md">
-      <Group justify="space-between" align="start">
+      <Group justify="space-between" align="start" wrap="wrap" gap="xs">
         <div>
           <Title order={2} size="h3">
             Page Editor
@@ -1038,7 +1076,7 @@ export function PageEditor({ pageId }: { pageId: string }) {
       ) : null}
 
       <Paper withBorder p="md" radius="md">
-        <Group justify="space-between" mb="sm">
+        <Group justify="space-between" mb="sm" wrap="wrap" gap="xs">
           <Group gap="sm">
             <Text fw={600} size="sm">
               Sections
@@ -1097,14 +1135,29 @@ export function PageEditor({ pageId }: { pageId: string }) {
       <Modal opened={addOpen} onClose={() => setAddOpen(false)} title="Add section" centered>
         <Stack gap="sm">
           <Select
-            label="Section type"
-            value={newType}
-            onChange={(v) => setNewType((v as CmsSectionType) ?? "hero_cta")}
-            data={SECTION_TYPES.map((type) => ({
-              value: type,
-              label: typeDefaults[type]?.label ?? type,
-            }))}
+            label="Source"
+            value={addSource}
+            onChange={(v) => setAddSource((v as "local" | "global") ?? "local")}
+            data={[{ value: "local", label: "Page-specific section" }, { value: "global", label: "Global reusable section" }]}
           />
+          {addSource === "global" ? (
+            <Select
+              label="Global section"
+              value={selectedGlobalId}
+              onChange={setSelectedGlobalId}
+              data={globalSections.map((g) => ({ value: g.id, label: `${g.key} (${typeDefaults[g.section_type]?.label ?? g.section_type})` }))}
+            />
+          ) : (
+            <Select
+              label="Section type"
+              value={newType}
+              onChange={(v) => setNewType((v as CmsSectionType) ?? "hero_cta")}
+              data={SECTION_TYPES.map((type) => ({
+                value: type,
+                label: typeDefaults[type]?.label ?? type,
+              }))}
+            />
+          )}
           <TextInput
             label="Key (optional, used for anchors like #faq)"
             placeholder="faq"
