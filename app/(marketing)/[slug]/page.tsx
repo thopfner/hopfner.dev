@@ -112,6 +112,15 @@ function clampNumber(value: unknown, min: number, max: number, fallback: number)
   return Math.min(max, Math.max(min, n))
 }
 
+function buildInnerShadow(strength: number): string {
+  if (strength <= 0) return "none"
+  const topPx = Math.max(1, Math.round(2 * strength))
+  const spreadY = Math.max(2, Math.round(12 * strength))
+  const blur = Math.max(6, Math.round(20 * strength))
+  const spread = Math.max(2, Math.round(10 * strength))
+  return `inset 0 1px ${topPx}px color-mix(in srgb, white 24%, transparent), inset 0 ${spreadY}px ${blur}px -${spread}px color-mix(in srgb, var(--section-shadow-color) 34%, transparent)`
+}
+
 function fontScaleVars(scale: number): Record<string, string> {
   const base = {
     "--text-xs": 0.75,
@@ -229,23 +238,42 @@ function sectionContainerProps(
   const accentColor = asString(formatting.accentColor)
   const backgroundColor = asString(formatting.backgroundColorToken)
   const shadowMode = asString(formatting.shadowMode)
+  const innerShadowMode = asString(formatting.innerShadowMode)
+  const innerShadowStrength = clampNumber(formatting.innerShadowStrength, 0, 1.8, 0)
   if (textColor) containerStyle.color = textColor
   Object.assign(containerStyle as CSSProperties & Record<string, string>, accentDerivedVars(accentColor))
   if (backgroundColor) (containerStyle as CSSProperties & Record<string, string>)["--background"] = backgroundColor
 
   const cssVars = containerStyle as CSSProperties & Record<string, string>
-  if (shadowMode === "off") {
+  const outerShadowOn = shadowMode !== "off"
+  const innerShadowOn =
+    innerShadowMode === "on"
+      ? innerShadowStrength > 0
+      : innerShadowMode === "off"
+        ? false
+        : true
+
+  if (!outerShadowOn) {
     cssVars["--section-shadow-ambient"] = "none"
     cssVars["--section-shadow-lift"] = "none"
     cssVars["--shadow-sm"] = "none"
     cssVars["--shadow"] = "none"
     cssVars["--shadow-lg"] = "none"
-    panelStyle.boxShadow = "none"
-  } else {
-    ;(panelStyle as CSSProperties & Record<string, string>)["--section-shadow-color"] =
-      asString(formatting.shadowColorToken) || "var(--section-shadow-color)"
-    panelStyle.boxShadow = "var(--section-shadow-ambient), var(--section-shadow-lift)"
   }
+
+  if (innerShadowMode === "on") {
+    cssVars["--section-inner-shadow"] = buildInnerShadow(innerShadowStrength)
+  } else if (innerShadowMode === "off") {
+    cssVars["--section-inner-shadow"] = "none"
+  }
+
+  ;(panelStyle as CSSProperties & Record<string, string>)["--section-shadow-color"] =
+    asString(formatting.shadowColorToken) || "var(--section-shadow-color)"
+
+  const boxShadowLayers: string[] = []
+  if (outerShadowOn) boxShadowLayers.push("var(--section-shadow-ambient)", "var(--section-shadow-lift)")
+  if (innerShadowOn) boxShadowLayers.push("var(--section-inner-shadow)")
+  panelStyle.boxShadow = boxShadowLayers.length ? boxShadowLayers.join(", ") : "none"
 
   const widthMode = asString(formatting.widthMode)
   const align = asString(formatting.alignment)
@@ -340,6 +368,7 @@ export default async function MarketingPage({
   const rootRadiusScale = clampNumber(mergedTokens.radiusScale ?? 1, 0, 1.8, 1)
   const rootSpacingScale = clampNumber(mergedTokens.spaceScale ?? mergedTokens.spacingScale ?? 1, 0.75, 1.8, 1)
   const rootShadowScale = clampNumber(mergedTokens.shadowScale ?? 1, 0, 1.8, 1)
+  const rootInnerShadowScale = clampNumber(mergedTokens.innerShadowScale ?? 0, 0, 1.8, 0)
   const rootTextColor = asString(mergedTokens.textColor)
   const rootAccentColor = asString(mergedTokens.accentColor)
   const rootBackgroundColor = asString(mergedTokens.backgroundColor)
@@ -359,6 +388,7 @@ export default async function MarketingPage({
     ["--section-shadow-lift" as string]: rootShadowScale <= 0
       ? "none"
       : `0 ${Math.round(10 * rootShadowScale)}px ${Math.round(26 * rootShadowScale)}px -${Math.round(8 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 42%, transparent)`,
+    ["--section-inner-shadow" as string]: buildInnerShadow(rootInnerShadowScale),
     ["--shadow-sm" as string]: rootShadowScale <= 0
       ? "none"
       : `0 ${Math.round(1 * rootShadowScale)}px ${Math.round(3 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 32%, transparent)`,

@@ -112,6 +112,7 @@ export type SiteFormattingSettings = {
     spaceScale?: number
     radiusScale?: number
     shadowScale?: number
+    innerShadowScale?: number
     shadowColor?: string
     textColor?: string
     accentColor?: string
