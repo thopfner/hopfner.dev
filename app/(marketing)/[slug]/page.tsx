@@ -112,6 +112,32 @@ function clampNumber(value: unknown, min: number, max: number, fallback: number)
   return Math.min(max, Math.max(min, n))
 }
 
+function fontScaleVars(scale: number): Record<string, string> {
+  const base = {
+    "--text-xs": 0.75,
+    "--text-sm": 0.875,
+    "--text-base": 1,
+    "--text-lg": 1.125,
+    "--text-xl": 1.25,
+    "--text-2xl": 1.5,
+    "--text-3xl": 1.875,
+    "--text-4xl": 2.25,
+  }
+  return Object.fromEntries(
+    Object.entries(base).map(([k, rem]) => [k, `${(rem * scale).toFixed(3)}rem`])
+  )
+}
+
+function accentDerivedVars(accentColor: string): Record<string, string> {
+  if (!accentColor) return {}
+  return {
+    "--accent": accentColor,
+    "--border": `color-mix(in srgb, ${accentColor} 45%, transparent)`,
+    "--input": `color-mix(in srgb, ${accentColor} 38%, transparent)`,
+    "--ring": `color-mix(in srgb, ${accentColor} 72%, white 8%)`,
+  }
+}
+
 function sectionContainerProps(
   formatting: Record<string, unknown>,
   whitelist: Set<string>,
@@ -156,7 +182,7 @@ function sectionContainerProps(
   const accentColor = asString(formatting.accentColor)
   const backgroundColor = asString(formatting.backgroundColorToken)
   if (textColor) containerStyle.color = textColor
-  if (accentColor) (containerStyle as CSSProperties & Record<string, string>)["--accent"] = accentColor
+  Object.assign(containerStyle as CSSProperties & Record<string, string>, accentDerivedVars(accentColor))
   if (backgroundColor) (containerStyle as CSSProperties & Record<string, string>)["--background"] = backgroundColor
 
   const widthMode = asString(formatting.widthMode)
@@ -250,17 +276,19 @@ export default async function MarketingPage({
   const rootTextColor = asString(mergedTokens.textColor)
   const rootAccentColor = asString(mergedTokens.accentColor)
   const rootBackgroundColor = asString(mergedTokens.backgroundColor)
+  const rootShadowColor = asString(mergedTokens.shadowColor) || (rootAccentColor ? `color-mix(in srgb, ${rootAccentColor} 28%, black)` : "")
 
   const rootStyle: CSSProperties = {
     fontFamily: rootFontFamily || undefined,
     fontSize: `${rootFontScale}rem`,
+    ...fontScaleVars(rootFontScale),
     ["--radius" as string]: `${(0.625 * rootRadiusScale).toFixed(3)}rem`,
-    ["--shadow-sm" as string]: `0 ${Math.round(1 * rootShadowScale)}px ${Math.round(2 * rootShadowScale)}px rgba(0,0,0,0.08)`,
-    ["--shadow" as string]: `0 ${Math.round(4 * rootShadowScale)}px ${Math.round(12 * rootShadowScale)}px rgba(0,0,0,0.12)`,
-    ["--shadow-lg" as string]: `0 ${Math.round(12 * rootShadowScale)}px ${Math.round(28 * rootShadowScale)}px rgba(0,0,0,0.18)`,
+    ["--shadow-sm" as string]: `0 ${Math.round(1 * rootShadowScale)}px ${Math.round(2 * rootShadowScale)}px color-mix(in srgb, ${rootShadowColor || "#000"} 45%, transparent)`,
+    ["--shadow" as string]: `0 ${Math.round(4 * rootShadowScale)}px ${Math.round(12 * rootShadowScale)}px color-mix(in srgb, ${rootShadowColor || "#000"} 40%, transparent)`,
+    ["--shadow-lg" as string]: `0 ${Math.round(12 * rootShadowScale)}px ${Math.round(28 * rootShadowScale)}px color-mix(in srgb, ${rootShadowColor || "#000"} 36%, transparent)`,
+    ...accentDerivedVars(rootAccentColor),
   }
   if (rootTextColor) (rootStyle as Record<string, string>)["--foreground"] = rootTextColor
-  if (rootAccentColor) (rootStyle as Record<string, string>)["--accent"] = rootAccentColor
   if (rootBackgroundColor) (rootStyle as Record<string, string>)["--background"] = rootBackgroundColor
 
   return (
