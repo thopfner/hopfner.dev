@@ -184,6 +184,9 @@ function sectionContainerProps(
   if (textColor) containerStyle.color = textColor
   Object.assign(containerStyle as CSSProperties & Record<string, string>, accentDerivedVars(accentColor))
   if (backgroundColor) (containerStyle as CSSProperties & Record<string, string>)["--background"] = backgroundColor
+  ;(containerStyle as CSSProperties & Record<string, string>)["--section-shadow-color"] =
+    asString(formatting.shadowColorToken) || "var(--section-shadow-color)"
+  containerStyle.boxShadow = "var(--shadow-sm)"
 
   const widthMode = asString(formatting.widthMode)
   const align = asString(formatting.alignment)
@@ -272,6 +275,7 @@ export default async function MarketingPage({
   const rootFontFamily = asString(mergedTokens.fontFamily) || asString(siteFormattingSettings.fontFamily)
   const rootFontScale = clampNumber(mergedTokens.fontScale ?? siteFormattingSettings.fontScale ?? 1, 0.8, 1.4, 1)
   const rootRadiusScale = clampNumber(mergedTokens.radiusScale ?? 1, 0.5, 1.8, 1)
+  const rootSpacingScale = clampNumber(mergedTokens.spaceScale ?? mergedTokens.spacingScale ?? 1, 0.75, 1.8, 1)
   const rootShadowScale = clampNumber(mergedTokens.shadowScale ?? 1, 0.5, 1.8, 1)
   const rootTextColor = asString(mergedTokens.textColor)
   const rootAccentColor = asString(mergedTokens.accentColor)
@@ -283,9 +287,11 @@ export default async function MarketingPage({
     fontSize: `${rootFontScale}rem`,
     ...fontScaleVars(rootFontScale),
     ["--radius" as string]: `${(0.625 * rootRadiusScale).toFixed(3)}rem`,
-    ["--shadow-sm" as string]: `0 ${Math.round(1 * rootShadowScale)}px ${Math.round(2 * rootShadowScale)}px color-mix(in srgb, ${rootShadowColor || "#000"} 45%, transparent)`,
-    ["--shadow" as string]: `0 ${Math.round(4 * rootShadowScale)}px ${Math.round(12 * rootShadowScale)}px color-mix(in srgb, ${rootShadowColor || "#000"} 40%, transparent)`,
-    ["--shadow-lg" as string]: `0 ${Math.round(12 * rootShadowScale)}px ${Math.round(28 * rootShadowScale)}px color-mix(in srgb, ${rootShadowColor || "#000"} 36%, transparent)`,
+    ["--spacing" as string]: `${(0.25 * rootSpacingScale).toFixed(4)}rem`,
+    ["--section-shadow-color" as string]: rootShadowColor || "#000",
+    ["--shadow-sm" as string]: `0 ${Math.round(1 * rootShadowScale)}px ${Math.round(2 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 45%, transparent)`,
+    ["--shadow" as string]: `0 ${Math.round(4 * rootShadowScale)}px ${Math.round(12 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 40%, transparent)`,
+    ["--shadow-lg" as string]: `0 ${Math.round(12 * rootShadowScale)}px ${Math.round(28 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 36%, transparent)`,
     ...accentDerivedVars(rootAccentColor),
   }
   if (rootTextColor) (rootStyle as Record<string, string>)["--foreground"] = rootTextColor
