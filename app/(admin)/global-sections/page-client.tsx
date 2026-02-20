@@ -56,10 +56,39 @@ type GlobalVersionRow = {
 
 type ImpactRow = { total_references: number; enabled_references: number; distinct_pages: number }
 type UsageRow = { global_section_id: string; page_slug: string; page_title: string; section_key: string | null }
+type SectionTypeDefault = {
+  section_type: string
+  default_formatting: Record<string, unknown>
+  default_content: Record<string, unknown>
+}
 
 function parseNum(v: string, fallback: number) {
   const n = Number(v)
   return Number.isFinite(n) ? n : fallback
+}
+
+function asRecord(v: unknown): Record<string, unknown> {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {}
+}
+
+function deepMerge(a: Record<string, unknown>, b: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...a }
+  Object.entries(b).forEach(([key, value]) => {
+    const prev = out[key]
+    if (
+      value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      prev &&
+      typeof prev === "object" &&
+      !Array.isArray(prev)
+    ) {
+      out[key] = deepMerge(prev as Record<string, unknown>, value as Record<string, unknown>)
+      return
+    }
+    out[key] = value
+  })
+  return out
 }
 
 export function GlobalSectionsPage() {
@@ -77,6 +106,7 @@ export function GlobalSectionsPage() {
   const [spaceScale, setSpaceScale] = useState(1)
   const [radiusScale, setRadiusScale] = useState(1)
   const [shadowScale, setShadowScale] = useState(1)
+  const [shadowColor, setShadowColor] = useState("")
   const [textColor, setTextColor] = useState("")
   const [accentColor, setAccentColor] = useState("")
   const [backgroundColor, setBackgroundColor] = useState("")
@@ -86,6 +116,7 @@ export function GlobalSectionsPage() {
 
   const [editorOpen, setEditorOpen] = useState(false)
   const [editing, setEditing] = useState<Row | null>(null)
+  const [sectionTypeDefaults, setSectionTypeDefaults] = useState<Record<string, SectionTypeDefault>>({})
   const [versions, setVersions] = useState<GlobalVersionRow[]>([])
   const [title, setTitle] = useState("")
   const [subtitle, setSubtitle] = useState("")
@@ -113,6 +144,15 @@ export function GlobalSectionsPage() {
 
     const nextRows = (data ?? []) as Row[]
     setRows(nextRows)
+
+    const { data: defaultsRows } = await supabase
+      .from("section_type_defaults")
+      .select("section_type,default_formatting,default_content")
+
+    const defaultsMap = Object.fromEntries(
+      ((defaultsRows ?? []) as SectionTypeDefault[]).map((row) => [row.section_type, row])
+    )
+    setSectionTypeDefaults(defaultsMap)
 
     const { data: whereUsedRows } = await supabase
       .from("global_section_where_used")
@@ -146,6 +186,7 @@ export function GlobalSectionsPage() {
     setSpaceScale(parseNum(String(tokens.spaceScale ?? 1), 1))
     setRadiusScale(parseNum(String(tokens.radiusScale ?? 1), 1))
     setShadowScale(parseNum(String(tokens.shadowScale ?? 1), 1))
+    setShadowColor(String(tokens.shadowColor ?? ""))
     setTextColor(String(tokens.textColor ?? ""))
     setAccentColor(String(tokens.accentColor ?? ""))
     setBackgroundColor(String(tokens.backgroundColor ?? ""))
@@ -171,8 +212,11 @@ export function GlobalSectionsPage() {
     setCtaPrimaryHref(base?.cta_primary_href ?? "")
     setCtaSecondaryLabel(base?.cta_secondary_label ?? "")
     setCtaSecondaryHref(base?.cta_secondary_href ?? "")
-    setFormattingText(JSON.stringify(base?.formatting ?? {}, null, 2))
-    setContentText(JSON.stringify(base?.content ?? {}, null, 2))
+    const defaults = sectionTypeDefaults[row.section_type]
+    const normalizedFormatting = deepMerge(asRecord(defaults?.default_formatting), asRecord(base?.formatting))
+    const normalizedContent = deepMerge(asRecord(defaults?.default_content), asRecord(base?.content))
+    setFormattingText(JSON.stringify(normalizedFormatting, null, 2))
+    setContentText(JSON.stringify(normalizedContent, null, 2))
     setEditorOpen(true)
   }
 
@@ -180,8 +224,9 @@ export function GlobalSectionsPage() {
     if (!editing) return
     setError(null)
     try {
-      const formatting = JSON.parse(formattingText || "{}")
-      const content = JSON.parse(contentText || "{}")
+      const defaults = sectionTypeDefaults[editing.section_type]
+      const formatting = deepMerge(asRecord(defaults?.default_formatting), asRecord(JSON.parse(formattingText || "{}")))
+      const content = deepMerge(asRecord(defaults?.default_content), asRecord(JSON.parse(contentText || "{}")))
       await supabase.from("global_section_versions").update({ status: "archived" }).eq("global_section_id", editing.id).eq("status", "draft")
       const nextVersion = (versions[0]?.version ?? 0) + 1
       const { error } = await supabase.from("global_section_versions").insert({
@@ -241,6 +286,7 @@ export function GlobalSectionsPage() {
           spaceScale,
           radiusScale,
           shadowScale,
+          shadowColor: shadowColor.trim() || null,
           textColor: textColor.trim() || null,
           accentColor: accentColor.trim() || null,
           backgroundColor: backgroundColor.trim() || null,
@@ -264,7 +310,14 @@ export function GlobalSectionsPage() {
 
     if (error || !data) return setError(error?.message ?? "Create failed")
 
-    await supabase.from("global_section_versions").insert({ global_section_id: data.id, version: 1, status: "draft", formatting: {}, content: {} })
+    const defaults = sectionTypeDefaults[type]
+    await supabase.from("global_section_versions").insert({
+      global_section_id: data.id,
+      version: 1,
+      status: "draft",
+      formatting: asRecord(defaults?.default_formatting),
+      content: asRecord(defaults?.default_content),
+    })
 
     setKey("")
     setLabel("")
@@ -312,12 +365,13 @@ export function GlobalSectionsPage() {
           <Group grow>
             <ColorInput label="Text color" value={textColor} onChange={setTextColor} placeholder="#111827" />
             <ColorInput label="Accent color" value={accentColor} onChange={setAccentColor} placeholder="#4f46e5" />
+            <ColorInput label="Shadow color" value={shadowColor} onChange={setShadowColor} placeholder="#111827" />
             <ColorInput label="Background color" value={backgroundColor} onChange={setBackgroundColor} placeholder="#ffffff" />
           </Group>
 
           <Paper withBorder p="sm" radius="md" style={{ fontFamily: effectiveFontFamily || undefined, fontSize: `${fontScale}rem`, color: textColor || undefined, background: backgroundColor || undefined }}>
             <Text fw={600}>Live preview</Text>
-            <div style={{ marginTop: 8, padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px rgba(0,0,0,0.18)`, border: `1px solid ${accentColor || "rgba(127,127,127,.35)"}` }}>
+            <div style={{ marginTop: 8, padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 36%, transparent)`, border: `1px solid ${accentColor ? `color-mix(in srgb, ${accentColor} 45%, transparent)` : "rgba(127,127,127,.35)"}` }}>
               This preview reflects font, radius/shadow and color tokens before saving.
             </div>
           </Paper>
