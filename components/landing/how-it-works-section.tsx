@@ -1,27 +1,34 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { cn } from "@/lib/utils"
+import type { CSSProperties } from "react"
 
 export function HowItWorksSection({
   sectionId,
   sectionClassName,
   containerClassName,
+  sectionStyle,
+  containerStyle,
   title,
   steps,
 }: {
   sectionId?: string
   sectionClassName?: string
   containerClassName?: string
+  sectionStyle?: CSSProperties
+  containerStyle?: CSSProperties
   title: string
-  steps: Array<{ title: string; body?: string }>
+  steps: Array<{ title: string; body?: string; bodyHtml?: string }>
 }) {
   return (
     <section
       id={sectionId}
       className={cn("scroll-mt-16 py-6", sectionClassName)}
       aria-labelledby="how-it-works-title"
+    style={sectionStyle}
     >
-      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)}>
+      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
         <h2
           id="how-it-works-title"
           className="text-lg font-semibold tracking-tight"
@@ -37,7 +44,12 @@ export function HowItWorksSection({
                   <Badge variant="secondary">{idx + 1}</Badge>
                   <div className="space-y-1">
                     <p className="text-sm">{step.title}</p>
-                    {step.body ? (
+                    {step.bodyHtml?.trim() ? (
+                      <div
+                        className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                        dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
+                      />
+                    ) : step.body ? (
                       <p className="text-sm text-muted-foreground">{step.body}</p>
                     ) : null}
                   </div>

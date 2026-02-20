@@ -1,5 +1,7 @@
 import Link from "next/link"
+import type { CSSProperties } from "react"
 
+import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -8,16 +10,22 @@ export function FinalCtaSection({
   sectionId,
   sectionClassName,
   containerClassName,
+  sectionStyle,
+  containerStyle,
   headline,
   body,
+  bodyHtml,
   primaryCta,
   secondaryCta,
 }: {
   sectionId?: string
   sectionClassName?: string
   containerClassName?: string
+  sectionStyle?: CSSProperties
+  containerStyle?: CSSProperties
   headline: string
   body: string
+  bodyHtml?: string
   primaryCta: { label: string; href: string }
   secondaryCta: { label: string; href: string }
 }) {
@@ -26,8 +34,9 @@ export function FinalCtaSection({
       id={sectionId}
       className={cn("scroll-mt-16 py-6", sectionClassName)}
       aria-labelledby="final-cta-title"
+    style={sectionStyle}
     >
-      <div className={cn("mx-auto max-w-5xl px-4", containerClassName)}>
+      <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
         <Card className="relative overflow-hidden gap-3 border-border/60 bg-card/40 py-4 shadow-sm">
           <div
             aria-hidden
@@ -40,7 +49,14 @@ export function FinalCtaSection({
             >
               {headline}
             </h2>
-            <p className="text-sm text-muted-foreground">{body}</p>
+            {bodyHtml?.trim() ? (
+              <div
+                className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                dangerouslySetInnerHTML={{ __html: bodyHtml }}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{body}</p>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               <Button size="sm" asChild>
                 <Link href={primaryCta.href}>{primaryCta.label}</Link>

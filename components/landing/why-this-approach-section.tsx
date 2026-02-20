@@ -1,10 +1,14 @@
 import { Card, CardContent } from "@/components/ui/card"
+import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { cn } from "@/lib/utils"
+import type { CSSProperties } from "react"
 
 export function WhyThisApproachSection({
   sectionId,
   sectionClassName,
   containerClassName,
+  sectionStyle,
+  containerStyle,
   title,
   heading,
   bodyHtml,
@@ -12,6 +16,8 @@ export function WhyThisApproachSection({
   sectionId?: string
   sectionClassName?: string
   containerClassName?: string
+  sectionStyle?: CSSProperties
+  containerStyle?: CSSProperties
   title: string
   heading: string
   bodyHtml: string
@@ -21,8 +27,9 @@ export function WhyThisApproachSection({
       id={sectionId}
       className={cn("scroll-mt-16 py-6", sectionClassName)}
       aria-labelledby="why-title"
+    style={sectionStyle}
     >
-      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)}>
+      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
         <h2 id="why-title" className="text-lg font-semibold tracking-tight">
           {title}
         </h2>
@@ -31,7 +38,7 @@ export function WhyThisApproachSection({
           <CardContent className="space-y-2 px-4">
             <h3 className="text-sm font-semibold">{heading}</h3>
             <div
-              className="text-sm text-muted-foreground [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-border [&_blockquote]:pl-3 [&_li]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-6 [&_pre]:overflow-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:border-border [&_pre]:bg-card/30 [&_pre]:p-3 [&_ul]:list-disc [&_ul]:pl-5"
+              className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
           </CardContent>

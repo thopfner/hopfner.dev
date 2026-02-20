@@ -106,6 +106,12 @@ function pickText(primary: string | null | undefined, fallback: string | null | 
   return f
 }
 
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return fallback
+  return Math.min(max, Math.max(min, n))
+}
+
 function sectionContainerProps(
   formatting: Record<string, unknown>,
   whitelist: Set<string>,
@@ -146,6 +152,12 @@ function sectionContainerProps(
   const containerStyle: CSSProperties = {}
   const fontFamily = asString(formatting.fontFamily)
   if (fontFamily) containerStyle.fontFamily = fontFamily
+  const textColor = asString(formatting.textColor)
+  const accentColor = asString(formatting.accentColor)
+  const backgroundColor = asString(formatting.backgroundColorToken)
+  if (textColor) containerStyle.color = textColor
+  if (accentColor) (containerStyle as CSSProperties & Record<string, string>)["--accent"] = accentColor
+  if (backgroundColor) (containerStyle as CSSProperties & Record<string, string>)["--background"] = backgroundColor
 
   const widthMode = asString(formatting.widthMode)
   const align = asString(formatting.alignment)
@@ -229,12 +241,30 @@ export default async function MarketingPage({
   }
 
   const siteTokens = asRecord(siteFormattingSettings.tokens)
-  const rootFontFamily = asString(siteTokens.fontFamily) || asString(siteFormattingSettings.fontFamily)
-  const rootFontScaleRaw = Number(siteTokens.fontScale ?? siteFormattingSettings.fontScale ?? 1)
-  const rootFontScale = Number.isFinite(rootFontScaleRaw) ? Math.min(1.4, Math.max(0.8, rootFontScaleRaw)) : 1
+  const pageTokens = asRecord(pageFormattingOverride.tokens)
+  const mergedTokens = deepMerge(siteTokens, pageTokens)
+  const rootFontFamily = asString(mergedTokens.fontFamily) || asString(siteFormattingSettings.fontFamily)
+  const rootFontScale = clampNumber(mergedTokens.fontScale ?? siteFormattingSettings.fontScale ?? 1, 0.8, 1.4, 1)
+  const rootRadiusScale = clampNumber(mergedTokens.radiusScale ?? 1, 0.5, 1.8, 1)
+  const rootShadowScale = clampNumber(mergedTokens.shadowScale ?? 1, 0.5, 1.8, 1)
+  const rootTextColor = asString(mergedTokens.textColor)
+  const rootAccentColor = asString(mergedTokens.accentColor)
+  const rootBackgroundColor = asString(mergedTokens.backgroundColor)
+
+  const rootStyle: CSSProperties = {
+    fontFamily: rootFontFamily || undefined,
+    fontSize: `${rootFontScale}rem`,
+    ["--radius" as string]: `${(0.625 * rootRadiusScale).toFixed(3)}rem`,
+    ["--shadow-sm" as string]: `0 ${Math.round(1 * rootShadowScale)}px ${Math.round(2 * rootShadowScale)}px rgba(0,0,0,0.08)`,
+    ["--shadow" as string]: `0 ${Math.round(4 * rootShadowScale)}px ${Math.round(12 * rootShadowScale)}px rgba(0,0,0,0.12)`,
+    ["--shadow-lg" as string]: `0 ${Math.round(12 * rootShadowScale)}px ${Math.round(28 * rootShadowScale)}px rgba(0,0,0,0.18)`,
+  }
+  if (rootTextColor) (rootStyle as Record<string, string>)["--foreground"] = rootTextColor
+  if (rootAccentColor) (rootStyle as Record<string, string>)["--accent"] = rootAccentColor
+  if (rootBackgroundColor) (rootStyle as Record<string, string>)["--background"] = rootBackgroundColor
 
   return (
-    <div className="relative min-h-dvh bg-background" style={{ fontFamily: rootFontFamily || undefined, fontSize: `${rootFontScale}rem` }}>
+    <div className="relative min-h-dvh bg-background" style={rootStyle}>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_55%),radial-gradient(700px_circle_at_50%_100%,hsl(var(--foreground)/0.06),transparent_50%)]"

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import type { CSSProperties } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -9,6 +10,8 @@ export function HeroSection({
   sectionId,
   sectionClassName,
   containerClassName,
+  sectionStyle,
+  containerStyle,
   headline,
   subheadline,
   bullets,
@@ -19,6 +22,8 @@ export function HeroSection({
   sectionId?: string
   sectionClassName?: string
   containerClassName?: string
+  sectionStyle?: CSSProperties
+  containerStyle?: CSSProperties
   headline: string
   subheadline: string
   bullets: string[]
@@ -30,8 +35,9 @@ export function HeroSection({
     <section
       id={sectionId}
       className={cn("scroll-mt-16 py-6", sectionClassName)}
+    style={sectionStyle}
     >
-      <div className={cn("mx-auto max-w-5xl px-4", containerClassName)}>
+      <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
         <Card className="relative overflow-hidden border-border/60 bg-card/40 py-4 shadow-sm">
           <div
             aria-hidden

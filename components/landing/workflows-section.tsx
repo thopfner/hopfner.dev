@@ -4,28 +4,35 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { cn } from "@/lib/utils"
+import type { CSSProperties } from "react"
 
 export function WorkflowsSection({
   sectionId,
   sectionClassName,
   containerClassName,
+  sectionStyle,
+  containerStyle,
   title,
   items,
 }: {
   sectionId?: string
   sectionClassName?: string
   containerClassName?: string
+  sectionStyle?: CSSProperties
+  containerStyle?: CSSProperties
   title: string
-  items: Array<{ title: string; body: string }>
+  items: Array<{ title: string; body: string; bodyHtml?: string }>
 }) {
   return (
     <section
       id={sectionId}
       className={cn("scroll-mt-16 py-6", sectionClassName)}
       aria-labelledby="examples-title"
+    style={sectionStyle}
     >
-      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)}>
+      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
         <h2 id="examples-title" className="text-lg font-semibold tracking-tight">
           {title}
         </h2>
@@ -41,7 +48,14 @@ export function WorkflowsSection({
                 {item.title}
               </AccordionTrigger>
               <AccordionContent className="pb-3 text-muted-foreground">
-                <p className="text-sm">{item.body}</p>
+                {item.bodyHtml?.trim() ? (
+                  <div
+                    className={cn("text-sm", RICH_TEXT_CLASS)}
+                    dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
+                  />
+                ) : (
+                  <p className="text-sm">{item.body}</p>
+                )}
               </AccordionContent>
             </AccordionItem>
           ))}

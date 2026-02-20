@@ -1,17 +1,22 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import type { CSSProperties } from "react"
 
 export function TechStackSection({
   sectionId,
   sectionClassName,
   containerClassName,
+  sectionStyle,
+  containerStyle,
   title,
   items,
 }: {
   sectionId?: string
   sectionClassName?: string
   containerClassName?: string
+  sectionStyle?: CSSProperties
+  containerStyle?: CSSProperties
   title: string
   items: Array<{ label: string; value: string }>
 }) {
@@ -20,8 +25,9 @@ export function TechStackSection({
       id={sectionId}
       className={cn("scroll-mt-16 py-6", sectionClassName)}
       aria-labelledby="tech-title"
+    style={sectionStyle}
     >
-      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)}>
+      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
         <h2 id="tech-title" className="text-lg font-semibold tracking-tight">
           {title}
         </h2>
