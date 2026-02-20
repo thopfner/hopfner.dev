@@ -115,6 +115,8 @@ type FormattingState = {
   maxWidth: "" | "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl"
   textAlign: "" | "left" | "center"
   shadowMode: "inherit" | "on" | "off"
+  innerShadowMode: "inherit" | "on" | "off"
+  innerShadowStrength: number
   mobile?: {
     containerClass: string
     sectionClass: string
@@ -130,6 +132,8 @@ const DEFAULT_FORMATTING: FormattingState = {
   maxWidth: "max-w-5xl",
   textAlign: "left",
   shadowMode: "inherit",
+  innerShadowMode: "inherit",
+  innerShadowStrength: 0,
 }
 
 type CardDisplayState = {
@@ -663,6 +667,8 @@ function validateClassTokens(input: string, allowed: Set<string>) {
 function normalizeFormatting(raw: Record<string, unknown>): FormattingState {
   const mobile = asRecord(raw.mobile)
   const rawShadowMode = asString(raw.shadowMode)
+  const rawInnerShadowMode = asString(raw.innerShadowMode)
+  const rawInnerShadowStrength = Number(raw.innerShadowStrength)
   const out: FormattingState = {
     containerClass: asString(raw.containerClass),
     sectionClass: asString(raw.sectionClass),
@@ -671,6 +677,13 @@ function normalizeFormatting(raw: Record<string, unknown>): FormattingState {
     maxWidth: (asString(raw.maxWidth) as FormattingState["maxWidth"]) || "",
     textAlign: (asString(raw.textAlign) as FormattingState["textAlign"]) || "",
     shadowMode: rawShadowMode === "off" || rawShadowMode === "on" ? rawShadowMode : "inherit",
+    innerShadowMode:
+      rawInnerShadowMode === "off" || rawInnerShadowMode === "on"
+        ? rawInnerShadowMode
+        : "inherit",
+    innerShadowStrength: Number.isFinite(rawInnerShadowStrength)
+      ? Math.min(1.8, Math.max(0, rawInnerShadowStrength))
+      : 0,
   }
   const hasMobile =
     typeof mobile.containerClass === "string" ||
@@ -697,6 +710,8 @@ function formattingToJsonb(state: FormattingState) {
     maxWidth: state.maxWidth,
     textAlign: state.textAlign,
     shadowMode: state.shadowMode,
+    innerShadowMode: state.innerShadowMode,
+    innerShadowStrength: state.innerShadowStrength,
   }
   if (state.mobile) {
     base.mobile = {
@@ -1782,6 +1797,22 @@ export function SectionEditorDrawer({
                   }
                 />
                 <Select
+                  label="Inner bevel/glow"
+                  comboboxProps={{ withinPortal: false }}
+                  data={[
+                    { value: "inherit", label: "Inherit site setting" },
+                    { value: "on", label: "On" },
+                    { value: "off", label: "Off" },
+                  ]}
+                  value={formatting.innerShadowMode}
+                  onChange={(v) =>
+                    setFormatting((s) => ({
+                      ...s,
+                      innerShadowMode: v === "on" || v === "off" ? v : "inherit",
+                    }))
+                  }
+                />
+                <Select
                   label="Section spacing (outer)"
                   comboboxProps={{ withinPortal: false }}
                   data={[
@@ -1802,6 +1833,20 @@ export function SectionEditorDrawer({
                   }
                 />
               </SimpleGrid>
+
+              <Slider
+                label={(v) => `Inner bevel/glow strength ${v.toFixed(2)}x`}
+                min={0}
+                max={1.8}
+                step={0.05}
+                value={formatting.innerShadowStrength}
+                onChange={(v) =>
+                  setFormatting((s) => ({
+                    ...s,
+                    innerShadowStrength: Math.min(1.8, Math.max(0, v)),
+                  }))
+                }
+              />
 
               <Textarea
                 label="containerClass (whitelisted Tailwind tokens)"

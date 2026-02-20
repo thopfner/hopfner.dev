@@ -109,6 +109,7 @@ export function GlobalSectionsPage() {
   const [spaceScale, setSpaceScale] = useState(1)
   const [radiusScale, setRadiusScale] = useState(1)
   const [shadowScale, setShadowScale] = useState(1)
+  const [innerShadowScale, setInnerShadowScale] = useState(0)
   const [shadowColor, setShadowColor] = useState("")
   const [textColor, setTextColor] = useState("")
   const [accentColor, setAccentColor] = useState("")
@@ -189,6 +190,7 @@ export function GlobalSectionsPage() {
     setSpaceScale(parseNum(String(tokens.spaceScale ?? 1), 1))
     setRadiusScale(parseNum(String(tokens.radiusScale ?? 1), 1))
     setShadowScale(parseNum(String(tokens.shadowScale ?? 1), 1))
+    setInnerShadowScale(parseNum(String(tokens.innerShadowScale ?? 0), 0))
     setShadowColor(String(tokens.shadowColor ?? ""))
     setTextColor(String(tokens.textColor ?? ""))
     setAccentColor(String(tokens.accentColor ?? ""))
@@ -214,6 +216,7 @@ export function GlobalSectionsPage() {
           spaceScale,
           radiusScale,
           shadowScale,
+          innerShadowScale,
           shadowColor: shadowColor.trim() || null,
           textColor: textColor.trim() || null,
           accentColor: accentColor.trim() || null,
@@ -291,6 +294,7 @@ export function GlobalSectionsPage() {
           <Slider label={(v) => `Space scale ${v.toFixed(2)}x`} min={0.7} max={1.6} step={0.05} value={spaceScale} onChange={setSpaceScale} />
           <Slider label={(v) => `Radius scale ${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={radiusScale} onChange={setRadiusScale} />
           <Slider label={(v) => `Shadow scale ${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={shadowScale} onChange={setShadowScale} />
+          <Slider label={(v) => `Inner bevel/glow scale ${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={innerShadowScale} onChange={setInnerShadowScale} />
           <Group grow>
             <ColorInput label="Text color" value={textColor} onChange={setTextColor} placeholder="#111827" />
             <ColorInput label="Accent color" value={accentColor} onChange={setAccentColor} placeholder="#4f46e5" />
@@ -302,7 +306,8 @@ export function GlobalSectionsPage() {
           <Paper withBorder p="sm" radius="md" style={{ fontFamily: effectiveFontFamily || undefined, fontSize: `${fontScale}rem`, color: textColor || undefined, background: backgroundColor || undefined }}>
             <Text fw={600}>Live preview (frontend token mapping)</Text>
             <Stack gap={Math.max(6, Math.round(spaceScale * 8))} mt={8}>
-              <div style={{ padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 36%, transparent)`, border: `1px solid ${accentColor ? `color-mix(in srgb, ${accentColor} 45%, transparent)` : "rgba(127,127,127,.35)"}`, background: cardBackgroundColor || undefined }}>
+              <div style={{ padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `${shadowScale <= 0 ? "none" : `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 36%, transparent)`}${innerShadowScale > 0 ? `${shadowScale > 0 ? ", " : ""}inset 0 1px ${Math.max(1, Math.round(2 * innerShadowScale))}px color-mix(in srgb, white 26%, transparent), inset 0 ${Math.max(2, Math.round(12 * innerShadowScale))}px ${Math.max(6, Math.round(20 * innerShadowScale))}px -${Math.max(2, Math.round(10 * innerShadowScale))}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 30%, transparent)` : ""}`,
+                border: `1px solid ${accentColor ? `color-mix(in srgb, ${accentColor} 45%, transparent)` : "rgba(127,127,127,.35)"}`, background: cardBackgroundColor || undefined }}>
                 Shadow + radius sample card
               </div>
               <div style={{ paddingInline: `${Math.round(spaceScale * 16)}px`, paddingBlock: `${Math.round(spaceScale * 10)}px`, borderRadius: `${Math.round(radiusScale * 8)}px`, border: "1px dashed rgba(127,127,127,.45)", background: cardBackgroundColor || undefined }}>
