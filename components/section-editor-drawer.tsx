@@ -114,6 +114,7 @@ type FormattingState = {
   outerSpacing: "" | "my-2" | "my-4" | "my-6" | "my-8" | "my-10" | "my-12"
   maxWidth: "" | "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl"
   textAlign: "" | "left" | "center"
+  widthMode: "content" | "full"
   shadowMode: "inherit" | "on" | "off"
   innerShadowMode: "inherit" | "on" | "off"
   innerShadowStrength: number
@@ -131,6 +132,7 @@ const DEFAULT_FORMATTING: FormattingState = {
   outerSpacing: "",
   maxWidth: "max-w-5xl",
   textAlign: "left",
+  widthMode: "content",
   shadowMode: "inherit",
   innerShadowMode: "inherit",
   innerShadowStrength: 0,
@@ -676,6 +678,7 @@ function normalizeFormatting(raw: Record<string, unknown>): FormattingState {
     outerSpacing: (asString(raw.outerSpacing) as FormattingState["outerSpacing"]) || "",
     maxWidth: (asString(raw.maxWidth) as FormattingState["maxWidth"]) || "",
     textAlign: (asString(raw.textAlign) as FormattingState["textAlign"]) || "",
+    widthMode: asString(raw.widthMode) === "full" ? "full" : "content",
     shadowMode: rawShadowMode === "off" || rawShadowMode === "on" ? rawShadowMode : "inherit",
     innerShadowMode:
       rawInnerShadowMode === "off" || rawInnerShadowMode === "on"
@@ -709,6 +712,7 @@ function formattingToJsonb(state: FormattingState) {
     outerSpacing: state.outerSpacing,
     maxWidth: state.maxWidth,
     textAlign: state.textAlign,
+    widthMode: state.widthMode,
     shadowMode: state.shadowMode,
     innerShadowMode: state.innerShadowMode,
     innerShadowStrength: state.innerShadowStrength,
@@ -1779,6 +1783,23 @@ export function SectionEditorDrawer({
                     }))
                   }
                 />
+                {type === "hero_cta" ? (
+                  <Select
+                    label="Hero width mode"
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                      { value: "content", label: "Contained" },
+                      { value: "full", label: "Full-bleed" },
+                    ]}
+                    value={formatting.widthMode}
+                    onChange={(v) =>
+                      setFormatting((s) => ({
+                        ...s,
+                        widthMode: v === "full" ? "full" : "content",
+                      }))
+                    }
+                  />
+                ) : null}
                 <Select
                   label="Section shadow"
                   comboboxProps={{ withinPortal: false }}
