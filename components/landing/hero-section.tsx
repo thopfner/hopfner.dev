@@ -12,6 +12,7 @@ export function HeroSection({
   containerClassName,
   sectionStyle,
   containerStyle,
+  panelStyle,
   headline,
   subheadline,
   bullets,
@@ -24,6 +25,7 @@ export function HeroSection({
   containerClassName?: string
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
+  panelStyle?: CSSProperties
   headline: string
   subheadline: string
   bullets: string[]
@@ -38,7 +40,7 @@ export function HeroSection({
     style={sectionStyle}
     >
       <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
-        <Card className="relative overflow-hidden border-border/60 bg-card/40 py-4 shadow-sm">
+        <Card className="relative overflow-hidden border-border/60 bg-card/40 py-4" style={panelStyle}>
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(800px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_60%)]"

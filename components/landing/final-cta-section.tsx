@@ -12,6 +12,7 @@ export function FinalCtaSection({
   containerClassName,
   sectionStyle,
   containerStyle,
+  panelStyle,
   headline,
   body,
   bodyHtml,
@@ -23,6 +24,7 @@ export function FinalCtaSection({
   containerClassName?: string
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
+  panelStyle?: CSSProperties
   headline: string
   body: string
   bodyHtml?: string
@@ -37,7 +39,7 @@ export function FinalCtaSection({
     style={sectionStyle}
     >
       <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
-        <Card className="relative overflow-hidden gap-3 border-border/60 bg-card/40 py-4 shadow-sm">
+        <Card className="relative overflow-hidden gap-3 border-border/60 bg-card/40 py-4" style={panelStyle}>
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(700px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_60%)]"

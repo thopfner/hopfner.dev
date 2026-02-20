@@ -14,6 +14,7 @@ export function WorkflowsSection({
   containerClassName,
   sectionStyle,
   containerStyle,
+  panelStyle,
   title,
   items,
 }: {
@@ -22,6 +23,7 @@ export function WorkflowsSection({
   containerClassName?: string
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
+  panelStyle?: CSSProperties
   title: string
   items: Array<{ title: string; body: string; bodyHtml?: string }>
 }) {
@@ -40,7 +42,8 @@ export function WorkflowsSection({
         <Accordion
           type="single"
           collapsible
-          className="rounded-lg border border-border/60 bg-card/30 px-4 shadow-sm"
+          className="rounded-lg border border-border/60 bg-card/30 px-4"
+          style={panelStyle}
         >
           {items.map((item) => (
             <AccordionItem key={item.title} value={item.title}>

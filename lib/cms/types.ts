@@ -133,6 +133,7 @@ export type SiteFormattingSettings = {
   alignment?: "left" | "center" | "right"
   spacingTop?: string
   spacingBottom?: string
+  outerSpacing?: string
 }
 
 export type TailwindWhitelist = Set<string>

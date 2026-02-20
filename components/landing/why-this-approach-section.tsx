@@ -9,6 +9,7 @@ export function WhyThisApproachSection({
   containerClassName,
   sectionStyle,
   containerStyle,
+  panelStyle,
   title,
   heading,
   bodyHtml,
@@ -18,6 +19,7 @@ export function WhyThisApproachSection({
   containerClassName?: string
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
+  panelStyle?: CSSProperties
   title: string
   heading: string
   bodyHtml: string
@@ -34,7 +36,7 @@ export function WhyThisApproachSection({
           {title}
         </h2>
 
-        <Card className="gap-3 border-border/60 bg-card/40 py-4 shadow-sm">
+        <Card className="gap-3 border-border/60 bg-card/40 py-4" style={panelStyle}>
           <CardContent className="space-y-2 px-4">
             <h3 className="text-sm font-semibold">{heading}</h3>
             <div

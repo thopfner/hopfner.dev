@@ -176,6 +176,7 @@ function sectionContainerProps(
   }
 
   const containerStyle: CSSProperties = {}
+  const panelStyle: CSSProperties = {}
   const fontFamily = asString(formatting.fontFamily)
   if (fontFamily) containerStyle.fontFamily = fontFamily
   const textColor = asString(formatting.textColor)
@@ -184,18 +185,19 @@ function sectionContainerProps(
   if (textColor) containerStyle.color = textColor
   Object.assign(containerStyle as CSSProperties & Record<string, string>, accentDerivedVars(accentColor))
   if (backgroundColor) (containerStyle as CSSProperties & Record<string, string>)["--background"] = backgroundColor
-  ;(containerStyle as CSSProperties & Record<string, string>)["--section-shadow-color"] =
+  ;(panelStyle as CSSProperties & Record<string, string>)["--section-shadow-color"] =
     asString(formatting.shadowColorToken) || "var(--section-shadow-color)"
-  containerStyle.boxShadow = "var(--shadow-sm)"
+  panelStyle.boxShadow = "var(--shadow-sm)"
 
   const widthMode = asString(formatting.widthMode)
   const align = asString(formatting.alignment)
   const spacingTop = asString(formatting.spacingTop)
   const spacingBottom = asString(formatting.spacingBottom)
+  const outerSpacing = asString(formatting.outerSpacing)
 
   return {
     sectionId: sectionKey ?? undefined,
-    sectionClassName: cn(f.paddingY || "py-6", spacingTop, spacingBottom, f.sectionClass),
+    sectionClassName: cn(f.paddingY || "py-6", spacingTop, spacingBottom, outerSpacing, f.sectionClass),
     containerClassName: cn(
       widthMode === "full" ? "max-w-none" : f.maxWidth || "max-w-5xl",
       align === "left" ? "ml-0 mr-auto" : align === "right" ? "ml-auto mr-0" : "mx-auto",
@@ -204,6 +206,7 @@ function sectionContainerProps(
     ),
     sectionStyle,
     containerStyle,
+    panelStyle,
   }
 }
 
