@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { useEffect, useId, useRef, useState } from "react"
 
+import { Menu, X } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -43,9 +45,29 @@ export function SiteHeader({
     window.addEventListener("keydown", onKeyDown)
     window.addEventListener("mousedown", onClickOutside)
 
+    const body = document.body
+    const previousOverflow = body.style.overflow
+    const previousPaddingRight = body.style.paddingRight
+    const previousOverscrollBehavior = body.style.overscrollBehavior
+
+    if (mobileOpen) {
+      const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth)
+      const computedPaddingRight = Number.parseFloat(window.getComputedStyle(body).paddingRight || "0") || 0
+
+      body.style.overflow = "hidden"
+      body.style.overscrollBehavior = "contain"
+
+      if (scrollbarWidth > 0) {
+        body.style.paddingRight = `${computedPaddingRight + scrollbarWidth}px`
+      }
+    }
+
     return () => {
       window.removeEventListener("keydown", onKeyDown)
       window.removeEventListener("mousedown", onClickOutside)
+      body.style.overflow = previousOverflow
+      body.style.paddingRight = previousPaddingRight
+      body.style.overscrollBehavior = previousOverscrollBehavior
     }
   }, [mobileOpen])
 
@@ -57,6 +79,56 @@ export function SiteHeader({
           containerClassName
         )}
       >
+        <div className="relative md:hidden" ref={mobileMenuRef}>
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="h-11 w-11 shrink-0"
+            aria-haspopup="menu"
+            aria-expanded={mobileOpen}
+            aria-controls={menuId}
+            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            onClick={() => setMobileOpen((open) => !open)}
+          >
+            {mobileOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
+          </Button>
+
+          <div
+            id={menuId}
+            role="menu"
+            aria-label="Mobile navigation"
+            aria-hidden={!mobileOpen}
+            className={cn(
+              "absolute left-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-md border border-border bg-background p-2 shadow-lg transition-all duration-200",
+              mobileOpen
+                ? "pointer-events-auto translate-x-0 opacity-100"
+                : "pointer-events-none -translate-x-2 opacity-0"
+            )}
+          >
+            <ul className="space-y-1">
+              {links.map((item, idx) => (
+                <li key={`mobile-${item.href}-${idx}`}>
+                  <Link
+                    href={item.href}
+                    role="menuitem"
+                    className="block rounded-sm px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-2 border-t border-border pt-2">
+              <Button size="sm" asChild className="w-full" onClick={() => setMobileOpen(false)}>
+                <Link href={cta.href}>{cta.label}</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {logo ? (
           <Link href="/home" className="shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <img
@@ -92,53 +164,7 @@ export function SiteHeader({
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
 
-        <div className="relative md:hidden" ref={mobileMenuRef}>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="shrink-0"
-            aria-haspopup="menu"
-            aria-expanded={mobileOpen}
-            aria-controls={menuId}
-            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-            onClick={() => setMobileOpen((open) => !open)}
-          >
-            <span aria-hidden className="text-base leading-none">
-              ☰
-            </span>
-          </Button>
-
-          {mobileOpen ? (
-            <div
-              id={menuId}
-              role="menu"
-              aria-label="Mobile navigation"
-              className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-md border border-border bg-background p-2 shadow-lg"
-            >
-              <ul className="space-y-1">
-                {links.map((item, idx) => (
-                  <li key={`mobile-${item.href}-${idx}`}>
-                    <Link
-                      href={item.href}
-                      role="menuitem"
-                      className="block rounded-sm px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-2 border-t border-border pt-2">
-                <Button size="sm" asChild className="w-full" onClick={() => setMobileOpen(false)}>
-                  <Link href={cta.href}>{cta.label}</Link>
-                </Button>
-              </div>
-            </div>
-          ) : null}
-        </div>
+        {/* mobile menu rendered on the left above */}
       </div>
     </header>
   )
