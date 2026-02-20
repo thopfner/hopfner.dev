@@ -80,16 +80,18 @@ type SectionTypeDefault = {
 
 type SectionTypeDefaultsMap = Partial<Record<CmsSectionType, SectionTypeDefault>>
 
+type SectionScope = "page" | "global"
+
 type SectionRow = {
   id: string
-  page_id: string
-  section_type: CmsSectionType
+  page_id?: string | null
+  section_type: CmsSectionType | string
   key: string | null
 }
 
 type SectionVersionRow = {
   id: string
-  section_id: string
+  owner_id: string
   version: number
   status: "draft" | "published" | "archived"
   title: string | null
@@ -973,14 +975,21 @@ export function SectionEditorDrawer({
   onClose,
   onChanged,
   typeDefaults,
+  scope = "page",
 }: {
   opened: boolean
   section: SectionRow | null
   onClose: () => void
   onChanged: () => void | Promise<void>
   typeDefaults?: SectionTypeDefaultsMap | null
+  scope?: SectionScope
 }) {
   const supabase = useMemo(() => createClient(), [])
+  const versionTable = scope === "global" ? "global_section_versions" : "section_versions"
+  const ownerIdColumn = scope === "global" ? "global_section_id" : "section_id"
+  const publishRpc = scope === "global" ? "publish_global_section_version" : "publish_section_version"
+  const restoreRpc = scope === "global" ? "rollback_global_section_to_version" : "restore_section_version"
+  const versionSelect = `id, ${ownerIdColumn}, version, status, title, subtitle, cta_primary_label, cta_primary_href, cta_secondary_label, cta_secondary_href, background_media_url, formatting, content, created_at, published_at`
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1116,11 +1125,9 @@ export function SectionEditorDrawer({
       const [{ data: vData, error: vErr }, { data: clsData, error: clsErr }] =
         await Promise.all([
           supabase
-            .from("section_versions")
-            .select(
-              "id, section_id, version, status, title, subtitle, cta_primary_label, cta_primary_href, cta_secondary_label, cta_secondary_href, background_media_url, formatting, content, created_at, published_at"
-            )
-            .eq("section_id", section.id)
+            .from(versionTable)
+            .select(versionSelect)
+            .eq(ownerIdColumn, section.id)
             .order("version", { ascending: false }),
           supabase.from("tailwind_class_whitelist").select("class"),
         ])
@@ -1128,7 +1135,7 @@ export function SectionEditorDrawer({
       if (vErr) throw new Error(vErr.message)
       if (clsErr) throw new Error(clsErr.message)
 
-      let versionRows = (vData ?? []) as SectionVersionRow[]
+      let versionRows = (vData ?? []) as unknown as SectionVersionRow[]
 
       // Guard legacy data: enforce at most one active draft (keep highest draft version).
       const foundDrafts = versionRows.filter((v) => v.status === "draft")
@@ -1145,20 +1152,18 @@ export function SectionEditorDrawer({
           }
 
           const { error: archiveError } = await supabase
-            .from("section_versions")
+            .from(versionTable)
             .update({ status: "archived" })
             .in("id", toArchive)
           if (archiveError) throw new Error(archiveError.message)
 
           const { data: v2Data, error: v2Err } = await supabase
-            .from("section_versions")
-            .select(
-              "id, section_id, version, status, title, subtitle, cta_primary_label, cta_primary_href, cta_secondary_label, cta_secondary_href, background_media_url, formatting, content, created_at, published_at"
-            )
-            .eq("section_id", section.id)
+            .from(versionTable)
+            .select(versionSelect)
+            .eq(ownerIdColumn, section.id)
             .order("version", { ascending: false })
           if (v2Err) throw new Error(v2Err.message)
-          versionRows = (v2Data ?? []) as SectionVersionRow[]
+          versionRows = (v2Data ?? []) as unknown as SectionVersionRow[]
         }
       }
 
@@ -1268,15 +1273,15 @@ export function SectionEditorDrawer({
       }
 
       const { error: archiveError } = await supabase
-        .from("section_versions")
+        .from(versionTable)
         .update({ status: "archived" })
-        .eq("section_id", section.id)
+        .eq(ownerIdColumn, section.id)
         .eq("status", "draft")
       if (archiveError) throw new Error(archiveError.message)
 
       const nextVersion = (versions.reduce((m, v) => Math.max(m, v.version), 0) || 0) + 1
-      const { error: insertError } = await supabase.from("section_versions").insert({
-        section_id: section.id,
+      const { error: insertError } = await supabase.from(versionTable).insert({
+        [ownerIdColumn]: section.id,
         version: nextVersion,
         status: "draft",
         ...payload,
@@ -1305,10 +1310,11 @@ export function SectionEditorDrawer({
     setError(null)
     setLoading(true)
     try {
-      const { error: rpcError } = await supabase.rpc("publish_section_version", {
-        p_section_id: section.id,
-        p_version_id: activeDraft.id,
-      })
+      const publishArgs =
+        scope === "global"
+          ? { p_global_section_id: section.id, p_version_id: activeDraft.id, p_publish_at: new Date().toISOString() }
+          : { p_section_id: section.id, p_version_id: activeDraft.id }
+      const { error: rpcError } = await supabase.rpc(publishRpc, publishArgs)
       if (rpcError) throw new Error(rpcError.message)
 
       await load({ forceHydrate: true })
@@ -1327,9 +1333,9 @@ export function SectionEditorDrawer({
     setDeleteDraftLoading(true)
     try {
       const { error: delError } = await supabase
-        .from("section_versions")
+        .from(versionTable)
         .delete()
-        .eq("section_id", section.id)
+        .eq(ownerIdColumn, section.id)
         .eq("status", "draft")
       if (delError) throw new Error(delError.message)
 
@@ -1348,17 +1354,18 @@ export function SectionEditorDrawer({
     setError(null)
     setLoading(true)
     try {
-      const { data, error: rpcError } = await supabase.rpc("restore_section_version", {
-        p_section_id: section.id,
-        p_from_version_id: fromVersionId,
-      })
+      const restoreArgs =
+        scope === "global"
+          ? { p_global_section_id: section.id, p_from_version_id: fromVersionId }
+          : { p_section_id: section.id, p_from_version_id: fromVersionId }
+      const { data, error: rpcError } = await supabase.rpc(restoreRpc, restoreArgs)
       if (rpcError) throw new Error(rpcError.message)
       if (typeof data === "string") {
         // Ensure only one active draft exists after restore (archive any legacy drafts).
         const { error: archiveError } = await supabase
-          .from("section_versions")
+          .from(versionTable)
           .update({ status: "archived" })
-          .eq("section_id", section.id)
+          .eq(ownerIdColumn, section.id)
           .eq("status", "draft")
           .neq("id", data)
         if (archiveError) throw new Error(archiveError.message)

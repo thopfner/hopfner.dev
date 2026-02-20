@@ -6,7 +6,6 @@ import {
   Button,
   ColorInput,
   Divider,
-  Drawer,
   Group,
   Paper,
   Select,
@@ -15,12 +14,29 @@ import {
   Table,
   Text,
   TextInput,
-  Textarea,
   Title,
 } from "@mantine/core"
+import { SectionEditorDrawer } from "@/components/section-editor-drawer"
 import { createClient } from "@/lib/supabase/browser"
 
-const SECTION_TYPES = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block"]
+const SECTION_TYPES: CmsSectionType[] = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block"]
+
+function normalizeSectionType(raw: string): CmsSectionType | null {
+  switch (raw) {
+    case "nav_links":
+    case "hero_cta":
+    case "card_grid":
+    case "steps_list":
+    case "title_body_list":
+    case "rich_text_block":
+    case "label_value_list":
+    case "faq_list":
+    case "cta_block":
+      return raw
+    default:
+      return null
+  }
+}
 const FONT_STACKS = [
   { value: "Inter, system-ui, sans-serif", label: "Inter (Sans)" },
   { value: "'Geist', Inter, system-ui, sans-serif", label: "Geist + Inter" },
@@ -38,29 +54,36 @@ type Row = {
   lifecycle_state?: "draft" | "published" | "archived"
 }
 
-type GlobalVersionRow = {
-  id: string
-  global_section_id: string
-  version: number
-  status: "draft" | "published" | "archived"
-  title: string | null
-  subtitle: string | null
-  cta_primary_label: string | null
-  cta_primary_href: string | null
-  cta_secondary_label: string | null
-  cta_secondary_href: string | null
-  formatting: Record<string, unknown>
-  content: Record<string, unknown>
-  published_at: string | null
-}
+type CmsSectionType =
+  | "nav_links"
+  | "hero_cta"
+  | "card_grid"
+  | "steps_list"
+  | "title_body_list"
+  | "rich_text_block"
+  | "label_value_list"
+  | "faq_list"
+  | "cta_block"
 
 type ImpactRow = { total_references: number; enabled_references: number; distinct_pages: number }
 type UsageRow = { global_section_id: string; page_slug: string; page_title: string; section_key: string | null }
 type SectionTypeDefault = {
-  section_type: string
+  section_type: CmsSectionType
+  label: string
+  description: string | null
+  default_title: string | null
+  default_subtitle: string | null
+  default_cta_primary_label: string | null
+  default_cta_primary_href: string | null
+  default_cta_secondary_label: string | null
+  default_cta_secondary_href: string | null
+  default_background_media_url: string | null
   default_formatting: Record<string, unknown>
   default_content: Record<string, unknown>
+  capabilities: Record<string, unknown>
 }
+
+type SectionTypeDefaultsMap = Partial<Record<CmsSectionType, SectionTypeDefault>>
 
 function parseNum(v: string, fallback: number) {
   const n = Number(v)
@@ -71,33 +94,13 @@ function asRecord(v: unknown): Record<string, unknown> {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {}
 }
 
-function deepMerge(a: Record<string, unknown>, b: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = { ...a }
-  Object.entries(b).forEach(([key, value]) => {
-    const prev = out[key]
-    if (
-      value &&
-      typeof value === "object" &&
-      !Array.isArray(value) &&
-      prev &&
-      typeof prev === "object" &&
-      !Array.isArray(prev)
-    ) {
-      out[key] = deepMerge(prev as Record<string, unknown>, value as Record<string, unknown>)
-      return
-    }
-    out[key] = value
-  })
-  return out
-}
-
 export function GlobalSectionsPage() {
   const supabase = useMemo(() => createClient(), [])
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(false)
   const [key, setKey] = useState("")
   const [label, setLabel] = useState("")
-  const [type, setType] = useState("hero_cta")
+  const [type, setType] = useState<CmsSectionType>("hero_cta")
   const [error, setError] = useState<string | null>(null)
 
   const [fontFamily, setFontFamily] = useState("Inter, system-ui, sans-serif")
@@ -116,16 +119,7 @@ export function GlobalSectionsPage() {
 
   const [editorOpen, setEditorOpen] = useState(false)
   const [editing, setEditing] = useState<Row | null>(null)
-  const [sectionTypeDefaults, setSectionTypeDefaults] = useState<Record<string, SectionTypeDefault>>({})
-  const [versions, setVersions] = useState<GlobalVersionRow[]>([])
-  const [title, setTitle] = useState("")
-  const [subtitle, setSubtitle] = useState("")
-  const [ctaPrimaryLabel, setCtaPrimaryLabel] = useState("")
-  const [ctaPrimaryHref, setCtaPrimaryHref] = useState("")
-  const [ctaSecondaryLabel, setCtaSecondaryLabel] = useState("")
-  const [ctaSecondaryHref, setCtaSecondaryHref] = useState("")
-  const [formattingText, setFormattingText] = useState("{}")
-  const [contentText, setContentText] = useState("{}")
+  const [sectionTypeDefaults, setSectionTypeDefaults] = useState<SectionTypeDefaultsMap>({})
 
   async function load() {
     setLoading(true)
@@ -147,10 +141,18 @@ export function GlobalSectionsPage() {
 
     const { data: defaultsRows } = await supabase
       .from("section_type_defaults")
-      .select("section_type,default_formatting,default_content")
+      .select(
+        "section_type, label, description, default_title, default_subtitle, default_cta_primary_label, default_cta_primary_href, default_cta_secondary_label, default_cta_secondary_href, default_background_media_url, default_formatting, default_content, capabilities"
+      )
 
-    const defaultsMap = Object.fromEntries(
-      ((defaultsRows ?? []) as SectionTypeDefault[]).map((row) => [row.section_type, row])
+    const defaultsMap = ((defaultsRows ?? []) as Array<SectionTypeDefault | { section_type: string }>).reduce(
+      (acc, row) => {
+        const normalized = normalizeSectionType(String(row.section_type))
+        if (!normalized) return acc
+        acc[normalized] = { ...(row as SectionTypeDefault), section_type: normalized }
+        return acc
+      },
+      {} as SectionTypeDefaultsMap
     )
     setSectionTypeDefaults(defaultsMap)
 
@@ -194,86 +196,10 @@ export function GlobalSectionsPage() {
     setLoading(false)
   }
 
-  async function loadGlobalVersions(row: Row) {
+  function openEditor(row: Row) {
     setEditing(row)
-    const { data, error } = await supabase
-      .from("global_section_versions")
-      .select("id,global_section_id,version,status,title,subtitle,cta_primary_label,cta_primary_href,cta_secondary_label,cta_secondary_href,formatting,content,published_at")
-      .eq("global_section_id", row.id)
-      .order("version", { ascending: false })
-
-    if (error) return setError(error.message)
-    const rows = (data ?? []) as GlobalVersionRow[]
-    setVersions(rows)
-    const base = rows.find((v) => v.status === "draft") ?? rows.find((v) => v.status === "published") ?? null
-    setTitle(base?.title ?? "")
-    setSubtitle(base?.subtitle ?? "")
-    setCtaPrimaryLabel(base?.cta_primary_label ?? "")
-    setCtaPrimaryHref(base?.cta_primary_href ?? "")
-    setCtaSecondaryLabel(base?.cta_secondary_label ?? "")
-    setCtaSecondaryHref(base?.cta_secondary_href ?? "")
-    const defaults = sectionTypeDefaults[row.section_type]
-    const normalizedFormatting = deepMerge(asRecord(defaults?.default_formatting), asRecord(base?.formatting))
-    const normalizedContent = deepMerge(asRecord(defaults?.default_content), asRecord(base?.content))
-    setFormattingText(JSON.stringify(normalizedFormatting, null, 2))
-    setContentText(JSON.stringify(normalizedContent, null, 2))
     setEditorOpen(true)
   }
-
-  async function saveGlobalDraft() {
-    if (!editing) return
-    setError(null)
-    try {
-      const defaults = sectionTypeDefaults[editing.section_type]
-      const formatting = deepMerge(asRecord(defaults?.default_formatting), asRecord(JSON.parse(formattingText || "{}")))
-      const content = deepMerge(asRecord(defaults?.default_content), asRecord(JSON.parse(contentText || "{}")))
-      await supabase.from("global_section_versions").update({ status: "archived" }).eq("global_section_id", editing.id).eq("status", "draft")
-      const nextVersion = (versions[0]?.version ?? 0) + 1
-      const { error } = await supabase.from("global_section_versions").insert({
-        global_section_id: editing.id,
-        version: nextVersion,
-        status: "draft",
-        title: title.trim() || null,
-        subtitle: subtitle.trim() || null,
-        cta_primary_label: ctaPrimaryLabel.trim() || null,
-        cta_primary_href: ctaPrimaryHref.trim() || null,
-        cta_secondary_label: ctaSecondaryLabel.trim() || null,
-        cta_secondary_href: ctaSecondaryHref.trim() || null,
-        formatting,
-        content,
-      })
-      if (error) throw new Error(error.message)
-      await loadGlobalVersions(editing)
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save draft")
-    }
-  }
-
-  async function publishGlobalDraft() {
-    if (!editing) return
-    const draft = versions.find((v) => v.status === "draft")
-    if (!draft) return setError("No draft to publish")
-    const { error } = await supabase.rpc("publish_global_section_version", {
-      p_global_section_id: editing.id,
-      p_version_id: draft.id,
-      p_publish_at: new Date().toISOString(),
-    })
-    if (error) return setError(error.message)
-    await loadGlobalVersions(editing)
-    await load()
-  }
-
-  async function rollbackFromVersion(versionId: string) {
-    if (!editing) return
-    const { error } = await supabase.rpc("rollback_global_section_to_version", {
-      p_global_section_id: editing.id,
-      p_from_version_id: versionId,
-    })
-    if (error) return setError(error.message)
-    await loadGlobalVersions(editing)
-  }
-
   async function saveFormatting() {
     setError(null)
     const selectedFont = fontFamily === "__custom" ? customFontFamily : fontFamily
@@ -347,7 +273,7 @@ export function GlobalSectionsPage() {
         <Group align="end">
           <TextInput label="Key" placeholder="global-hero" value={key} onChange={(e) => setKey(e.currentTarget.value)} />
           <TextInput label="Label" placeholder="Global Hero" value={label} onChange={(e) => setLabel(e.currentTarget.value)} />
-          <Select label="Type" value={type} onChange={(v) => setType(v ?? "hero_cta")} data={SECTION_TYPES} />
+          <Select label="Type" value={type} onChange={(v) => setType((normalizeSectionType(v ?? "") ?? "hero_cta"))} data={SECTION_TYPES} />
           <Button onClick={createGlobal}>Create</Button>
         </Group>
         {error ? <Text c="red" size="sm" mt="sm">{error}</Text> : null}
@@ -413,7 +339,7 @@ export function GlobalSectionsPage() {
                       </Table.Td>
                       <Table.Td>
                         <Group gap="xs" justify="end">
-                          <Button size="xs" variant="default" onClick={() => void loadGlobalVersions(row)}>Edit</Button>
+                          <Button size="xs" variant="default" onClick={() => openEditor(row)}>Edit</Button>
                           <Button size="xs" variant={row.enabled ? "default" : "outline"} onClick={() => void toggle(row)}>{row.enabled ? "Disable" : "Enable"}</Button>
                         </Group>
                       </Table.Td>
@@ -428,44 +354,14 @@ export function GlobalSectionsPage() {
         </Stack>
       </Paper>
 
-      <Drawer opened={editorOpen} onClose={() => setEditorOpen(false)} position="right" size="xl" title={editing ? `Global section: ${editing.key}` : "Global section"}>
-        <Stack>
-          <Group justify="space-between">
-            <Text fw={600}>Version workflow</Text>
-            <Group>
-              <Button variant="default" onClick={saveGlobalDraft}>Save draft</Button>
-              <Button onClick={publishGlobalDraft}>Publish draft</Button>
-            </Group>
-          </Group>
-          <Group grow>
-            <TextInput label="Title" value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
-            <TextInput label="Subtitle" value={subtitle} onChange={(e) => setSubtitle(e.currentTarget.value)} />
-          </Group>
-          <Group grow>
-            <TextInput label="Primary CTA label" value={ctaPrimaryLabel} onChange={(e) => setCtaPrimaryLabel(e.currentTarget.value)} />
-            <TextInput label="Primary CTA href" value={ctaPrimaryHref} onChange={(e) => setCtaPrimaryHref(e.currentTarget.value)} />
-          </Group>
-          <Group grow>
-            <TextInput label="Secondary CTA label" value={ctaSecondaryLabel} onChange={(e) => setCtaSecondaryLabel(e.currentTarget.value)} />
-            <TextInput label="Secondary CTA href" value={ctaSecondaryHref} onChange={(e) => setCtaSecondaryHref(e.currentTarget.value)} />
-          </Group>
-          <Textarea label="Formatting JSON" minRows={8} autosize value={formattingText} onChange={(e) => setFormattingText(e.currentTarget.value)} />
-          <Textarea label="Content JSON" minRows={12} autosize value={contentText} onChange={(e) => setContentText(e.currentTarget.value)} />
-
-          <Divider my="xs" />
-          <Text fw={600}>Versions</Text>
-          <Stack gap={6}>
-            {versions.map((v) => (
-              <Paper withBorder p="sm" key={v.id}>
-                <Group justify="space-between">
-                  <Group gap="xs"><Badge variant="default">v{v.version}</Badge><Badge color={v.status === "published" ? "teal" : v.status === "draft" ? "yellow" : "gray"} variant="light">{v.status}</Badge></Group>
-                  <Button size="xs" variant="subtle" onClick={() => void rollbackFromVersion(v.id)}>Restore as new draft</Button>
-                </Group>
-              </Paper>
-            ))}
-          </Stack>
-        </Stack>
-      </Drawer>
+      <SectionEditorDrawer
+        opened={editorOpen}
+        section={editing}
+        onClose={() => setEditorOpen(false)}
+        onChanged={load}
+        typeDefaults={sectionTypeDefaults}
+        scope="global"
+      />
     </Stack>
   )
 }
