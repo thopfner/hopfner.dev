@@ -132,6 +132,7 @@ export type SiteFormattingSettings = {
   overlayColor?: string
   overlayOpacity?: number
   widthMode?: "content" | "full"
+  heroMinHeight?: "auto" | "70svh" | "100svh"
   alignment?: "left" | "center" | "right"
   spacingTop?: string
   spacingBottom?: string

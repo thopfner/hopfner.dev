@@ -14,6 +14,7 @@ export function HeroSection({
   containerStyle,
   panelStyle,
   fullBleed,
+  minHeight,
   headline,
   subheadline,
   bullets,
@@ -28,6 +29,7 @@ export function HeroSection({
   containerStyle?: CSSProperties
   panelStyle?: CSSProperties
   fullBleed?: boolean
+  minHeight?: "auto" | "70svh" | "100svh"
   headline: string
   subheadline: string
   bullets: string[]
@@ -35,19 +37,34 @@ export function HeroSection({
   secondaryCta: { label: string; href: string }
   trustLine: string
 }) {
+  const sectionStyleWithMinHeight: CSSProperties = {
+    ...(sectionStyle ?? {}),
+    minHeight: minHeight && minHeight !== "auto" ? minHeight : sectionStyle?.minHeight,
+  }
+
   return (
     <section
       id={sectionId}
-      className={cn("scroll-mt-16 py-6", sectionClassName)}
-    style={sectionStyle}
+      className={cn(
+        "scroll-mt-16 py-6",
+        sectionClassName,
+        fullBleed || (minHeight && minHeight !== "auto") ? "pt-0" : undefined
+      )}
+      style={sectionStyleWithMinHeight}
     >
       <div className={cn(fullBleed ? "mx-auto max-w-none px-0" : "mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
-        <Card className={cn("relative overflow-hidden border-border/60 bg-card/40 py-4", fullBleed ? "rounded-none border-x-0" : undefined)} style={panelStyle}>
+        <Card className={cn("relative overflow-hidden border-border/60 bg-card/40 py-4", fullBleed ? "rounded-none border-x-0" : undefined, minHeight && minHeight !== "auto" ? "h-full" : undefined)} style={panelStyle}>
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(800px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_60%)]"
           />
-          <CardContent className={cn("relative space-y-4 px-4 sm:px-6", fullBleed ? "mx-auto w-full max-w-5xl" : undefined)}>
+          <CardContent
+            className={cn(
+              "relative space-y-4 px-4 sm:px-6",
+              fullBleed ? "mx-auto w-full max-w-5xl" : undefined,
+              minHeight && minHeight !== "auto" ? "flex h-full flex-col justify-center" : undefined
+            )}
+          >
             <div className="space-y-2 text-center">
               <h1 className="text-pretty text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
                 {headline}

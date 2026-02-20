@@ -330,6 +330,7 @@ export default async function MarketingPage({
 
   const header = sections.find((s) => s.section_type === "nav_links") ?? null
   const bodySections = sections.filter((s) => s.section_type !== "nav_links")
+  const firstBodyIsHero = bodySections[0]?.section_type === "hero_cta"
 
   function defaultsFor(type: string): CmsSectionTypeDefault | undefined {
     return sectionTypeDefaults[type as keyof typeof sectionTypeDefaults]
@@ -439,7 +440,7 @@ export default async function MarketingPage({
         />
       ) : null}
 
-      <main className="pb-10 pt-4">
+      <main className={cn("pb-10", firstBodyIsHero ? "pt-0" : "pt-4")}>
         {bodySections.map((section) => {
           const v = section.published
           const defaults = defaultsFor(section.section_type)
@@ -463,6 +464,11 @@ export default async function MarketingPage({
                   key={section.id}
                   {...props}
                   fullBleed={asString(formatting.widthMode) === "full"}
+                  minHeight={
+                    asString(formatting.heroMinHeight) === "70svh" || asString(formatting.heroMinHeight) === "100svh"
+                      ? (asString(formatting.heroMinHeight) as "70svh" | "100svh")
+                      : "auto"
+                  }
                   headline={pickText(v.title, defaults?.default_title)}
                   subheadline={pickText(v.subtitle, defaults?.default_subtitle)}
                   bullets={asStringArray(content.bullets)}
