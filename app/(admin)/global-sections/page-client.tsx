@@ -286,8 +286,8 @@ export function GlobalSectionsPage() {
           {fontFamily === "__custom" ? <TextInput label="Custom font stack" value={customFontFamily} onChange={(e) => setCustomFontFamily(e.currentTarget.value)} placeholder="'Your Font', Inter, system-ui, sans-serif" /> : null}
           <Slider label={(v) => `Font scale ${v.toFixed(2)}x`} min={0.8} max={1.4} step={0.05} value={fontScale} onChange={setFontScale} />
           <Slider label={(v) => `Space scale ${v.toFixed(2)}x`} min={0.7} max={1.6} step={0.05} value={spaceScale} onChange={setSpaceScale} />
-          <Slider label={(v) => `Radius scale ${v.toFixed(2)}x`} min={0.5} max={1.8} step={0.05} value={radiusScale} onChange={setRadiusScale} />
-          <Slider label={(v) => `Shadow scale ${v.toFixed(2)}x`} min={0.5} max={1.8} step={0.05} value={shadowScale} onChange={setShadowScale} />
+          <Slider label={(v) => `Radius scale ${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={radiusScale} onChange={setRadiusScale} />
+          <Slider label={(v) => `Shadow scale ${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={shadowScale} onChange={setShadowScale} />
           <Group grow>
             <ColorInput label="Text color" value={textColor} onChange={setTextColor} placeholder="#111827" />
             <ColorInput label="Accent color" value={accentColor} onChange={setAccentColor} placeholder="#4f46e5" />

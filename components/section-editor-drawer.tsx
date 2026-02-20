@@ -114,6 +114,7 @@ type FormattingState = {
   outerSpacing: "" | "my-2" | "my-4" | "my-6" | "my-8" | "my-10" | "my-12"
   maxWidth: "" | "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl"
   textAlign: "" | "left" | "center"
+  shadowMode: "inherit" | "on" | "off"
   mobile?: {
     containerClass: string
     sectionClass: string
@@ -128,6 +129,7 @@ const DEFAULT_FORMATTING: FormattingState = {
   outerSpacing: "",
   maxWidth: "max-w-5xl",
   textAlign: "left",
+  shadowMode: "inherit",
 }
 
 type CardDisplayState = {
@@ -660,6 +662,7 @@ function validateClassTokens(input: string, allowed: Set<string>) {
 
 function normalizeFormatting(raw: Record<string, unknown>): FormattingState {
   const mobile = asRecord(raw.mobile)
+  const rawShadowMode = asString(raw.shadowMode)
   const out: FormattingState = {
     containerClass: asString(raw.containerClass),
     sectionClass: asString(raw.sectionClass),
@@ -667,6 +670,7 @@ function normalizeFormatting(raw: Record<string, unknown>): FormattingState {
     outerSpacing: (asString(raw.outerSpacing) as FormattingState["outerSpacing"]) || "",
     maxWidth: (asString(raw.maxWidth) as FormattingState["maxWidth"]) || "",
     textAlign: (asString(raw.textAlign) as FormattingState["textAlign"]) || "",
+    shadowMode: rawShadowMode === "off" || rawShadowMode === "on" ? rawShadowMode : "inherit",
   }
   const hasMobile =
     typeof mobile.containerClass === "string" ||
@@ -692,6 +696,7 @@ function formattingToJsonb(state: FormattingState) {
     outerSpacing: state.outerSpacing,
     maxWidth: state.maxWidth,
     textAlign: state.textAlign,
+    shadowMode: state.shadowMode,
   }
   if (state.mobile) {
     base.mobile = {
@@ -1756,6 +1761,23 @@ export function SectionEditorDrawer({
                     setFormatting((s) => ({
                       ...s,
                       textAlign: ((v ?? "") as FormattingState["textAlign"]) || "",
+                    }))
+                  }
+                />
+                <Select
+                  label="Section shadow"
+                  comboboxProps={{ withinPortal: false }}
+                  data={[
+                    { value: "inherit", label: "Inherit site setting" },
+                    { value: "on", label: "On" },
+                    { value: "off", label: "Off" },
+                  ]}
+                  value={formatting.shadowMode}
+                  onChange={(v) =>
+                    setFormatting((s) => ({
+                      ...s,
+                      shadowMode:
+                        v === "on" || v === "off" ? v : "inherit",
                     }))
                   }
                 />
