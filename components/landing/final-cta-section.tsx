@@ -31,6 +31,10 @@ export function FinalCtaSection({
   primaryCta: { label: string; href: string }
   secondaryCta: { label: string; href: string }
 }) {
+  const ctaJustify = containerClassName?.includes("text-center")
+    ? "justify-center"
+    : "justify-start"
+
   return (
     <section
       id={sectionId}
@@ -59,7 +63,7 @@ export function FinalCtaSection({
             ) : (
               <p className="text-sm text-muted-foreground">{body}</p>
             )}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className={cn("flex flex-wrap items-center gap-2", ctaJustify)}>
               <Button size="sm" asChild>
                 <Link href={primaryCta.href}>{primaryCta.label}</Link>
               </Button>

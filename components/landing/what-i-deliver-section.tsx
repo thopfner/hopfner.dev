@@ -10,6 +10,7 @@ export function WhatIDeliverSection({
   containerClassName,
   sectionStyle,
   containerStyle,
+  panelStyle,
   title,
   cards,
 }: {
@@ -18,6 +19,7 @@ export function WhatIDeliverSection({
   containerClassName?: string
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
+  panelStyle?: CSSProperties
   title: string
   cards: Array<{
     display: {
@@ -78,7 +80,8 @@ export function WhatIDeliverSection({
             return (
             <Card
               key={`${item.title}-${idx}`}
-              className="gap-3 border-border/60 bg-card/40 py-4 shadow-sm"
+              className="gap-3 border-border/60 bg-card/40 py-4"
+              style={panelStyle}
             >
               {item.display.showImage && item.imageUrl ? (
                 <div className="flex justify-center px-4">

@@ -9,6 +9,7 @@ export function TechStackSection({
   containerClassName,
   sectionStyle,
   containerStyle,
+  panelStyle,
   title,
   items,
 }: {
@@ -17,6 +18,7 @@ export function TechStackSection({
   containerClassName?: string
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
+  panelStyle?: CSSProperties
   title: string
   items: Array<{ label: string; value: string }>
 }) {
@@ -36,7 +38,8 @@ export function TechStackSection({
           {items.map((item) => (
             <Card
               key={item.label}
-              className="gap-2 border-border/60 bg-card/40 py-3 shadow-sm"
+              className="gap-2 border-border/60 bg-card/40 py-3"
+              style={panelStyle}
             >
               <CardContent className="flex items-start gap-2 px-4">
                 <Badge variant="secondary">{item.label}</Badge>

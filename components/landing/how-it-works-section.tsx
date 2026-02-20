@@ -10,6 +10,7 @@ export function HowItWorksSection({
   containerClassName,
   sectionStyle,
   containerStyle,
+  panelStyle,
   title,
   steps,
 }: {
@@ -18,6 +19,7 @@ export function HowItWorksSection({
   containerClassName?: string
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
+  panelStyle?: CSSProperties
   title: string
   steps: Array<{ title: string; body?: string; bodyHtml?: string }>
 }) {
@@ -39,7 +41,7 @@ export function HowItWorksSection({
         <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {steps.map((step, idx) => (
             <li key={`${idx}-${step.title}`}>
-              <Card className="gap-3 border-border/60 bg-card/40 py-4 shadow-sm">
+              <Card className="gap-3 border-border/60 bg-card/40 py-4" style={panelStyle}>
                 <CardContent className="space-y-2 px-4">
                   <Badge variant="secondary">{idx + 1}</Badge>
                   <div className="space-y-1">
