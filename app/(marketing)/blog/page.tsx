@@ -149,8 +149,9 @@ export default async function BlogIndexPage({
 
   const { items, total, pageSize } = postsResult
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
-  const featured = items[0] ?? null
-  const rest = items.slice(1)
+  const hasActiveFilters = Boolean(q || selectedTags.length || selectedCategories.length)
+  const featured = hasActiveFilters ? null : (items[0] ?? null)
+  const rest = hasActiveFilters ? items : items.slice(1)
 
   const tagNameBySlug = Object.fromEntries(tags.map((item) => [item.slug, item.name]))
   const categoryNameBySlug = Object.fromEntries(categories.map((item) => [item.slug, item.name]))
@@ -244,11 +245,11 @@ export default async function BlogIndexPage({
               </article>
             ))}
           </div>
-        ) : (
+        ) : !featured ? (
           <div className="rounded-xl border border-border bg-card/20 p-6 text-sm text-foreground/75">
             No published posts match your filters yet.
           </div>
-        )}
+        ) : null}
       </section>
 
       <footer className="mt-8 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
