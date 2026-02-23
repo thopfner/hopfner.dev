@@ -5,8 +5,21 @@ type ListParams = {
   page: number
   pageSize: number
   q?: string
-  tag?: string
-  category?: string
+  tag?: string | string[]
+  category?: string | string[]
+}
+
+function normalizeToSlugArray(value: string | string[] | undefined): string[] {
+  const raw = Array.isArray(value) ? value : value ? [value] : []
+
+  return Array.from(
+    new Set(
+      raw
+        .flatMap((entry) => entry.split(","))
+        .map((entry) => entry.trim().toLowerCase())
+        .filter(Boolean)
+    )
+  )
 }
 
 export async function listPublishedBlogPosts(params: ListParams): Promise<{
@@ -21,8 +34,8 @@ export async function listPublishedBlogPosts(params: ListParams): Promise<{
   const to = from + pageSize - 1
 
   const q = (params.q ?? "").trim()
-  const tag = (params.tag ?? "").trim().toLowerCase()
-  const category = (params.category ?? "").trim().toLowerCase()
+  const tags = normalizeToSlugArray(params.tag)
+  const categories = normalizeToSlugArray(params.category)
 
   const supabase = getSupabasePublicClient()
 
@@ -37,11 +50,11 @@ export async function listPublishedBlogPosts(params: ListParams): Promise<{
     query = query.ilike("search_text", `%${q}%`)
   }
 
-  if (tag) {
+  for (const tag of tags) {
     query = query.contains("tag_slugs", [tag])
   }
 
-  if (category) {
+  for (const category of categories) {
     query = query.contains("category_slugs", [category])
   }
 
@@ -75,21 +88,53 @@ export async function getPublishedBlogPostBySlug(slug: string): Promise<BlogPubl
 export async function listBlogTags(): Promise<BlogTaxonomy[]> {
   const supabase = getSupabasePublicClient()
   const { data, error } = await supabase
-    .from("blog_tags")
-    .select("id, slug, name")
-    .order("name", { ascending: true })
+    .from("blog_published_posts")
+    .select("tag_slugs, tag_names")
 
   if (error) throw new Error(error.message)
-  return (data ?? []) as BlogTaxonomy[]
+
+  const map = new Map<string, string>()
+
+  for (const row of (data ?? []) as Array<{ tag_slugs: string[] | null; tag_names: string[] | null }>) {
+    const slugs = Array.isArray(row.tag_slugs) ? row.tag_slugs : []
+    const names = Array.isArray(row.tag_names) ? row.tag_names : []
+
+    for (let i = 0; i < slugs.length; i += 1) {
+      const slug = (slugs[i] ?? "").trim().toLowerCase()
+      if (!slug) continue
+      const name = (names[i] ?? slug).trim() || slug
+      if (!map.has(slug)) map.set(slug, name)
+    }
+  }
+
+  return Array.from(map.entries())
+    .map(([slug, name]) => ({ id: slug, slug, name }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export async function listBlogCategories(): Promise<BlogTaxonomy[]> {
   const supabase = getSupabasePublicClient()
   const { data, error } = await supabase
-    .from("blog_categories")
-    .select("id, slug, name")
-    .order("name", { ascending: true })
+    .from("blog_published_posts")
+    .select("category_slugs, category_names")
 
   if (error) throw new Error(error.message)
-  return (data ?? []) as BlogTaxonomy[]
+
+  const map = new Map<string, string>()
+
+  for (const row of (data ?? []) as Array<{ category_slugs: string[] | null; category_names: string[] | null }>) {
+    const slugs = Array.isArray(row.category_slugs) ? row.category_slugs : []
+    const names = Array.isArray(row.category_names) ? row.category_names : []
+
+    for (let i = 0; i < slugs.length; i += 1) {
+      const slug = (slugs[i] ?? "").trim().toLowerCase()
+      if (!slug) continue
+      const name = (names[i] ?? slug).trim() || slug
+      if (!map.has(slug)) map.set(slug, name)
+    }
+  }
+
+  return Array.from(map.entries())
+    .map(([slug, name]) => ({ id: slug, slug, name }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
