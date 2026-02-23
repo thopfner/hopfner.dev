@@ -2,29 +2,43 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { forwardRef, isValidElement, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
-  ActionIcon,
-  Badge,
-  Box,
-  Button,
-  Chip,
-  Collapse,
-  Group,
-  Menu,
-  Modal,
-  NumberInput,
-  Paper,
-  SegmentedControl,
-  Select,
-  Slider,
-  Stack,
-  Switch,
-  Text,
-  TextInput,
-  Title,
-  Tooltip,
-} from "@mantine/core"
+  Autocomplete,
+  Box as MuiBox,
+  Button as MuiButton,
+  Chip as MuiChip,
+  CircularProgress,
+  Collapse as MuiCollapse,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
+  InputAdornment,
+  ListItemIcon,
+  Menu as MuiMenu,
+  MenuItem,
+  Paper as MuiPaper,
+  Slider as MuiSlider,
+  Stack as MuiStack,
+  Switch as MuiSwitch,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip as MuiTooltip,
+  Typography,
+  type BoxProps,
+  type ButtonProps as MuiButtonProps,
+  type ChipProps as MuiChipProps,
+  type IconButtonProps,
+  type PaperProps as MuiPaperProps,
+  type SliderProps as MuiSliderProps,
+  type StackProps as MuiStackProps,
+  type SwitchProps as MuiSwitchProps,
+  type TextFieldProps,
+  type TypographyProps,
+} from "@mui/material"
 import {
   DndContext,
   type DragEndEvent,
@@ -108,6 +122,564 @@ function asRecord(v: unknown): Record<string, unknown> {
   return v && typeof v === "object" && !Array.isArray(v)
     ? (v as Record<string, unknown>)
     : {}
+}
+
+type MantineSpace = "xs" | "sm" | "md" | "lg" | "xl" | number
+type MantineRadius = "xs" | "sm" | "md" | "lg" | "xl"
+type MantineAlign = "start" | "center" | "end" | "stretch"
+type MantineJustify = "start" | "center" | "end" | "space-between" | "space-around" | "space-evenly"
+type SelectDataItem = { value: string; label: string }
+type SelectData = string[] | SelectDataItem[]
+type ButtonColor = "red" | "yellow" | "blue" | "teal" | "gray" | string
+
+const SPACE_MAP: Record<Exclude<MantineSpace, number>, string> = {
+  xs: "8px",
+  sm: "12px",
+  md: "16px",
+  lg: "24px",
+  xl: "32px",
+}
+
+const RADIUS_MAP: Record<MantineRadius, string> = {
+  xs: "4px",
+  sm: "6px",
+  md: "10px",
+  lg: "14px",
+  xl: "999px",
+}
+
+function toCssSpace(value?: MantineSpace): string | undefined {
+  if (value === undefined) return undefined
+  return typeof value === "number" ? `${value}px` : SPACE_MAP[value]
+}
+
+function toCssRadius(value?: MantineRadius): string | undefined {
+  if (!value) return undefined
+  return RADIUS_MAP[value]
+}
+
+function toFlexAlign(value?: MantineAlign): BoxProps["alignItems"] {
+  if (value === "start") return "flex-start"
+  if (value === "end") return "flex-end"
+  if (value === "stretch") return "stretch"
+  return value ?? "center"
+}
+
+function toFlexJustify(value?: MantineJustify): BoxProps["justifyContent"] {
+  if (value === "start") return "flex-start"
+  if (value === "end") return "flex-end"
+  return value ?? "flex-start"
+}
+
+function normalizeSelectData(data: SelectData): SelectDataItem[] {
+  if (!data.length) return []
+  if (typeof data[0] === "string") {
+    return (data as string[]).map((item) => ({ value: item, label: item }))
+  }
+  return data as SelectDataItem[]
+}
+
+function toMuiButtonColor(color?: ButtonColor): MuiButtonProps["color"] {
+  if (color === "red") return "error"
+  if (color === "yellow") return "warning"
+  if (color === "teal") return "success"
+  return "primary"
+}
+
+const Box = MuiBox
+
+type ButtonProps = Omit<MuiButtonProps, "variant" | "size" | "color"> & {
+  variant?: "filled" | "light" | "default" | "subtle"
+  size?: "xs" | "sm" | "md"
+  loading?: boolean
+  color?: ButtonColor
+  leftSection?: ReactNode
+}
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { variant, size, loading, color, leftSection, startIcon, disabled, sx, ...props },
+  ref
+) {
+  const muiVariant: MuiButtonProps["variant"] =
+    variant === "light" || variant === "default" ? "outlined" : variant === "subtle" ? "text" : "contained"
+  const muiSize: MuiButtonProps["size"] = size === "xs" || size === "sm" ? "small" : "medium"
+
+  return (
+    <MuiButton
+      ref={ref}
+      variant={muiVariant}
+      size={muiSize}
+      color={toMuiButtonColor(color)}
+      disabled={disabled || loading}
+      startIcon={loading ? <CircularProgress color="inherit" size={14} /> : leftSection ?? startIcon}
+      sx={{ textTransform: "none", ...sx }}
+      {...props}
+    />
+  )
+})
+
+type ActionIconProps = Omit<IconButtonProps, "color" | "size"> & {
+  color?: "red" | "gray" | "dark"
+  size?: "xs" | "sm" | "md"
+  variant?: "subtle" | "default"
+}
+
+function ActionIcon({ color, size, variant, sx, ...props }: ActionIconProps) {
+  const muiSize: IconButtonProps["size"] = size === "xs" || size === "sm" ? "small" : "medium"
+  const muiColor: IconButtonProps["color"] = color === "red" ? "error" : "default"
+
+  return (
+    <IconButton
+      size={muiSize}
+      color={muiColor}
+      sx={{
+        ...(variant === "default"
+          ? {
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: "8px",
+            }
+          : null),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type BadgeTone = "blue" | "teal" | "gray" | "yellow" | "red" | "dark"
+
+type BadgeProps = Omit<MuiChipProps, "label" | "variant" | "color" | "size" | "children" | "icon"> & {
+  size?: "xs" | "sm" | "md"
+  variant?: "filled" | "light" | "default"
+  color?: BadgeTone
+  radius?: MantineRadius
+  leftSection?: ReactNode
+  children: ReactNode
+}
+
+function badgeLightStyles(color?: BadgeTone) {
+  switch (color) {
+    case "teal":
+      return { bgcolor: "rgba(2, 132, 199, 0.14)", color: "#0f766e", borderColor: "rgba(2, 132, 199, 0.35)" }
+    case "yellow":
+      return { bgcolor: "rgba(245, 158, 11, 0.18)", color: "#92400e", borderColor: "rgba(245, 158, 11, 0.4)" }
+    case "red":
+      return { bgcolor: "rgba(239, 68, 68, 0.16)", color: "#b91c1c", borderColor: "rgba(239, 68, 68, 0.38)" }
+    case "gray":
+      return { bgcolor: "rgba(100, 116, 139, 0.14)", color: "#475569", borderColor: "rgba(100, 116, 139, 0.35)" }
+    case "blue":
+      return { bgcolor: "rgba(59, 130, 246, 0.16)", color: "#1d4ed8", borderColor: "rgba(59, 130, 246, 0.38)" }
+    case "dark":
+      return { bgcolor: "rgba(15, 23, 42, 0.15)", color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.4)" }
+    default:
+      return { bgcolor: "transparent", color: "inherit", borderColor: "divider" }
+  }
+}
+
+function Badge({ size, variant, color, radius, leftSection, children, sx, ...props }: BadgeProps) {
+  const muiVariant: MuiChipProps["variant"] = variant === "filled" ? "filled" : "outlined"
+  const muiColor: MuiChipProps["color"] =
+    color === "teal" ? "success" : color === "yellow" ? "warning" : color === "red" ? "error" : color === "blue" ? "primary" : "default"
+  const lightStyles = badgeLightStyles(color)
+  const icon = leftSection && isValidElement(leftSection) ? leftSection : undefined
+
+  return (
+    <MuiChip
+      size={size === "xs" || size === "sm" ? "small" : "medium"}
+      variant={muiVariant}
+      color={muiColor}
+      label={children}
+      icon={icon}
+      sx={{
+        borderRadius: toCssRadius(radius),
+        ...(variant === "light" ? lightStyles : null),
+        ...(variant === "filled" && color === "dark"
+          ? {
+              bgcolor: "text.primary",
+              color: "background.paper",
+            }
+          : null),
+        ...(size === "xs"
+          ? {
+              height: "20px",
+              "& .MuiChip-label": { px: 1, fontSize: "0.68rem" },
+            }
+          : null),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type PaperShadow = "xs" | "sm" | "md" | "lg" | "xl"
+
+const SHADOW_MAP: Record<PaperShadow, number> = {
+  xs: 1,
+  sm: 2,
+  md: 4,
+  lg: 8,
+  xl: 12,
+}
+
+type PaperProps = Omit<MuiPaperProps, "variant" | "elevation"> & {
+  withBorder?: boolean
+  p?: MantineSpace
+  radius?: MantineRadius
+  shadow?: PaperShadow
+}
+
+const Paper = forwardRef<HTMLDivElement, PaperProps>(function Paper(
+  { withBorder, p, radius, shadow, sx, ...props },
+  ref
+) {
+  return (
+    <MuiPaper
+      ref={ref}
+      variant={withBorder ? "outlined" : undefined}
+      elevation={shadow ? SHADOW_MAP[shadow] : 0}
+      sx={{
+        p: toCssSpace(p),
+        borderRadius: toCssRadius(radius),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+})
+
+type StackProps = Omit<MuiStackProps, "gap" | "alignItems" | "mt" | "mb"> & {
+  gap?: MantineSpace
+  align?: MantineAlign
+  mt?: MantineSpace
+  mb?: MantineSpace
+}
+
+function Stack({ gap, align, mt, mb, sx, ...props }: StackProps) {
+  return (
+    <MuiStack
+      sx={{
+        gap: toCssSpace(gap),
+        alignItems: align ? toFlexAlign(align) : undefined,
+        mt: toCssSpace(mt),
+        mb: toCssSpace(mb),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type GroupProps = Omit<BoxProps, "display" | "alignItems" | "justifyContent" | "gap" | "mt" | "mb"> & {
+  gap?: MantineSpace
+  align?: MantineAlign
+  justify?: MantineJustify
+  grow?: boolean
+  wrap?: "wrap" | "nowrap"
+  mt?: MantineSpace
+  mb?: MantineSpace
+}
+
+function Group({ gap, align, justify, grow, wrap, mt, mb, sx, children, ...props }: GroupProps) {
+  return (
+    <MuiBox
+      sx={{
+        display: "flex",
+        flexWrap: wrap ?? "wrap",
+        alignItems: toFlexAlign(align),
+        justifyContent: toFlexJustify(justify),
+        gap: toCssSpace(gap ?? "sm"),
+        mt: toCssSpace(mt),
+        mb: toCssSpace(mb),
+        ...(grow
+          ? {
+              "& > *": {
+                flex: 1,
+                minWidth: 0,
+              },
+            }
+          : null),
+        ...sx,
+      }}
+      {...props}
+    >
+      {children}
+    </MuiBox>
+  )
+}
+
+type TextProps = Omit<TypographyProps, "variant" | "color" | "mt" | "mb"> & {
+  size?: "xs" | "sm" | "md"
+  c?: "dimmed" | "red" | "yellow" | "teal"
+  fw?: number
+  lineClamp?: number
+  mt?: MantineSpace
+  mb?: MantineSpace
+}
+
+function Text({ size, c, fw, lineClamp, mt, mb, sx, ...props }: TextProps) {
+  const variant: TypographyProps["variant"] = size === "xs" ? "caption" : size === "sm" ? "body2" : "body1"
+  const color =
+    c === "dimmed" ? "text.secondary" : c === "red" ? "error.main" : c === "yellow" ? "warning.main" : c === "teal" ? "success.main" : undefined
+
+  return (
+    <Typography
+      variant={variant}
+      sx={{
+        color,
+        fontWeight: fw,
+        mt: toCssSpace(mt),
+        mb: toCssSpace(mb),
+        ...(lineClamp
+          ? {
+              display: "-webkit-box",
+              WebkitLineClamp: lineClamp,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }
+          : null),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type TitleProps = Omit<TypographyProps, "variant" | "component" | "order"> & {
+  order?: 1 | 2 | 3 | 4 | 5 | 6
+  size?: TypographyProps["variant"]
+}
+
+function Title({ order = 2, size, sx, ...props }: TitleProps) {
+  const byOrder: Record<1 | 2 | 3 | 4 | 5 | 6, TypographyProps["variant"]> = {
+    1: "h4",
+    2: "h5",
+    3: "h6",
+    4: "subtitle1",
+    5: "subtitle2",
+    6: "body1",
+  }
+
+  return <Typography variant={size ?? byOrder[order]} sx={{ fontWeight: 700, ...sx }} {...props} />
+}
+
+type TextInputProps = Omit<TextFieldProps, "size"> & {
+  size?: "xs" | "sm" | "md"
+  leftSection?: ReactNode
+  w?: number | string
+}
+
+function TextInput({ size, leftSection, w, InputProps, fullWidth, sx, ...props }: TextInputProps) {
+  const fullWidthValue = fullWidth ?? w === undefined
+  return (
+    <TextField
+      size={size === "xs" || size === "sm" ? "small" : "medium"}
+      fullWidth={fullWidthValue}
+      InputProps={{
+        ...InputProps,
+        startAdornment: leftSection ? <InputAdornment position="start">{leftSection}</InputAdornment> : InputProps?.startAdornment,
+      }}
+      sx={{ width: w, ...sx }}
+      {...props}
+    />
+  )
+}
+
+type NumberInputProps = Omit<TextFieldProps, "size" | "type" | "value" | "onChange"> & {
+  size?: "xs" | "sm" | "md"
+  value: number
+  onChange?: (value: number | string) => void
+  min?: number
+  max?: number
+  step?: number
+  suffix?: string
+  w?: number | string
+}
+
+function NumberInput({ size, value, onChange, suffix, w, InputProps, fullWidth, sx, ...props }: NumberInputProps) {
+  const fullWidthValue = fullWidth ?? w === undefined
+
+  return (
+    <TextField
+      type="number"
+      size={size === "xs" || size === "sm" ? "small" : "medium"}
+      value={value}
+      fullWidth={fullWidthValue}
+      onChange={(event) => {
+        const raw = event.currentTarget.value
+        if (!raw.length) {
+          onChange?.("")
+          return
+        }
+        const parsed = Number(raw)
+        onChange?.(Number.isFinite(parsed) ? parsed : raw)
+      }}
+      InputProps={{
+        ...InputProps,
+        endAdornment: suffix ? <InputAdornment position="end">{suffix}</InputAdornment> : InputProps?.endAdornment,
+      }}
+      sx={{ width: w, ...sx }}
+      {...props}
+    />
+  )
+}
+
+type SelectProps = {
+  label?: string
+  placeholder?: string
+  clearable?: boolean
+  value?: string | null
+  onChange?: (value: string | null) => void
+  data: SelectData
+  disabled?: boolean
+  w?: number | string
+  "aria-label"?: string
+}
+
+function Select({ label, placeholder, clearable, value, onChange, data, disabled, w, "aria-label": ariaLabel }: SelectProps) {
+  const options = normalizeSelectData(data)
+  const selected = options.find((option) => option.value === (value ?? "")) ?? null
+
+  return (
+    <Autocomplete
+      disablePortal
+      options={options}
+      value={selected}
+      disabled={disabled}
+      onChange={(_event, option) => onChange?.(option?.value ?? null)}
+      isOptionEqualToValue={(option, nextValue) => option.value === nextValue.value}
+      getOptionLabel={(option) => option.label}
+      disableClearable={!clearable}
+      sx={w !== undefined ? { width: w } : undefined}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          fullWidth
+          label={label}
+          placeholder={placeholder}
+          inputProps={{
+            ...params.inputProps,
+            "aria-label": ariaLabel,
+          }}
+        />
+      )}
+    />
+  )
+}
+
+type SegmentedControlProps = {
+  value: string
+  onChange: (value: string) => void
+  data: Array<{ label: string; value: string }>
+  "aria-label"?: string
+}
+
+function SegmentedControl({ value, onChange, data, "aria-label": ariaLabel }: SegmentedControlProps) {
+  return (
+    <ToggleButtonGroup
+      exclusive
+      fullWidth
+      value={value}
+      onChange={(_event, nextValue: string | null) => {
+        if (typeof nextValue === "string") onChange(nextValue)
+      }}
+      aria-label={ariaLabel}
+    >
+      {data.map((item) => (
+        <ToggleButton key={item.value} value={item.value}>
+          {item.label}
+        </ToggleButton>
+      ))}
+    </ToggleButtonGroup>
+  )
+}
+
+type SwitchProps = Omit<MuiSwitchProps, "size"> & {
+  size?: "xs" | "sm" | "md"
+}
+
+function Switch({ size, ...props }: SwitchProps) {
+  return <MuiSwitch size={size === "md" ? "medium" : "small"} {...props} />
+}
+
+type SliderLabel = "always" | "hover" | "never" | ((value: number) => string)
+type SliderProps = Omit<MuiSliderProps, "value" | "defaultValue" | "onChange" | "valueLabelDisplay" | "valueLabelFormat"> & {
+  value: number
+  onChange: (value: number) => void
+  label?: SliderLabel
+}
+
+function Slider({ label, value, onChange, ...props }: SliderProps) {
+  const valueLabelDisplay: MuiSliderProps["valueLabelDisplay"] =
+    label === "always" ? "on" : label === "never" ? "off" : label === "hover" || typeof label === "function" ? "auto" : "off"
+
+  return (
+    <MuiSlider
+      value={value}
+      onChange={(_event, nextValue) => {
+        if (typeof nextValue === "number") onChange(nextValue)
+      }}
+      valueLabelDisplay={valueLabelDisplay}
+      valueLabelFormat={typeof label === "function" ? (nextValue) => label(Number(nextValue)) : undefined}
+      {...props}
+    />
+  )
+}
+
+type CollapseProps = {
+  in: boolean
+  children: ReactNode
+}
+
+function Collapse({ in: inValue, children }: CollapseProps) {
+  return <MuiCollapse in={inValue}>{children}</MuiCollapse>
+}
+
+type ModalSize = "xs" | "sm" | "md" | "lg" | "xl"
+
+type ModalProps = {
+  opened: boolean
+  onClose: () => void
+  title?: ReactNode
+  size?: ModalSize
+  centered?: boolean
+  children: ReactNode
+}
+
+function Modal({ opened, onClose, title, size = "sm", children }: ModalProps) {
+  return (
+    <Dialog open={opened} onClose={() => onClose()} maxWidth={size} fullWidth>
+      {title ? <DialogTitle>{title}</DialogTitle> : null}
+      <DialogContent>{children}</DialogContent>
+    </Dialog>
+  )
+}
+
+type TooltipProps = {
+  label: ReactNode
+  multiline?: boolean
+  maw?: number
+  children: ReactNode
+}
+
+function Tooltip({ label, multiline, maw, children }: TooltipProps) {
+  return (
+    <MuiTooltip
+      title={label}
+      arrow
+      slotProps={{
+        tooltip: {
+          sx: {
+            maxWidth: maw,
+            whiteSpace: multiline ? "normal" : "nowrap",
+          },
+        },
+      }}
+    >
+      <span style={{ display: "inline-flex", maxWidth: "100%" }}>{children}</span>
+    </MuiTooltip>
+  )
 }
 
 type BuiltinCmsSectionType =
@@ -494,6 +1066,22 @@ function SectionsToolbar({
   onSortMode: (value: "manual" | "updated") => void
   types: Array<{ value: string; label: string }>
 }) {
+  function toggleStatusFilter(value: SectionFilterStatus) {
+    onStatusFilters(
+      statusFilters.includes(value)
+        ? statusFilters.filter((item) => item !== value)
+        : [...statusFilters, value]
+    )
+  }
+
+  function toggleSourceFilter(value: SectionFilterSource) {
+    onSourceFilters(
+      sourceFilters.includes(value)
+        ? sourceFilters.filter((item) => item !== value)
+        : [...sourceFilters, value]
+    )
+  }
+
   return (
     <Stack gap="xs" mb="sm">
       <Group grow>
@@ -516,27 +1104,45 @@ function SectionsToolbar({
         />
       </Group>
       <Group gap="sm" wrap="wrap">
-        <Chip.Group
-          multiple
-          value={statusFilters}
-          onChange={(value) => onStatusFilters(value as SectionFilterStatus[])}
-        >
-          <Group gap="xs">
-            <Chip value="published">Published</Chip>
-            <Chip value="draft">Draft</Chip>
-            <Chip value="hidden">Hidden</Chip>
-          </Group>
-        </Chip.Group>
-        <Chip.Group
-          multiple
-          value={sourceFilters}
-          onChange={(value) => onSourceFilters(value as SectionFilterSource[])}
-        >
-          <Group gap="xs">
-            <Chip value="local">Local</Chip>
-            <Chip value="global">Global</Chip>
-          </Group>
-        </Chip.Group>
+        <Group gap="xs">
+          <MuiChip
+            clickable
+            label="Published"
+            color={statusFilters.includes("published") ? "primary" : "default"}
+            variant={statusFilters.includes("published") ? "filled" : "outlined"}
+            onClick={() => toggleStatusFilter("published")}
+          />
+          <MuiChip
+            clickable
+            label="Draft"
+            color={statusFilters.includes("draft") ? "primary" : "default"}
+            variant={statusFilters.includes("draft") ? "filled" : "outlined"}
+            onClick={() => toggleStatusFilter("draft")}
+          />
+          <MuiChip
+            clickable
+            label="Hidden"
+            color={statusFilters.includes("hidden") ? "primary" : "default"}
+            variant={statusFilters.includes("hidden") ? "filled" : "outlined"}
+            onClick={() => toggleStatusFilter("hidden")}
+          />
+        </Group>
+        <Group gap="xs">
+          <MuiChip
+            clickable
+            label="Local"
+            color={sourceFilters.includes("local") ? "primary" : "default"}
+            variant={sourceFilters.includes("local") ? "filled" : "outlined"}
+            onClick={() => toggleSourceFilter("local")}
+          />
+          <MuiChip
+            clickable
+            label="Global"
+            color={sourceFilters.includes("global") ? "primary" : "default"}
+            variant={sourceFilters.includes("global") ? "filled" : "outlined"}
+            onClick={() => toggleSourceFilter("global")}
+          />
+        </Group>
         <Select
           placeholder="Type"
           clearable
@@ -603,8 +1209,9 @@ function SectionRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: section.id })
 
-  const [menuOpened, setMenuOpened] = useState(false)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
   const [menuScreen, setMenuScreen] = useState<"root" | "dup_target" | "dup_pages">("root")
+  const menuOpened = Boolean(menuAnchorEl)
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -614,9 +1221,13 @@ function SectionRow({
 
   const otherPages = pages.filter((p) => p.id !== currentPageId)
 
-  async function runDuplicate(targetPageId: string) {
-    setMenuOpened(false)
+  function closeMenu() {
+    setMenuAnchorEl(null)
     setMenuScreen("root")
+  }
+
+  async function runDuplicate(targetPageId: string) {
+    closeMenu()
     await onDuplicate(section, targetPageId)
   }
 
@@ -640,7 +1251,11 @@ function SectionRow({
       }}
       tabIndex={0}
       className="cursor-pointer select-none"
-      style={{ ...style, background: "color-mix(in srgb, var(--mantine-color-body) 94%, transparent)", minHeight: 92 }}
+      style={{
+        ...style,
+        background: "color-mix(in srgb, var(--mui-palette-background-paper, #ffffff) 94%, transparent)",
+        minHeight: 92,
+      }}
     >
       <Group justify="space-between" align="center" gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
         <Group align="start" gap="sm" style={{ minWidth: 0, flex: 1 }}>
@@ -729,152 +1344,183 @@ function SectionRow({
             />
           </Tooltip>
 
-          <Menu
-            withinPortal
-            position="bottom-end"
-            shadow="md"
-            opened={menuOpened}
-            onChange={(opened) => {
-              setMenuOpened(opened)
-              if (!opened) setMenuScreen("root")
-            }}
+          <Tooltip label="Section actions">
+            <ActionIcon
+              variant="default"
+              aria-label="Section actions"
+              onClick={(event) => {
+                setMenuAnchorEl((current) => (current ? null : event.currentTarget))
+                if (menuOpened) setMenuScreen("root")
+              }}
+            >
+              <IconDotsVertical size={16} />
+            </ActionIcon>
+          </Tooltip>
+          <MuiMenu
+            anchorEl={menuAnchorEl}
+            open={menuOpened}
+            onClose={closeMenu}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
           >
-            <Menu.Target>
-              <Tooltip label="Section actions">
-                <ActionIcon variant="default" aria-label="Section actions">
-                  <IconDotsVertical size={16} />
-                </ActionIcon>
-              </Tooltip>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item closeMenuOnClick={false} onClick={() => setMenuOpened(false)}>
-                <Text size="xs" fw={600} c="dimmed">
-                  Actions
-                </Text>
-              </Menu.Item>
-              <Menu.Divider />
-              {menuScreen === "root" ? (
-                <>
-                  {section.global_section_id ? (
-                    <Menu.Item closeMenuOnClick onClick={() => onOpen(section)}>
-                      Edit global section
-                    </Menu.Item>
-                  ) : null}
-                  <Menu.Item
-                    leftSection={<IconArrowUp size={14} />}
-                    disabled={duplicateLoading || section.position <= 0}
-                    onClick={() => void onMove(section.id, "up")}
-                  >
-                    Move up
-                  </Menu.Item>
-                  <Menu.Item
-                    leftSection={<IconArrowDown size={14} />}
-                    disabled={duplicateLoading || section.position >= sectionCount - 1}
-                    onClick={() => void onMove(section.id, "down")}
-                  >
-                    Move down
-                  </Menu.Item>
-                  <Menu.Item
-                    leftSection={<IconCopy size={14} />}
-                    closeMenuOnClick={false}
-                    onClick={() => setMenuScreen("dup_target")}
-                    disabled={duplicateLoading}
-                  >
-                    Duplicate…
-                  </Menu.Item>
-                  {section.global_section_id ? (
-                    <Menu.Item closeMenuOnClick onClick={() => onRequestDetach(section)}>
-                      Detach & fork locally…
-                    </Menu.Item>
-                  ) : null}
-                  <Menu.Item
-                    color="red"
-                    leftSection={<IconTrash size={14} />}
-                    onClick={() => onDelete(section)}
-                  >
-                    Delete…
-                  </Menu.Item>
-                </>
-              ) : null}
-
-              {menuScreen === "dup_target" ? (
-                <>
-                  <Menu.Item
-                    leftSection={<IconChevronLeft size={14} />}
-                    closeMenuOnClick={false}
-                    onClick={() => setMenuScreen("root")}
-                  >
-                    Back
-                  </Menu.Item>
-                  <Menu.Label>Duplicate to</Menu.Label>
-                  <Menu.Item
-                    closeMenuOnClick={false}
-                    disabled={duplicateLoading}
-                    onClick={() => void runDuplicate(currentPageId)}
-                  >
-                    This page
-                  </Menu.Item>
-                  <Menu.Item
-                    closeMenuOnClick={false}
-                    disabled={duplicateLoading}
+            <MenuItem onClick={closeMenu}>
+              <Text size="xs" fw={600} c="dimmed">
+                Actions
+              </Text>
+            </MenuItem>
+            <Divider />
+            {menuScreen === "root" ? (
+              <>
+                {section.global_section_id ? (
+                  <MenuItem
                     onClick={() => {
-                      setMenuScreen("dup_pages")
-                      void ensurePagesLoaded()
+                      closeMenu()
+                      onOpen(section)
                     }}
                   >
-                    Another page
-                  </Menu.Item>
-                  <Menu.Item
-                    closeMenuOnClick={false}
-                    disabled={duplicateLoading}
-                    leftSection={<IconWorld size={14} />}
+                    Edit global section
+                  </MenuItem>
+                ) : null}
+                <MenuItem
+                  disabled={duplicateLoading || section.position <= 0}
+                  onClick={() => {
+                    closeMenu()
+                    void onMove(section.id, "up")
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 28 }}>
+                    <IconArrowUp size={14} />
+                  </ListItemIcon>
+                  Move up
+                </MenuItem>
+                <MenuItem
+                  disabled={duplicateLoading || section.position >= sectionCount - 1}
+                  onClick={() => {
+                    closeMenu()
+                    void onMove(section.id, "down")
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 28 }}>
+                    <IconArrowDown size={14} />
+                  </ListItemIcon>
+                  Move down
+                </MenuItem>
+                <MenuItem
+                  disabled={duplicateLoading}
+                  onClick={() => setMenuScreen("dup_target")}
+                >
+                  <ListItemIcon sx={{ minWidth: 28 }}>
+                    <IconCopy size={14} />
+                  </ListItemIcon>
+                  Duplicate…
+                </MenuItem>
+                {section.global_section_id ? (
+                  <MenuItem
                     onClick={() => {
-                      setMenuOpened(false)
-                      setMenuScreen("root")
-                      void onDuplicateToAllPages(section)
+                      closeMenu()
+                      onRequestDetach(section)
                     }}
                   >
-                    Duplicate to all pages
-                  </Menu.Item>
-                </>
-              ) : null}
+                    Detach & fork locally…
+                  </MenuItem>
+                ) : null}
+                <MenuItem
+                  onClick={() => {
+                    closeMenu()
+                    onDelete(section)
+                  }}
+                  sx={{ color: "error.main" }}
+                >
+                  <ListItemIcon sx={{ minWidth: 28, color: "error.main" }}>
+                    <IconTrash size={14} />
+                  </ListItemIcon>
+                  Delete…
+                </MenuItem>
+              </>
+            ) : null}
 
-              {menuScreen === "dup_pages" ? (
-                <>
-                  <Menu.Item
-                    leftSection={<IconChevronLeft size={14} />}
-                    closeMenuOnClick={false}
-                    onClick={() => setMenuScreen("dup_target")}
-                  >
-                    Back
-                  </Menu.Item>
-                  <Menu.Label>Choose page</Menu.Label>
-                  {pagesLoading ? (
-                    <Menu.Item disabled closeMenuOnClick={false}>
-                      Loading…
-                    </Menu.Item>
-                  ) : otherPages.length ? (
-                    <div style={{ maxHeight: 260, overflowY: "auto" }}>
-                      {otherPages.map((p) => (
-                        <Menu.Item
-                          key={p.id}
-                          disabled={duplicateLoading}
-                          closeMenuOnClick={false}
-                          onClick={() => void runDuplicate(p.id)}
-                        >
-                          {p.title} ({p.slug})
-                        </Menu.Item>
-                      ))}
-                    </div>
-                  ) : (
-                    <Menu.Item disabled closeMenuOnClick={false}>
-                      No other pages
-                    </Menu.Item>
-                  )}
-                </>
-              ) : null}
-            </Menu.Dropdown>
-          </Menu>
+            {menuScreen === "dup_target" ? (
+              <>
+                <MenuItem onClick={() => setMenuScreen("root")}>
+                  <ListItemIcon sx={{ minWidth: 28 }}>
+                    <IconChevronLeft size={14} />
+                  </ListItemIcon>
+                  Back
+                </MenuItem>
+                <Typography
+                  variant="caption"
+                  sx={{ px: 2, py: 1, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}
+                >
+                  Duplicate to
+                </Typography>
+                <MenuItem
+                  disabled={duplicateLoading}
+                  onClick={() => void runDuplicate(currentPageId)}
+                >
+                  This page
+                </MenuItem>
+                <MenuItem
+                  disabled={duplicateLoading}
+                  onClick={() => {
+                    setMenuScreen("dup_pages")
+                    void ensurePagesLoaded()
+                  }}
+                >
+                  Another page
+                </MenuItem>
+                <MenuItem
+                  disabled={duplicateLoading}
+                  onClick={() => {
+                    closeMenu()
+                    void onDuplicateToAllPages(section)
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 28 }}>
+                    <IconWorld size={14} />
+                  </ListItemIcon>
+                  Duplicate to all pages
+                </MenuItem>
+              </>
+            ) : null}
+
+            {menuScreen === "dup_pages" ? (
+              <>
+                <MenuItem onClick={() => setMenuScreen("dup_target")}>
+                  <ListItemIcon sx={{ minWidth: 28 }}>
+                    <IconChevronLeft size={14} />
+                  </ListItemIcon>
+                  Back
+                </MenuItem>
+                <Typography
+                  variant="caption"
+                  sx={{ px: 2, py: 1, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}
+                >
+                  Choose page
+                </Typography>
+                {pagesLoading ? (
+                  <MenuItem disabled>
+                    Loading…
+                  </MenuItem>
+                ) : otherPages.length ? (
+                  <div style={{ maxHeight: 260, overflowY: "auto" }}>
+                    {otherPages.map((p) => (
+                      <MenuItem
+                        key={p.id}
+                        disabled={duplicateLoading}
+                        onClick={() => void runDuplicate(p.id)}
+                      >
+                        {p.title} ({p.slug})
+                      </MenuItem>
+                    ))}
+                  </div>
+                ) : (
+                  <MenuItem disabled>
+                    No other pages
+                  </MenuItem>
+                )}
+              </>
+            ) : null}
+          </MuiMenu>
         </Group>
       </Group>
     </Paper>
