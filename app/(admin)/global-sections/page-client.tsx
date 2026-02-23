@@ -1,13 +1,18 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import {
+  ActionIcon,
   Badge,
   Button,
   ColorInput,
   Divider,
   Group,
+  Menu,
+  Modal,
   Paper,
+  MultiSelect,
   Select,
   Slider,
   Stack,
@@ -16,10 +21,13 @@ import {
   TextInput,
   Title,
 } from "@mantine/core"
+import { IconDotsVertical, IconEdit, IconTrash } from "@tabler/icons-react"
+
 import { SectionEditorDrawer } from "@/components/section-editor-drawer"
 import { createClient } from "@/lib/supabase/browser"
+import { applyEditorError, toEditorErrorMessage } from "@/lib/cms/editor-error-message"
 
-const SECTION_TYPES: CmsSectionType[] = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block", "footer_grid"]
+const SECTION_TYPES: BuiltinCmsSectionType[] = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block", "footer_grid"]
 
 function normalizeSectionType(raw: string): CmsSectionType | null {
   switch (raw) {
@@ -35,15 +43,25 @@ function normalizeSectionType(raw: string): CmsSectionType | null {
     case "footer_grid":
       return raw
     default:
-      return null
+      return raw?.trim() ? raw.trim() : null
   }
 }
 const FONT_STACKS = [
   { value: "Inter, system-ui, sans-serif", label: "Inter (Sans)" },
-  { value: "'Geist', Inter, system-ui, sans-serif", label: "Geist + Inter" },
-  { value: "'IBM Plex Sans', Inter, system-ui, sans-serif", label: "IBM Plex Sans" },
+  { value: "'Geist', Inter, system-ui, sans-serif", label: "Geist + Inter (Sans)" },
+  { value: "'IBM Plex Sans', Inter, system-ui, sans-serif", label: "IBM Plex Sans (Sans)" },
   { value: "'Merriweather', Georgia, serif", label: "Merriweather (Serif)" },
-  { value: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace", label: "JetBrains Mono" },
+  { value: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace", label: "JetBrains Mono (Mono)" },
+  { value: "'Poppins', Inter, system-ui, sans-serif", label: "Poppins (Sans)" },
+  { value: "'Manrope', Inter, system-ui, sans-serif", label: "Manrope (Sans)" },
+  { value: "'DM Sans', Inter, system-ui, sans-serif", label: "DM Sans (Sans)" },
+  { value: "'Nunito Sans', Inter, system-ui, sans-serif", label: "Nunito Sans (Sans)" },
+  { value: "'Work Sans', Inter, system-ui, sans-serif", label: "Work Sans (Sans)" },
+  { value: "'Source Sans 3', Inter, system-ui, sans-serif", label: "Source Sans 3 (Sans)" },
+  { value: "'Roboto', Inter, system-ui, sans-serif", label: "Roboto (Sans)" },
+  { value: "'Open Sans', Inter, system-ui, sans-serif", label: "Open Sans (Sans)" },
+  { value: "'Lato', Inter, system-ui, sans-serif", label: "Lato (Sans)" },
+  { value: "'Montserrat', Inter, system-ui, sans-serif", label: "Montserrat (Sans)" },
 ]
 
 type Row = {
@@ -55,7 +73,7 @@ type Row = {
   lifecycle_state?: "draft" | "published" | "archived"
 }
 
-type CmsSectionType =
+type BuiltinCmsSectionType =
   | "nav_links"
   | "hero_cta"
   | "card_grid"
@@ -67,8 +85,11 @@ type CmsSectionType =
   | "cta_block"
   | "footer_grid"
 
+type CmsSectionType = BuiltinCmsSectionType | string
+
 type ImpactRow = { total_references: number; enabled_references: number; distinct_pages: number }
 type UsageRow = { global_section_id: string; page_slug: string; page_title: string; section_key: string | null }
+type PageOption = { id: string; slug: string; title: string }
 type SectionTypeDefault = {
   section_type: CmsSectionType
   label: string
@@ -85,7 +106,17 @@ type SectionTypeDefault = {
   capabilities: Record<string, unknown>
 }
 
-type SectionTypeDefaultsMap = Partial<Record<CmsSectionType, SectionTypeDefault>>
+type SectionTypeDefaultsMap = Record<string, SectionTypeDefault>
+
+type FormattingTemplateRow = {
+  id: string
+  name: string
+  description: string | null
+  settings: Record<string, unknown>
+  is_system: boolean
+  created_at: string
+  updated_at: string
+}
 
 function parseNum(v: string, fallback: number) {
   const n = Number(v)
@@ -96,13 +127,57 @@ function asRecord(v: unknown): Record<string, unknown> {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {}
 }
 
+function deepMerge(base: Record<string, unknown>, override: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base }
+  Object.entries(override).forEach(([key, value]) => {
+    if (value === undefined) return
+    if (
+      value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      out[key] &&
+      typeof out[key] === "object" &&
+      !Array.isArray(out[key])
+    ) {
+      out[key] = deepMerge(out[key] as Record<string, unknown>, value as Record<string, unknown>)
+      return
+    }
+    out[key] = value
+  })
+  return out
+}
+
+function settingsFingerprint(input: Record<string, unknown>) {
+  const s = asRecord(input)
+  const t = asRecord(s.tokens)
+  const picked = {
+    fontFamily: String(t.fontFamily ?? s.fontFamily ?? ""),
+    fontScale: Number(t.fontScale ?? s.fontScale ?? 1),
+    spaceScale: Number(t.spaceScale ?? t.spacingScale ?? 1),
+    radiusScale: Number(t.radiusScale ?? 1),
+    shadowScale: Number(t.shadowScale ?? 1),
+    innerShadowScale: Number(t.innerShadowScale ?? 0),
+    textColor: String(t.textColor ?? ""),
+    mutedTextColor: String(t.mutedTextColor ?? ""),
+    accentColor: String(t.accentColor ?? ""),
+    shadowColor: String(t.shadowColor ?? ""),
+    backgroundColor: String(t.backgroundColor ?? ""),
+    cardBackgroundColor: String(t.cardBackgroundColor ?? ""),
+  }
+  return JSON.stringify(picked)
+}
+
 export function GlobalSectionsPage() {
   const supabase = useMemo(() => createClient(), [])
+  const searchParams = useSearchParams()
+  const editGlobalId = (searchParams.get("edit") ?? "").trim()
+  const [autoOpenedEditId, setAutoOpenedEditId] = useState<string | null>(null)
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(false)
   const [key, setKey] = useState("")
   const [label, setLabel] = useState("")
   const [type, setType] = useState<CmsSectionType>("hero_cta")
+  const [customTypes, setCustomTypes] = useState<Array<{ value: string; label: string }>>([])
   const [error, setError] = useState<string | null>(null)
 
   const [fontFamily, setFontFamily] = useState("Inter, system-ui, sans-serif")
@@ -114,15 +189,33 @@ export function GlobalSectionsPage() {
   const [innerShadowScale, setInnerShadowScale] = useState(0)
   const [shadowColor, setShadowColor] = useState("")
   const [textColor, setTextColor] = useState("")
+  const [mutedTextColor, setMutedTextColor] = useState("")
   const [accentColor, setAccentColor] = useState("")
   const [backgroundColor, setBackgroundColor] = useState("")
   const [cardBackgroundColor, setCardBackgroundColor] = useState("")
+
+  const [templates, setTemplates] = useState<FormattingTemplateRow[]>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
+  const [templateName, setTemplateName] = useState("")
+  const [templateDescription, setTemplateDescription] = useState("")
+  const [newTemplateName, setNewTemplateName] = useState("")
+  const [newTemplateDescription, setNewTemplateDescription] = useState("")
+  const [templateBusy, setTemplateBusy] = useState(false)
+  const [applyTemplateConfirmOpen, setApplyTemplateConfirmOpen] = useState(false)
+  const [customizeOpen, setCustomizeOpen] = useState(false)
+  const [customizeBaselineFingerprint, setCustomizeBaselineFingerprint] = useState("")
 
   const [impactByGlobalId, setImpactByGlobalId] = useState<Record<string, ImpactRow>>({})
   const [usageByGlobalId, setUsageByGlobalId] = useState<Record<string, UsageRow[]>>({})
 
   const [editorOpen, setEditorOpen] = useState(false)
   const [editing, setEditing] = useState<Row | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Row | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [pages, setPages] = useState<PageOption[]>([])
+  const [attachTarget, setAttachTarget] = useState<Row | null>(null)
+  const [attachPageIds, setAttachPageIds] = useState<string[]>([])
+  const [attachLoading, setAttachLoading] = useState(false)
   const [sectionTypeDefaults, setSectionTypeDefaults] = useState<SectionTypeDefaultsMap>({})
 
   async function load() {
@@ -135,7 +228,11 @@ export function GlobalSectionsPage() {
       .order("key", { ascending: true })
 
     if (error) {
-      setError(error.message)
+      applyEditorError({
+        error,
+        fallback: "Failed to load global sections.",
+        setError,
+      })
       setLoading(false)
       return
     }
@@ -160,6 +257,36 @@ export function GlobalSectionsPage() {
     )
     setSectionTypeDefaults(defaultsMap)
 
+    const { data: customTypeRows } = await supabase
+      .from("section_type_registry")
+      .select("key,label,source,renderer,is_active")
+      .eq("source", "custom")
+      .eq("renderer", "composed")
+      .eq("is_active", true)
+      .order("label", { ascending: true })
+
+    setCustomTypes(
+      ((customTypeRows ?? []) as Array<{ key: string; label: string }>).map((row) => ({
+        value: row.key,
+        label: `${row.label} (${row.key})`,
+      }))
+    )
+
+    const { data: pagesData, error: pagesErr } = await supabase
+      .from("pages")
+      .select("id, slug, title")
+      .order("slug", { ascending: true })
+
+    if (pagesErr) {
+      applyEditorError({
+        error: pagesErr,
+        fallback: "Failed to load pages.",
+        setError,
+      })
+    } else {
+      setPages(((pagesData ?? []) as PageOption[]))
+    }
+
     const { data: whereUsedRows } = await supabase
       .from("global_section_where_used")
       .select("global_section_id,page_slug,page_title,section_key")
@@ -182,22 +309,41 @@ export function GlobalSectionsPage() {
 
     const { data: fmt } = await supabase.from("site_formatting_settings").select("settings").eq("id", "default").maybeSingle()
     const settings = (fmt?.settings ?? {}) as Record<string, unknown>
-    const tokens = ((settings.tokens ?? {}) as Record<string, unknown>)
+    applySettingsToForm(settings)
 
-    const tokenFont = String(tokens.fontFamily ?? settings.fontFamily ?? "Inter, system-ui, sans-serif")
-    const matchPreset = FONT_STACKS.find((f) => f.value === tokenFont)
-    setFontFamily(matchPreset?.value ?? "__custom")
-    setCustomFontFamily(matchPreset ? "" : tokenFont)
-    setFontScale(parseNum(String(tokens.fontScale ?? settings.fontScale ?? 1), 1))
-    setSpaceScale(parseNum(String(tokens.spaceScale ?? 1), 1))
-    setRadiusScale(parseNum(String(tokens.radiusScale ?? 1), 1))
-    setShadowScale(parseNum(String(tokens.shadowScale ?? 1), 1))
-    setInnerShadowScale(parseNum(String(tokens.innerShadowScale ?? 0), 0))
-    setShadowColor(String(tokens.shadowColor ?? ""))
-    setTextColor(String(tokens.textColor ?? ""))
-    setAccentColor(String(tokens.accentColor ?? ""))
-    setBackgroundColor(String(tokens.backgroundColor ?? ""))
-    setCardBackgroundColor(String(tokens.cardBackgroundColor ?? ""))
+    const { data: templateRows, error: templatesError } = await supabase
+      .from("formatting_templates")
+      .select("id, name, description, settings, is_system, created_at, updated_at")
+      .order("is_system", { ascending: false })
+      .order("name", { ascending: true })
+
+    if (templatesError) {
+      applyEditorError({
+        error: templatesError,
+        fallback: "Failed to load formatting templates.",
+        setError,
+      })
+    } else {
+      const rows = (templateRows ?? []) as FormattingTemplateRow[]
+      setTemplates(rows)
+
+      const activeFp = settingsFingerprint(settings)
+      const matched = rows.find((t) => settingsFingerprint(asRecord(t.settings)) === activeFp)
+      if (matched) {
+        setSelectedTemplateId(matched.id)
+        setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(matched.settings)))
+      } else if (selectedTemplateId && rows.some((t) => t.id === selectedTemplateId)) {
+        setSelectedTemplateId(selectedTemplateId)
+        const existingSelected = rows.find((t) => t.id === selectedTemplateId)
+        setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(existingSelected?.settings)))
+      } else if (rows.length) {
+        setSelectedTemplateId(rows[0].id)
+        setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(rows[0].settings)))
+      } else {
+        setSelectedTemplateId(null)
+        setCustomizeBaselineFingerprint(activeFp)
+      }
+    }
 
     setLoading(false)
   }
@@ -206,29 +352,113 @@ export function GlobalSectionsPage() {
     setEditing(row)
     setEditorOpen(true)
   }
-  async function saveFormatting() {
+  async function saveTemplateAsNew() {
+    if (!newTemplateName.trim()) {
+      setError("New template name is required.")
+      return
+    }
+    setTemplateBusy(true)
     setError(null)
-    const selectedFont = fontFamily === "__custom" ? customFontFamily : fontFamily
-    const { error } = await supabase.from("site_formatting_settings").upsert({
-      id: "default",
-      settings: {
-        tokens: {
-          fontFamily: selectedFont.trim() || "Inter, system-ui, sans-serif",
-          fontScale,
-          spaceScale,
-          radiusScale,
-          shadowScale,
-          innerShadowScale,
-          shadowColor: shadowColor.trim() || null,
-          textColor: textColor.trim() || null,
-          accentColor: accentColor.trim() || null,
-          backgroundColor: backgroundColor.trim() || null,
-          cardBackgroundColor: cardBackgroundColor.trim() || null,
-        },
-      },
-    })
-    if (error) return setError(error.message)
-    await load()
+    try {
+      const payload = buildCurrentSettingsPayload()
+      const { data, error } = await supabase
+        .from("formatting_templates")
+        .insert({
+          name: newTemplateName.trim(),
+          description: newTemplateDescription.trim() || null,
+          settings: payload,
+          is_system: false,
+        })
+        .select("id")
+        .single()
+      if (error) throw new Error(error.message)
+      await load()
+      if (data?.id) setSelectedTemplateId(String(data.id))
+      setCustomizeBaselineFingerprint(settingsFingerprint(payload))
+      setNewTemplateName("")
+      setNewTemplateDescription("")
+    } catch (e) {
+      const msg = toEditorErrorMessage(e, "Failed to save template.")
+      if (msg.includes("formatting_templates_name_unique")) {
+        setError("Template name already exists. Choose a different name.")
+      } else {
+        setError(msg)
+      }
+    } finally {
+      setTemplateBusy(false)
+    }
+  }
+
+  async function updateSelectedTemplate() {
+    if (!selectedTemplate || selectedTemplate.is_system) return
+    setTemplateBusy(true)
+    setError(null)
+    try {
+      const payload = buildCurrentSettingsPayload()
+      const { error } = await supabase
+        .from("formatting_templates")
+        .update({
+          name: templateName.trim() || selectedTemplate.name,
+          description: templateDescription.trim() || null,
+          settings: payload,
+        })
+        .eq("id", selectedTemplate.id)
+      if (error) throw new Error(error.message)
+      setCustomizeBaselineFingerprint(settingsFingerprint(payload))
+      await load()
+    } catch (e) {
+      setError(toEditorErrorMessage(e, "Failed to update template."))
+    } finally {
+      setTemplateBusy(false)
+    }
+  }
+
+  async function deleteSelectedTemplate() {
+    if (!selectedTemplate || selectedTemplate.is_system) return
+    const ok = window.confirm(`Delete template "${selectedTemplate.name}"?`)
+    if (!ok) return
+    setTemplateBusy(true)
+    setError(null)
+    try {
+      const { error } = await supabase.from("formatting_templates").delete().eq("id", selectedTemplate.id)
+      if (error) throw new Error(error.message)
+      setSelectedTemplateId(null)
+      await load()
+    } catch (e) {
+      setError(toEditorErrorMessage(e, "Failed to delete template."))
+    } finally {
+      setTemplateBusy(false)
+    }
+  }
+
+  async function applySelectedTemplate() {
+    if (!selectedTemplate) return
+    setApplyTemplateConfirmOpen(false)
+    setTemplateBusy(true)
+    setError(null)
+    try {
+      const { data: existing, error: existingError } = await supabase
+        .from("site_formatting_settings")
+        .select("settings")
+        .eq("id", "default")
+        .maybeSingle()
+      if (existingError) throw new Error(existingError.message)
+
+      const existingSettings = asRecord(existing?.settings)
+      const merged = deepMerge(existingSettings, asRecord(selectedTemplate.settings))
+
+      const { error } = await supabase.from("site_formatting_settings").upsert({
+        id: "default",
+        settings: merged,
+      })
+      if (error) throw new Error(error.message)
+      setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(selectedTemplate.settings)))
+      await load()
+    } catch (e) {
+      setError(toEditorErrorMessage(e, "Failed to apply template."))
+    } finally {
+      setTemplateBusy(false)
+    }
   }
 
   async function createGlobal() {
@@ -242,7 +472,7 @@ export function GlobalSectionsPage() {
       .select("id")
       .single()
 
-    if (error || !data) return setError(error?.message ?? "Create failed")
+    if (error || !data) return setError(toEditorErrorMessage(error, "Create failed"))
 
     const defaults = sectionTypeDefaults[type]
     await supabase.from("global_section_versions").insert({
@@ -259,16 +489,198 @@ export function GlobalSectionsPage() {
   }
 
   async function toggle(row: Row) {
-    await supabase.from("global_sections").update({ enabled: !row.enabled }).eq("id", row.id)
+    setError(null)
+    const { error } = await supabase.from("global_sections").update({ enabled: !row.enabled }).eq("id", row.id)
+    if (error) {
+      setError(toEditorErrorMessage(error, "Failed to update global section."))
+      return
+    }
     await load()
   }
+
+  async function attachGlobalToPages() {
+    if (!attachTarget || !attachPageIds.length) return
+    setAttachLoading(true)
+    setError(null)
+    try {
+      const endpoints = ["/api/global-sections/attach", "/admin/api/global-sections/attach"]
+      let lastError = "Failed to attach global section to pages."
+      let ok = false
+
+      for (const endpoint of endpoints) {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ globalSectionId: attachTarget.id, pageIds: attachPageIds }),
+        })
+
+        const payload = (await res.json().catch(() => ({}))) as {
+          ok?: boolean
+          error?: string
+          inserted?: number
+          skipped?: number
+          failed?: number
+        }
+
+        if (res.ok && payload.ok !== undefined) {
+          ok = true
+          setError(
+            `Attach complete: inserted ${payload.inserted ?? 0}, skipped ${payload.skipped ?? 0}, failed ${payload.failed ?? 0}.`
+          )
+          break
+        }
+
+        if (payload.error) lastError = payload.error
+      }
+
+      if (!ok) {
+        setError(lastError)
+      }
+
+      setAttachTarget(null)
+      setAttachPageIds([])
+      await load()
+    } finally {
+      setAttachLoading(false)
+    }
+  }
+
+  async function removeGlobal() {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setError(null)
+    const { error } = await supabase.from("global_sections").delete().eq("id", deleteTarget.id)
+    if (error) {
+      setError(toEditorErrorMessage(error, "Failed to delete global section."))
+      setDeleteLoading(false)
+      return
+    }
+    setDeleteTarget(null)
+    setDeleteLoading(false)
+    await load()
+  }
+
+  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId) ?? null
 
   useEffect(() => {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    if (!selectedTemplate) {
+      setTemplateName("")
+      setTemplateDescription("")
+      return
+    }
+    setTemplateName(selectedTemplate.name)
+    setTemplateDescription(selectedTemplate.description ?? "")
+  }, [selectedTemplate])
+
+  useEffect(() => {
+    if (!selectedTemplate) return
+    applySettingsToForm(asRecord(selectedTemplate.settings))
+    setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(selectedTemplate.settings)))
+  }, [selectedTemplate])
+
+  useEffect(() => {
+    if (!editGlobalId || autoOpenedEditId === editGlobalId) return
+    const match = rows.find((row) => row.id === editGlobalId)
+    if (!match) return
+    setEditing(match)
+    setEditorOpen(true)
+    setAutoOpenedEditId(editGlobalId)
+  }, [rows, editGlobalId, autoOpenedEditId])
+
   const effectiveFontFamily = fontFamily === "__custom" ? customFontFamily : fontFamily
+
+  function buildCurrentSettingsPayload() {
+    return {
+      fontFamily: effectiveFontFamily.trim() || "Inter, system-ui, sans-serif",
+      fontScale,
+      tokens: {
+        fontFamily: effectiveFontFamily.trim() || "Inter, system-ui, sans-serif",
+        fontScale,
+        spaceScale,
+        spacingScale: spaceScale,
+        radiusScale,
+        shadowScale,
+        innerShadowScale,
+        shadowColor: shadowColor.trim() || null,
+        textColor: textColor.trim() || null,
+        mutedTextColor: mutedTextColor.trim() || null,
+        accentColor: accentColor.trim() || null,
+        backgroundColor: backgroundColor.trim() || null,
+        cardBackgroundColor: cardBackgroundColor.trim() || null,
+      },
+    } satisfies Record<string, unknown>
+  }
+
+  const currentSettingsFingerprint = settingsFingerprint(buildCurrentSettingsPayload())
+  const hasUnsavedCustomizeChanges = Boolean(customizeBaselineFingerprint && currentSettingsFingerprint !== customizeBaselineFingerprint)
+
+  useEffect(() => {
+    if (!hasUnsavedCustomizeChanges) return
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", onBeforeUnload)
+    return () => window.removeEventListener("beforeunload", onBeforeUnload)
+  }, [hasUnsavedCustomizeChanges])
+
+  function applySettingsToForm(settings: Record<string, unknown>) {
+    const next = asRecord(settings)
+    const tokens = asRecord(next.tokens)
+    const tokenFont = String(tokens.fontFamily ?? next.fontFamily ?? "Inter, system-ui, sans-serif")
+    const matchPreset = FONT_STACKS.find((f) => f.value === tokenFont)
+    setFontFamily(matchPreset?.value ?? "__custom")
+    setCustomFontFamily(matchPreset ? "" : tokenFont)
+    setFontScale(parseNum(String(tokens.fontScale ?? next.fontScale ?? 1), 1))
+    setSpaceScale(parseNum(String(tokens.spaceScale ?? tokens.spacingScale ?? 1), 1))
+    setRadiusScale(parseNum(String(tokens.radiusScale ?? 1), 1))
+    setShadowScale(parseNum(String(tokens.shadowScale ?? 1), 1))
+    setInnerShadowScale(parseNum(String(tokens.innerShadowScale ?? 0), 0))
+    setShadowColor(String(tokens.shadowColor ?? ""))
+    setTextColor(String(tokens.textColor ?? ""))
+    setMutedTextColor(String(tokens.mutedTextColor ?? ""))
+    setAccentColor(String(tokens.accentColor ?? ""))
+    setBackgroundColor(String(tokens.backgroundColor ?? ""))
+    setCardBackgroundColor(String(tokens.cardBackgroundColor ?? ""))
+  }
+
+  function renderSectionActions(row: Row) {
+    return (
+      <Menu withinPortal position="bottom-end" shadow="md">
+        <Menu.Target>
+          <ActionIcon variant="default" aria-label={`Actions for ${row.key}`}>
+            <IconDotsVertical size={16} />
+          </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>Actions</Menu.Label>
+          <Menu.Item leftSection={<IconEdit size={14} />} onClick={() => openEditor(row)}>
+            Edit
+          </Menu.Item>
+          <Menu.Item
+            onClick={() => {
+              setAttachTarget(row)
+              setAttachPageIds([])
+            }}
+          >
+            Attach to page(s)…
+          </Menu.Item>
+          <Menu.Item onClick={() => void toggle(row)}>
+            {row.enabled ? "Disable" : "Enable"}
+          </Menu.Item>
+          <Menu.Divider />
+          <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => setDeleteTarget(row)}>
+            Delete…
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    )
+  }
 
   return (
     <Stack gap="md">
@@ -281,7 +693,15 @@ export function GlobalSectionsPage() {
         <Group align="end">
           <TextInput label="Key" placeholder="global-hero" value={key} onChange={(e) => setKey(e.currentTarget.value)} />
           <TextInput label="Label" placeholder="Global Hero" value={label} onChange={(e) => setLabel(e.currentTarget.value)} />
-          <Select label="Type" value={type} onChange={(v) => setType((normalizeSectionType(v ?? "") ?? "hero_cta"))} data={SECTION_TYPES} />
+          <Select
+            label="Type"
+            value={type}
+            onChange={(v) => setType((normalizeSectionType(v ?? "") ?? "hero_cta"))}
+            data={[
+              ...SECTION_TYPES.map((t) => ({ value: t, label: sectionTypeDefaults[t]?.label ?? t })),
+              ...customTypes,
+            ]}
+          />
           <Button onClick={createGlobal}>Create</Button>
         </Group>
         {error ? <Text c="red" size="sm" mt="sm">{error}</Text> : null}
@@ -290,20 +710,123 @@ export function GlobalSectionsPage() {
       <Paper withBorder p="md" radius="md">
         <Stack>
           <Title order={4}>Formatting tokens (site-wide)</Title>
-          <Select label="Font family" value={fontFamily} onChange={(v) => setFontFamily(v ?? FONT_STACKS[0].value)} data={[...FONT_STACKS, { value: "__custom", label: "Custom…" }]} />
-          {fontFamily === "__custom" ? <TextInput label="Custom font stack" value={customFontFamily} onChange={(e) => setCustomFontFamily(e.currentTarget.value)} placeholder="'Your Font', Inter, system-ui, sans-serif" /> : null}
-          <Slider label={(v) => `Font scale ${v.toFixed(2)}x`} min={0.8} max={1.4} step={0.05} value={fontScale} onChange={setFontScale} />
-          <Slider label={(v) => `Space scale ${v.toFixed(2)}x`} min={0.7} max={1.6} step={0.05} value={spaceScale} onChange={setSpaceScale} />
-          <Slider label={(v) => `Radius scale ${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={radiusScale} onChange={setRadiusScale} />
-          <Slider label={(v) => `Shadow scale ${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={shadowScale} onChange={setShadowScale} />
-          <Slider label={(v) => `Inner bevel/glow scale ${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={innerShadowScale} onChange={setInnerShadowScale} />
-          <Group grow>
-            <ColorInput label="Text color" value={textColor} onChange={setTextColor} placeholder="#111827" />
-            <ColorInput label="Accent color" value={accentColor} onChange={setAccentColor} placeholder="#4f46e5" />
-            <ColorInput label="Shadow color" value={shadowColor} onChange={setShadowColor} placeholder="#111827" />
-            <ColorInput label="Background color" value={backgroundColor} onChange={setBackgroundColor} placeholder="#ffffff" />
-            <ColorInput label="Card background color" value={cardBackgroundColor} onChange={setCardBackgroundColor} placeholder="#1f2937" />
-          </Group>
+
+          <Paper withBorder p="sm" radius="md">
+            <Stack gap="sm">
+              <Text fw={600} size="sm">Templates</Text>
+              <Select
+                label="Template"
+                value={selectedTemplateId}
+                onChange={setSelectedTemplateId}
+                data={templates.map((t) => ({ value: t.id, label: `${t.name}${t.is_system ? " (System)" : ""}` }))}
+                placeholder="Select a template"
+                searchable
+              />
+              <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+                <Button variant="default" disabled={!selectedTemplate} loading={templateBusy} onClick={() => setApplyTemplateConfirmOpen(true)}>
+                  Apply template
+                </Button>
+                {!customizeOpen ? (
+                  <Button variant="light" onClick={() => setCustomizeOpen(true)}>
+                    Customize
+                  </Button>
+                ) : (
+                  <ActionIcon variant="default" aria-label="Close customization" onClick={() => setCustomizeOpen(false)}>
+                    ×
+                  </ActionIcon>
+                )}
+              </Group>
+
+              {hasUnsavedCustomizeChanges ? (
+                <Text size="xs" c="yellow">Unsaved customization changes</Text>
+              ) : null}
+
+              {customizeOpen ? (
+                <Stack gap="sm">
+                  <TextInput
+                    label="Selected template name"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.currentTarget.value)}
+                    placeholder="Executive Slate"
+                    disabled={Boolean(selectedTemplate?.is_system)}
+                  />
+                  <TextInput
+                    label="Selected template description (optional)"
+                    value={templateDescription}
+                    onChange={(e) => setTemplateDescription(e.currentTarget.value)}
+                    placeholder="Professional high-contrast dark theme"
+                    disabled={Boolean(selectedTemplate?.is_system)}
+                  />
+                  <TextInput
+                    label="New template name"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.currentTarget.value)}
+                    placeholder="My Professional Theme"
+                  />
+                  <TextInput
+                    label="New template description (optional)"
+                    value={newTemplateDescription}
+                    onChange={(e) => setNewTemplateDescription(e.currentTarget.value)}
+                    placeholder="Saved from current global formatting"
+                  />
+                  <Group gap="xs" wrap="wrap">
+                    <Button variant="light" loading={templateBusy} disabled={!newTemplateName.trim()} onClick={saveTemplateAsNew}>
+                      Save current as template
+                    </Button>
+                    <Button
+                      variant="default"
+                      disabled={!selectedTemplate || selectedTemplate.is_system}
+                      loading={templateBusy}
+                      onClick={updateSelectedTemplate}
+                    >
+                      Update selected template
+                    </Button>
+                    <Button
+                      color="red"
+                      variant="light"
+                      disabled={!selectedTemplate || selectedTemplate.is_system}
+                      loading={templateBusy}
+                      onClick={deleteSelectedTemplate}
+                    >
+                      Delete selected template
+                    </Button>
+                  </Group>
+                  <Text size="xs" c="dimmed">System templates are read-only. User templates are editable.</Text>
+
+                  <Select label="Font family" value={fontFamily} onChange={(v) => setFontFamily(v ?? FONT_STACKS[0].value)} data={[...FONT_STACKS, { value: "__custom", label: "Custom…" }]} />
+                  {fontFamily === "__custom" ? <TextInput label="Custom font stack" value={customFontFamily} onChange={(e) => setCustomFontFamily(e.currentTarget.value)} placeholder="'Your Font', Inter, system-ui, sans-serif" /> : null}
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Font scale ({fontScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0.8} max={1.4} step={0.05} value={fontScale} onChange={setFontScale} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Space scale ({spaceScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0.7} max={1.6} step={0.05} value={spaceScale} onChange={setSpaceScale} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Radius scale ({radiusScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={radiusScale} onChange={setRadiusScale} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Shadow scale ({shadowScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={shadowScale} onChange={setShadowScale} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Inner bevel/glow scale ({innerShadowScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={innerShadowScale} onChange={setInnerShadowScale} />
+                  </Stack>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
+                    <ColorInput label="Text color" value={textColor} onChange={setTextColor} placeholder="#111827" />
+                    <ColorInput label="Muted text color" value={mutedTextColor} onChange={setMutedTextColor} placeholder="#6b7280" />
+                    <ColorInput label="Accent color" value={accentColor} onChange={setAccentColor} placeholder="#4f46e5" />
+                    <ColorInput label="Shadow color" value={shadowColor} onChange={setShadowColor} placeholder="#111827" />
+                    <ColorInput label="Background color" value={backgroundColor} onChange={setBackgroundColor} placeholder="#ffffff" />
+                    <ColorInput label="Card background color" value={cardBackgroundColor} onChange={setCardBackgroundColor} placeholder="#1f2937" />
+                  </div>
+                </Stack>
+              ) : null}
+            </Stack>
+          </Paper>
 
           <Paper withBorder p="sm" radius="md" style={{ fontFamily: effectiveFontFamily || undefined, fontSize: `${fontScale}rem`, color: textColor || undefined, background: backgroundColor || undefined }}>
             <Text fw={600}>Live preview (frontend token mapping)</Text>
@@ -318,9 +841,6 @@ export function GlobalSectionsPage() {
             </Stack>
           </Paper>
 
-          <Group justify="end">
-            <Button variant="default" onClick={saveFormatting}>Save tokens</Button>
-          </Group>
         </Stack>
       </Paper>
 
@@ -328,42 +848,177 @@ export function GlobalSectionsPage() {
         <Stack>
           <Title order={4}>Where used + impact preview</Title>
           {loading ? <Text c="dimmed" size="sm">Loading…</Text> : (
-            <Table striped highlightOnHover>
-              <Table.Thead><Table.Tr><Table.Th>Section</Table.Th><Table.Th>State</Table.Th><Table.Th>Impact</Table.Th><Table.Th>Used on</Table.Th><Table.Th /></Table.Tr></Table.Thead>
-              <Table.Tbody>
+            <>
+              <Stack gap="sm" className="sm:hidden">
                 {rows.map((row) => {
                   const impact = impactByGlobalId[row.id]
                   const usage = usageByGlobalId[row.id] ?? []
                   return (
-                    <Table.Tr key={row.id}>
-                      <Table.Td>
-                        <Group gap="xs"><Badge variant="default">{row.section_type}</Badge><Text fw={600}>{row.key}</Text></Group>
-                        {row.label ? <Text size="xs" c="dimmed">{row.label}</Text> : null}
-                      </Table.Td>
-                      <Table.Td><Badge color={row.lifecycle_state === "published" ? "teal" : row.lifecycle_state === "archived" ? "gray" : "yellow"} variant="light">{row.lifecycle_state ?? "draft"}</Badge></Table.Td>
-                      <Table.Td><Text size="sm">{impact?.enabled_references ?? 0} enabled refs</Text><Text size="xs" c="dimmed">{impact?.distinct_pages ?? 0} pages • {impact?.total_references ?? 0} total refs</Text></Table.Td>
-                      <Table.Td>
-                        <Stack gap={2}>
-                          {usage.slice(0, 3).map((u, idx) => <Text key={`${u.page_slug}-${idx}`} size="xs">/{u.page_slug}{u.section_key ? `#${u.section_key}` : ""}</Text>)}
-                          {usage.length > 3 ? <Text size="xs" c="dimmed">+{usage.length - 3} more</Text> : null}
+                    <Paper key={row.id} withBorder p="sm" radius="md">
+                      <Group justify="space-between" align="start" wrap="nowrap" gap="xs">
+                        <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
+                          <Group gap="xs" wrap="nowrap">
+                            <Badge variant="default">{row.section_type}</Badge>
+                            <Text fw={600} lineClamp={1}>{row.key}</Text>
+                          </Group>
+                          {row.label ? <Text size="xs" c="dimmed" lineClamp={2}>{row.label}</Text> : null}
                         </Stack>
-                      </Table.Td>
-                      <Table.Td>
-                        <Group gap="xs" justify="end">
-                          <Button size="xs" variant="default" onClick={() => openEditor(row)}>Edit</Button>
-                          <Button size="xs" variant={row.enabled ? "default" : "outline"} onClick={() => void toggle(row)}>{row.enabled ? "Disable" : "Enable"}</Button>
-                        </Group>
-                      </Table.Td>
-                    </Table.Tr>
+                        {renderSectionActions(row)}
+                      </Group>
+
+                      <Stack gap={4} mt="sm">
+                        <Text size="xs">
+                          State: <Badge size="xs" color={row.lifecycle_state === "published" ? "teal" : row.lifecycle_state === "archived" ? "gray" : "yellow"} variant="light">{row.lifecycle_state ?? "draft"}</Badge>
+                        </Text>
+                        <Text size="xs">{impact?.enabled_references ?? 0} enabled refs</Text>
+                        <Text size="xs" c="dimmed">{impact?.distinct_pages ?? 0} pages • {impact?.total_references ?? 0} total refs</Text>
+                        <Stack gap={2}>
+                          {usage.slice(0, 2).map((u, idx) => <Text key={`${u.page_slug}-${idx}`} size="xs">/{u.page_slug}{u.section_key ? `#${u.section_key}` : ""}</Text>)}
+                          {usage.length > 2 ? <Text size="xs" c="dimmed">+{usage.length - 2} more</Text> : null}
+                        </Stack>
+                      </Stack>
+                    </Paper>
                   )
                 })}
-              </Table.Tbody>
-            </Table>
+              </Stack>
+
+              <div className="hidden sm:block">
+                <Table striped highlightOnHover>
+                  <Table.Thead><Table.Tr><Table.Th>Section</Table.Th><Table.Th>State</Table.Th><Table.Th>Impact</Table.Th><Table.Th>Used on</Table.Th><Table.Th /></Table.Tr></Table.Thead>
+                  <Table.Tbody>
+                    {rows.map((row) => {
+                      const impact = impactByGlobalId[row.id]
+                      const usage = usageByGlobalId[row.id] ?? []
+                      return (
+                        <Table.Tr key={row.id}>
+                          <Table.Td>
+                            <Group gap="xs"><Badge variant="default">{row.section_type}</Badge><Text fw={600}>{row.key}</Text></Group>
+                            {row.label ? <Text size="xs" c="dimmed">{row.label}</Text> : null}
+                          </Table.Td>
+                          <Table.Td><Badge color={row.lifecycle_state === "published" ? "teal" : row.lifecycle_state === "archived" ? "gray" : "yellow"} variant="light">{row.lifecycle_state ?? "draft"}</Badge></Table.Td>
+                          <Table.Td><Text size="sm">{impact?.enabled_references ?? 0} enabled refs</Text><Text size="xs" c="dimmed">{impact?.distinct_pages ?? 0} pages • {impact?.total_references ?? 0} total refs</Text></Table.Td>
+                          <Table.Td>
+                            <Stack gap={2}>
+                              {usage.slice(0, 3).map((u, idx) => <Text key={`${u.page_slug}-${idx}`} size="xs">/{u.page_slug}{u.section_key ? `#${u.section_key}` : ""}</Text>)}
+                              {usage.length > 3 ? <Text size="xs" c="dimmed">+{usage.length - 3} more</Text> : null}
+                            </Stack>
+                          </Table.Td>
+                          <Table.Td>
+                            <Group gap="xs" justify="end">
+                              {renderSectionActions(row)}
+                            </Group>
+                          </Table.Td>
+                        </Table.Tr>
+                      )
+                    })}
+                  </Table.Tbody>
+                </Table>
+              </div>
+            </>
           )}
           <Divider />
           <Text size="xs" c="dimmed">Global editor supports draft → publish flow with version rollback.</Text>
         </Stack>
       </Paper>
+
+      <Modal
+        opened={applyTemplateConfirmOpen}
+        onClose={() => (templateBusy ? null : setApplyTemplateConfirmOpen(false))}
+        title="Apply template to global settings?"
+        centered
+      >
+        <Stack gap="sm">
+          <Text size="sm">
+            This will overwrite current site-wide formatting tokens with the selected template.
+          </Text>
+          {selectedTemplate ? (
+            <Paper withBorder p="sm" radius="md">
+              <Text fw={600} size="sm">{selectedTemplate.name}</Text>
+              {selectedTemplate.description ? <Text size="xs" c="dimmed">{selectedTemplate.description}</Text> : null}
+            </Paper>
+          ) : null}
+          <Group justify="end">
+            <Button variant="default" disabled={templateBusy} onClick={() => setApplyTemplateConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button loading={templateBusy} disabled={!selectedTemplate} onClick={applySelectedTemplate}>
+              Confirm apply
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={Boolean(attachTarget)}
+        onClose={() => (attachLoading ? null : setAttachTarget(null))}
+        title="Attach global section to page(s)"
+        centered
+      >
+        <Stack gap="sm">
+          <Text size="sm">
+            Attaching creates a page section reference with page-specific ordering and global single-source content.
+          </Text>
+          {attachTarget ? (
+            <Paper withBorder p="sm" radius="md">
+              <Group gap="xs" wrap="wrap">
+                <Badge variant="default">{attachTarget.section_type}</Badge>
+                <Text fw={600} size="sm">{attachTarget.key}</Text>
+              </Group>
+            </Paper>
+          ) : null}
+          <MultiSelect
+            label="Pages"
+            placeholder="Select one or more pages"
+            searchable
+            value={attachPageIds}
+            onChange={setAttachPageIds}
+            data={pages.map((p) => ({ value: p.id, label: `${p.title} (${p.slug})` }))}
+          />
+          <Group justify="end">
+            <Button variant="default" disabled={attachLoading} onClick={() => setAttachTarget(null)}>
+              Cancel
+            </Button>
+            <Button loading={attachLoading} disabled={!attachPageIds.length} onClick={() => void attachGlobalToPages()}>
+              Attach
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={Boolean(deleteTarget)}
+        onClose={() => (deleteLoading ? null : setDeleteTarget(null))}
+        title="Delete global section?"
+        centered
+      >
+        <Stack gap="sm">
+          <Text size="sm">
+            This deletes the global section and its versions. Linked page sections must be detached first.
+          </Text>
+          {deleteTarget ? (
+            <Paper withBorder p="sm" radius="md">
+              <Stack gap={4}>
+                <Group gap="xs">
+                  <Badge variant="default">{deleteTarget.section_type}</Badge>
+                  <Text size="sm" fw={600}>{deleteTarget.key}</Text>
+                </Group>
+                {deleteTarget.label ? <Text size="xs" c="dimmed">{deleteTarget.label}</Text> : null}
+                <Text size="xs" c="dimmed">
+                  Impact: {impactByGlobalId[deleteTarget.id]?.enabled_references ?? 0} enabled refs • {impactByGlobalId[deleteTarget.id]?.distinct_pages ?? 0} pages
+                </Text>
+              </Stack>
+            </Paper>
+          ) : null}
+          <Group justify="end">
+            <Button variant="default" onClick={() => setDeleteTarget(null)} disabled={deleteLoading}>
+              Cancel
+            </Button>
+            <Button color="red" onClick={() => void removeGlobal()} loading={deleteLoading}>
+              Delete
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
 
       <SectionEditorDrawer
         opened={editorOpen}
