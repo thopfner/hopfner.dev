@@ -6,6 +6,7 @@ import {
   listBlogTags,
   listPublishedBlogPosts,
 } from "@/lib/blog/get-published-posts"
+import { BlogFilterBar } from "@/components/blog/blog-filter-bar"
 
 export const dynamic = "force-dynamic"
 
@@ -19,14 +20,6 @@ type SearchParams = {
   q?: string
   tag?: string | string[]
   category?: string | string[]
-}
-
-type PrimaryFilterRowProps = {
-  q: string
-  selectedTags: string[]
-  selectedCategories: string[]
-  tags: Array<{ id: string; slug: string; name: string }>
-  categories: Array<{ id: string; slug: string; name: string }>
 }
 
 type ActiveFilterChipsProps = {
@@ -76,75 +69,6 @@ function buildBlogHref(params: {
 
   const query = search.toString()
   return query ? `/blog?${query}` : "/blog"
-}
-
-function PrimaryFilterRow({ q, selectedTags, selectedCategories, tags, categories }: PrimaryFilterRowProps) {
-  return (
-    <form action="/blog" method="get" className="grid grid-cols-1 gap-2 md:grid-cols-12">
-      <label className="space-y-0.5 text-sm md:col-span-4">
-        <span className="text-foreground/70">Search</span>
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Search title, excerpt, body"
-          className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
-        />
-      </label>
-
-      <label className="space-y-0.5 text-sm md:col-span-2">
-        <span className="text-foreground/70">Tags (multi)</span>
-        <select
-          name="tag"
-          defaultValue={selectedTags}
-          multiple
-          className="min-h-9 w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
-        >
-          {tags.map((item) => (
-            <option key={item.id} value={item.slug}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="space-y-0.5 text-sm md:col-span-2">
-        <span className="text-foreground/70">Categories (multi)</span>
-        <select
-          name="category"
-          defaultValue={selectedCategories}
-          multiple
-          className="min-h-9 w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
-        >
-          {categories.map((item) => (
-            <option key={item.id} value={item.slug}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="space-y-0.5 text-sm md:col-span-2">
-        <span className="invisible">Apply</span>
-        <button
-          type="submit"
-          className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
-        >
-          Apply
-        </button>
-      </div>
-
-      <div className="space-y-0.5 text-sm md:col-span-2">
-        <span className="invisible">Reset</span>
-        <Link
-          href="/blog"
-          className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-border px-4 text-sm text-foreground/80 transition-colors hover:bg-card"
-        >
-          Reset
-        </Link>
-      </div>
-    </form>
-  )
 }
 
 function ActiveFilterChips({ q, selectedTags, selectedCategories, tagNameBySlug, categoryNameBySlug }: ActiveFilterChipsProps) {
@@ -242,7 +166,7 @@ export default async function BlogIndexPage({
       </header>
 
       <section className="mb-8 rounded-2xl border border-border bg-card/30 p-3 sm:p-4">
-        <PrimaryFilterRow
+        <BlogFilterBar
           q={q}
           selectedTags={selectedTags}
           selectedCategories={selectedCategories}
