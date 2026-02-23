@@ -1,4 +1,4 @@
-export type CmsSectionType =
+export type BuiltinCmsSectionType =
   | "nav_links"
   | "hero_cta"
   | "card_grid"
@@ -10,8 +10,10 @@ export type CmsSectionType =
   | "cta_block"
   | "footer_grid"
 
+export type CmsSectionType = BuiltinCmsSectionType | string
+
 export type CmsSectionTypeDefault = {
-  section_type: CmsSectionType
+  section_type: string
   label: string
   description: string | null
   default_title: string | null
@@ -26,7 +28,7 @@ export type CmsSectionTypeDefault = {
   capabilities: Record<string, unknown>
 }
 
-export type CmsSectionTypeDefaultsMap = Record<CmsSectionType, CmsSectionTypeDefault>
+export type CmsSectionTypeDefaultsMap = Record<string, CmsSectionTypeDefault>
 
 export function normalizeSectionType(raw: string): CmsSectionType | null {
   switch (raw) {
@@ -60,7 +62,7 @@ export function normalizeSectionType(raw: string): CmsSectionType | null {
     case "final_cta":
       return "cta_block"
     default:
-      return null
+      return raw?.trim() ? raw.trim() : null
   }
 }
 
@@ -68,6 +70,7 @@ export type CmsPage = {
   id: string
   slug: string
   title: string
+  bg_image_url?: string | null
   formatting_override?: Record<string, unknown>
 }
 
@@ -117,6 +120,7 @@ export type SiteFormattingSettings = {
     innerShadowScale?: number
     shadowColor?: string
     textColor?: string
+    mutedTextColor?: string
     accentColor?: string
     backgroundColor?: string
     cardBackgroundColor?: string

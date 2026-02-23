@@ -1,16 +1,24 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ActionIcon,
   Badge,
   Box,
   Button,
+  Checkbox,
+  ColorInput,
   Drawer,
   Group,
+  Loader,
+  Menu,
   Modal,
   Paper,
+  Popover,
+  ScrollArea,
+  SegmentedControl,
   Select,
+  Slider,
   SimpleGrid,
   Stack,
   Table,
@@ -19,13 +27,29 @@ import {
   Textarea,
   Title,
 } from "@mantine/core"
-import { IconPhoto, IconPlus, IconRestore, IconUpload, IconX } from "@tabler/icons-react"
+import {
+  IconAdjustmentsHorizontal,
+  IconChevronDown,
+  IconChevronLeft,
+  IconExternalLink,
+  IconHash,
+  IconLink as IconLinkIcon,
+  IconPlus,
+  IconRestore,
+  IconTrash,
+  IconX,
+} from "@tabler/icons-react"
 import { RichTextEditor } from "@mantine/tiptap"
 import Link from "@tiptap/extension-link"
 import Image from "@tiptap/extension-image"
 import StarterKit from "@tiptap/starter-kit"
 import { useEditor } from "@tiptap/react"
 
+import { uploadMedia } from "@/lib/media/upload"
+import type { MediaItem } from "@/lib/media/types"
+import { ImageFieldPicker } from "@/components/image-field-picker"
+import { MediaLibraryModal } from "@/components/media-library-modal"
+import { MediaPickerMenu } from "@/components/media-picker-menu"
 import { createClient } from "@/lib/supabase/browser"
 
 type CmsSectionType =
@@ -88,6 +112,11 @@ type FormattingState = {
   paddingY: "" | "py-4" | "py-6" | "py-8" | "py-10" | "py-12"
   maxWidth: "" | "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl"
   textAlign: "" | "left" | "center"
+  heroImageOverlayColor: string
+  heroImageOverlayOpacity: number
+  heroBlendStrength: number
+  trustLineFontSizePx: number
+  trustLineColor: string
   mobile?: {
     containerClass: string
     sectionClass: string
@@ -101,7 +130,34 @@ const DEFAULT_FORMATTING: FormattingState = {
   paddingY: "py-6",
   maxWidth: "max-w-5xl",
   textAlign: "left",
+  heroImageOverlayColor: "",
+  heroImageOverlayOpacity: 0,
+  heroBlendStrength: 0.72,
+  trustLineFontSizePx: 12,
+  trustLineColor: "",
 }
+
+type CardDisplayState = {
+  showTitle: boolean
+  showText: boolean
+  showImage: boolean
+  showYouGet: boolean
+  showBestFor: boolean
+  youGetMode: "block" | "list"
+  bestForMode: "block" | "list"
+}
+
+const DEFAULT_CARD_DISPLAY: CardDisplayState = {
+  showTitle: true,
+  showText: true,
+  showImage: false,
+  showYouGet: false,
+  showBestFor: false,
+  youGetMode: "block",
+  bestForMode: "block",
+}
+
+const DEFAULT_CARD_IMAGE_WIDTH = 240
 
 function asString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback
@@ -115,6 +171,61 @@ function asRecord(v: unknown): Record<string, unknown> {
 
 function asArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : []
+}
+
+function asStringArray(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((item): item is string => typeof item === "string") : []
+}
+
+function inputValueFromEvent(e: unknown): string {
+  if (
+    e &&
+    typeof e === "object" &&
+    "currentTarget" in e &&
+    (e as { currentTarget?: { value?: unknown } }).currentTarget &&
+    typeof (e as { currentTarget?: { value?: unknown } }).currentTarget?.value === "string"
+  ) {
+    return (e as { currentTarget: { value: string } }).currentTarget.value
+  }
+  return ""
+}
+
+function toCardDisplay(v: unknown): CardDisplayState {
+  const r = asRecord(v)
+  const defaults = DEFAULT_CARD_DISPLAY
+  return {
+    showTitle: typeof r.showTitle === "boolean" ? r.showTitle : defaults.showTitle,
+    showText: typeof r.showText === "boolean" ? r.showText : defaults.showText,
+    showImage: typeof r.showImage === "boolean" ? r.showImage : defaults.showImage,
+    showYouGet: typeof r.showYouGet === "boolean" ? r.showYouGet : defaults.showYouGet,
+    showBestFor: typeof r.showBestFor === "boolean" ? r.showBestFor : defaults.showBestFor,
+    youGetMode: r.youGetMode === "list" ? "list" : defaults.youGetMode,
+    bestForMode: r.bestForMode === "list" ? "list" : defaults.bestForMode,
+  }
+}
+
+function emptyRichTextDoc(): Record<string, unknown> {
+  return { type: "doc", content: [] }
+}
+
+function plainTextToRichTextDoc(text: string): Record<string, unknown> {
+  const trimmed = text.trim()
+  if (!trimmed) return emptyRichTextDoc()
+  return {
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: trimmed }],
+      },
+    ],
+  }
+}
+
+function richTextWithFallback(rich: unknown, fallbackText: unknown): Record<string, unknown> {
+  const richRecord = asRecord(rich)
+  if (Object.keys(richRecord).length > 0) return richRecord
+  return plainTextToRichTextDoc(asString(fallbackText))
 }
 
 function normalizeSectionType(raw: string): CmsSectionType | null {
@@ -156,6 +267,352 @@ function formatType(type: CmsSectionType, defaults?: SectionTypeDefaultsMap) {
   return defaults?.[type]?.label ?? type.replaceAll("_", " ")
 }
 
+type CmsPageRow = { id: string; slug: string; title: string }
+
+type ParsedLinkTarget =
+  | { kind: "this_page_anchor"; anchor: string }
+  | { kind: "page"; pageSlug: string }
+  | { kind: "page_anchor"; pageSlug: string; anchor: string }
+  | { kind: "custom"; href: string }
+
+function pageSlugToPath(slug: string): string {
+  return `/${slug}`
+}
+
+function parseHref(rawHref: string): ParsedLinkTarget {
+  const href = (rawHref ?? "").trim()
+  if (!href) return { kind: "custom", href: "" }
+
+  if (href.startsWith("#")) {
+    const anchor = href.slice(1).trim()
+    return anchor ? { kind: "this_page_anchor", anchor } : { kind: "custom", href }
+  }
+
+  if (href.startsWith("/")) {
+    const [pathPart, hashPart] = href.split("#", 2)
+    const slug = (pathPart ?? "").slice(1).trim()
+    if (slug && !slug.includes("/")) {
+      const anchor = (hashPart ?? "").trim()
+      return anchor
+        ? { kind: "page_anchor", pageSlug: slug, anchor }
+        : { kind: "page", pageSlug: slug }
+    }
+  }
+
+  return { kind: "custom", href }
+}
+
+function buildHref(target: ParsedLinkTarget): string {
+  switch (target.kind) {
+    case "this_page_anchor":
+      return `#${target.anchor}`
+    case "page":
+      return pageSlugToPath(target.pageSlug)
+    case "page_anchor":
+      return `${pageSlugToPath(target.pageSlug)}#${target.anchor}`
+    case "custom":
+      return target.href
+  }
+}
+
+type LinkMenuScreen =
+  | "root"
+  | "this_page"
+  | "pages"
+  | "page_actions"
+  | "page_sections"
+  | "custom"
+
+function LinkMenuField({
+  label,
+  value,
+  onChange,
+  currentPageId,
+  pages,
+  pagesLoading,
+  anchorsByPageId,
+  anchorsLoadingByPageId,
+  ensurePagesLoaded,
+  ensureAnchorsLoaded,
+}: {
+  label: string
+  value: string
+  onChange: (nextHref: string) => void
+  currentPageId: string
+  pages: CmsPageRow[]
+  pagesLoading: boolean
+  anchorsByPageId: Record<string, string[]>
+  anchorsLoadingByPageId: Record<string, boolean>
+  ensurePagesLoaded: () => Promise<void>
+  ensureAnchorsLoaded: (pageId: string) => Promise<void>
+}) {
+  const [opened, setOpened] = useState(false)
+  const [screen, setScreen] = useState<LinkMenuScreen>("root")
+  const [selectedPageId, setSelectedPageId] = useState("")
+  const [customDraft, setCustomDraft] = useState("")
+
+  const parsed = useMemo(() => parseHref(value), [value])
+  const selectedPage = pages.find((p) => p.id === selectedPageId) ?? null
+
+  const thisPageAnchors = anchorsByPageId[currentPageId] ?? []
+  const thisPageAnchorsLoading = anchorsLoadingByPageId[currentPageId] ?? false
+  const selectedPageAnchors = selectedPageId ? anchorsByPageId[selectedPageId] ?? [] : []
+  const selectedPageAnchorsLoading = selectedPageId ? anchorsLoadingByPageId[selectedPageId] ?? false : false
+
+  function reset() {
+    setScreen("root")
+    setSelectedPageId("")
+    setCustomDraft("")
+  }
+
+  function closeMenu() {
+    setOpened(false)
+    reset()
+  }
+
+  function setHref(nextHref: string) {
+    if (nextHref !== value) onChange(nextHref)
+    closeMenu()
+  }
+
+  function enterThisPage() {
+    setScreen("this_page")
+    void ensureAnchorsLoaded(currentPageId)
+  }
+
+  function enterPages() {
+    setScreen("pages")
+    void ensurePagesLoaded()
+  }
+
+  function enterCustom() {
+    setScreen("custom")
+    setCustomDraft(parsed.kind === "custom" ? parsed.href : "")
+  }
+
+  return (
+    <Menu
+      withinPortal={false}
+      position="bottom-start"
+      shadow="md"
+      width={340}
+      opened={opened}
+      onChange={(nextOpened) => {
+        setOpened(nextOpened)
+        if (nextOpened) {
+          void ensurePagesLoaded()
+        } else {
+          reset()
+        }
+      }}
+    >
+      <Menu.Target>
+        <TextInput
+          label={label}
+          value={value}
+          readOnly
+          placeholder="Choose link..."
+          rightSection={<IconChevronDown size={16} />}
+          rightSectionPointerEvents="none"
+        />
+      </Menu.Target>
+
+      <Menu.Dropdown>
+        {screen === "root" ? (
+          <>
+            <Menu.Label>Choose Link</Menu.Label>
+            <Menu.Item leftSection={<IconHash size={16} />} closeMenuOnClick={false} onClick={enterThisPage}>
+              This page
+            </Menu.Item>
+            <Menu.Item leftSection={<IconLinkIcon size={16} />} closeMenuOnClick={false} onClick={enterPages}>
+              Another page
+            </Menu.Item>
+            <Menu.Divider />
+            <Menu.Item leftSection={<IconExternalLink size={16} />} closeMenuOnClick={false} onClick={enterCustom}>
+              Custom URL...
+            </Menu.Item>
+            <Menu.Item c="dimmed" closeMenuOnClick={false} onClick={() => setHref("")}>
+              Clear link
+            </Menu.Item>
+          </>
+        ) : null}
+
+        {screen === "this_page" ? (
+          <>
+            <Menu.Item leftSection={<IconChevronLeft size={16} />} closeMenuOnClick={false} onClick={() => setScreen("root")}>
+              Back
+            </Menu.Item>
+            <Menu.Label>This page sections</Menu.Label>
+            {thisPageAnchorsLoading ? (
+              <Menu.Item closeMenuOnClick={false} disabled leftSection={<Loader size="xs" />}>
+                Loading...
+              </Menu.Item>
+            ) : thisPageAnchors.length ? (
+              <Box style={{ maxHeight: 260, overflowY: "auto" }}>
+                {thisPageAnchors.map((k) => (
+                  <Menu.Item key={k} onClick={() => setHref(buildHref({ kind: "this_page_anchor", anchor: k }))}>
+                    #{k}
+                  </Menu.Item>
+                ))}
+              </Box>
+            ) : (
+              <Menu.Item closeMenuOnClick={false} disabled>
+                No keyed sections on this page
+              </Menu.Item>
+            )}
+          </>
+        ) : null}
+
+        {screen === "pages" ? (
+          <>
+            <Menu.Item leftSection={<IconChevronLeft size={16} />} closeMenuOnClick={false} onClick={() => setScreen("root")}>
+              Back
+            </Menu.Item>
+            <Menu.Label>Pages</Menu.Label>
+            {pagesLoading ? (
+              <Menu.Item closeMenuOnClick={false} disabled leftSection={<Loader size="xs" />}>
+                Loading...
+              </Menu.Item>
+            ) : pages.length ? (
+              <Box style={{ maxHeight: 260, overflowY: "auto" }}>
+                {pages.map((p) => (
+                  <Menu.Item
+                    key={p.id}
+                    closeMenuOnClick={false}
+                    onClick={() => {
+                      setSelectedPageId(p.id)
+                      setScreen("page_actions")
+                    }}
+                  >
+                    {p.title} ({p.slug})
+                  </Menu.Item>
+                ))}
+              </Box>
+            ) : (
+              <Menu.Item closeMenuOnClick={false} disabled>
+                No pages found
+              </Menu.Item>
+            )}
+          </>
+        ) : null}
+
+        {screen === "page_actions" ? (
+          <>
+            <Menu.Item leftSection={<IconChevronLeft size={16} />} closeMenuOnClick={false} onClick={() => setScreen("pages")}>
+              Back
+            </Menu.Item>
+            <Menu.Label>
+              {selectedPage ? `${selectedPage.title} (${selectedPage.slug})` : "Page"}
+            </Menu.Label>
+            <Menu.Item
+              disabled={!selectedPage}
+              onClick={() => {
+                if (!selectedPage) return
+                setHref(buildHref({ kind: "page", pageSlug: selectedPage.slug }))
+              }}
+            >
+              Top of page
+            </Menu.Item>
+            <Menu.Item
+              disabled={!selectedPage}
+              closeMenuOnClick={false}
+              onClick={() => {
+                if (!selectedPage) return
+                setScreen("page_sections")
+                void ensureAnchorsLoaded(selectedPage.id)
+              }}
+            >
+              Section on this page
+            </Menu.Item>
+          </>
+        ) : null}
+
+        {screen === "page_sections" ? (
+          <>
+            <Menu.Item leftSection={<IconChevronLeft size={16} />} closeMenuOnClick={false} onClick={() => setScreen("page_actions")}>
+              Back
+            </Menu.Item>
+            <Menu.Label>Sections</Menu.Label>
+            {!selectedPage ? (
+              <Menu.Item closeMenuOnClick={false} disabled>
+                Pick a page first
+              </Menu.Item>
+            ) : selectedPageAnchorsLoading ? (
+              <Menu.Item closeMenuOnClick={false} disabled leftSection={<Loader size="xs" />}>
+                Loading...
+              </Menu.Item>
+            ) : selectedPageAnchors.length ? (
+              <Box style={{ maxHeight: 260, overflowY: "auto" }}>
+                {selectedPageAnchors.map((k) => (
+                  <Menu.Item
+                    key={k}
+                    onClick={() => {
+                      if (!selectedPage) return
+                      setHref(buildHref({ kind: "page_anchor", pageSlug: selectedPage.slug, anchor: k }))
+                    }}
+                  >
+                    #{k}
+                  </Menu.Item>
+                ))}
+              </Box>
+            ) : (
+              <Menu.Item closeMenuOnClick={false} disabled>
+                No keyed sections on this page
+              </Menu.Item>
+            )}
+          </>
+        ) : null}
+
+        {screen === "custom" ? (
+          <Box p="sm">
+            <Group justify="space-between" mb="xs">
+              <Button
+                variant="subtle"
+                size="xs"
+                leftSection={<IconChevronLeft size={14} />}
+                onClick={() => setScreen("root")}
+              >
+                Back
+              </Button>
+              <Text size="xs" c="dimmed">
+                Custom URL
+              </Text>
+            </Group>
+            <TextInput
+              label="Link"
+              value={customDraft}
+              onChange={(e) => setCustomDraft(e.currentTarget.value)}
+              placeholder="https://... or mailto:... or /about#pricing"
+              mb="xs"
+            />
+            <Group justify="space-between">
+              <Group gap="xs">
+                <Button
+                  size="xs"
+                  variant="default"
+                  onClick={() => setCustomDraft((v) => (v.startsWith("mailto:") ? v : `mailto:${v}`))}
+                >
+                  mailto:
+                </Button>
+                <Button
+                  size="xs"
+                  variant="default"
+                  onClick={() => setCustomDraft((v) => (v.startsWith("tel:") ? v : `tel:${v}`))}
+                >
+                  tel:
+                </Button>
+              </Group>
+              <Button size="xs" onClick={() => setHref(customDraft.trim())}>
+                Apply
+              </Button>
+            </Group>
+          </Box>
+        ) : null}
+      </Menu.Dropdown>
+    </Menu>
+  )
+}
+
 async function getImageSize(file: File): Promise<{ width?: number; height?: number }> {
   if (!file.type.startsWith("image/")) return {}
   const url = URL.createObjectURL(file)
@@ -173,18 +630,11 @@ async function getImageSize(file: File): Promise<{ width?: number; height?: numb
 
 async function uploadToCmsMedia(file: File) {
   const supabase = createClient()
-  const bucket = "cms-media"
-  const safeName = file.name.replaceAll(/[^a-zA-Z0-9._-]/g, "_")
-  const path = `uploads/${Date.now()}-${safeName}`
-
-  const { error: uploadError } = await supabase.storage
-    .from(bucket)
-    .upload(path, file, { contentType: file.type, upsert: false })
-
-  if (uploadError) throw new Error(uploadError.message)
-
-  const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(path)
-  const publicUrl = publicUrlData.publicUrl
+  const { bucket, path, url } = await uploadMedia(file)
+  const publicUrl = url ?? ""
+  if (!publicUrl) {
+    throw new Error("Upload succeeded but no public URL was returned.")
+  }
 
   const { width, height } = await getImageSize(file)
 
@@ -217,12 +667,26 @@ function validateClassTokens(input: string, allowed: Set<string>) {
 
 function normalizeFormatting(raw: Record<string, unknown>): FormattingState {
   const mobile = asRecord(raw.mobile)
+  const rawHeroImageOverlayOpacity = Number(raw.heroImageOverlayOpacity)
+  const rawHeroBlendStrength = Number(raw.heroBlendStrength)
+  const rawTrustLineFontSizePx = Number(raw.trustLineFontSizePx)
   const out: FormattingState = {
     containerClass: asString(raw.containerClass),
     sectionClass: asString(raw.sectionClass),
     paddingY: (asString(raw.paddingY) as FormattingState["paddingY"]) || "",
     maxWidth: (asString(raw.maxWidth) as FormattingState["maxWidth"]) || "",
     textAlign: (asString(raw.textAlign) as FormattingState["textAlign"]) || "",
+    heroImageOverlayColor: asString(raw.heroImageOverlayColor),
+    heroImageOverlayOpacity: Number.isFinite(rawHeroImageOverlayOpacity)
+      ? Math.min(1, Math.max(0, rawHeroImageOverlayOpacity))
+      : 0,
+    heroBlendStrength: Number.isFinite(rawHeroBlendStrength)
+      ? Math.min(1, Math.max(0, rawHeroBlendStrength))
+      : 0.72,
+    trustLineFontSizePx: Number.isFinite(rawTrustLineFontSizePx)
+      ? Math.min(28, Math.max(10, Math.round(rawTrustLineFontSizePx)))
+      : 12,
+    trustLineColor: asString(raw.trustLineColor),
   }
   const hasMobile =
     typeof mobile.containerClass === "string" ||
@@ -247,6 +711,11 @@ function formattingToJsonb(state: FormattingState) {
     paddingY: state.paddingY,
     maxWidth: state.maxWidth,
     textAlign: state.textAlign,
+    heroImageOverlayColor: state.heroImageOverlayColor.trim(),
+    heroImageOverlayOpacity: state.heroImageOverlayOpacity,
+    heroBlendStrength: Math.min(1, Math.max(0, state.heroBlendStrength)),
+    trustLineFontSizePx: Math.min(28, Math.max(10, Math.round(state.trustLineFontSizePx))),
+    trustLineColor: state.trustLineColor.trim(),
   }
   if (state.mobile) {
     base.mobile = {
@@ -377,12 +846,14 @@ function TipTapJsonEditor({
   label,
   value,
   onChange,
+  onError,
 }: {
   label: string
   value: Record<string, unknown>
   onChange: (next: Record<string, unknown>) => void
+  onError?: (message: string) => void
 }) {
-  const fileRef = useRef<HTMLInputElement | null>(null)
+  const [libraryOpen, setLibraryOpen] = useState(false)
 
   const editor = useEditor({
     // Next.js renders Client Components on the server too; TipTap requires this to avoid hydration mismatches.
@@ -404,6 +875,12 @@ function TipTapJsonEditor({
     editor.chain().focus().setImage({ src: publicUrl }).run()
   }
 
+  function onPickFromLibrary(item: MediaItem) {
+    if (!editor) return
+    editor.chain().focus().setImage({ src: item.url }).run()
+    setLibraryOpen(false)
+  }
+
   return (
     <Stack gap={6}>
       <Group justify="space-between">
@@ -411,26 +888,14 @@ function TipTapJsonEditor({
           {label}
         </Text>
         <Group gap="xs">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={async (e) => {
-              const file = e.currentTarget.files?.[0]
-              e.currentTarget.value = ""
-              if (!file) return
-              await onPickImage(file)
-            }}
+          <MediaPickerMenu
+            iconTarget
+            label="Insert image"
+            withinPortal={false}
+            onUploadFile={onPickImage}
+            onChooseFromLibrary={() => setLibraryOpen(true)}
+            onError={onError}
           />
-          <ActionIcon
-            variant="default"
-            size="sm"
-            aria-label="Insert image"
-            onClick={() => fileRef.current?.click()}
-          >
-            <IconPhoto size={16} />
-          </ActionIcon>
         </Group>
       </Group>
 
@@ -460,6 +925,12 @@ function TipTapJsonEditor({
 
         <RichTextEditor.Content />
       </RichTextEditor>
+
+      <MediaLibraryModal
+        opened={libraryOpen}
+        onClose={() => setLibraryOpen(false)}
+        onSelect={onPickFromLibrary}
+      />
     </Stack>
   )
 }
@@ -560,7 +1031,20 @@ export function SectionEditorDrawer({
   // Content state (varies by section_type)
   const [content, setContent] = useState<Record<string, unknown>>({})
 
-  const [uploadOpen, setUploadOpen] = useState(false)
+  const [deleteDraftOpen, setDeleteDraftOpen] = useState(false)
+  const [deleteDraftLoading, setDeleteDraftLoading] = useState(false)
+  const [backgroundLibraryOpen, setBackgroundLibraryOpen] = useState(false)
+  const [navLogoLibraryOpen, setNavLogoLibraryOpen] = useState(false)
+  const [cardImageLibraryTarget, setCardImageLibraryTarget] = useState<number | null>(null)
+
+  const [pages, setPages] = useState<CmsPageRow[]>([])
+  const [pagesLoading, setPagesLoading] = useState(false)
+  const [anchorsByPageId, setAnchorsByPageId] = useState<Record<string, string[]>>({})
+  const [anchorsLoadingByPageId, setAnchorsLoadingByPageId] = useState<Record<string, boolean>>({})
+  const anchorsCacheRef = useRef<Record<string, string[]>>({})
+  const anchorsPromiseRef = useRef<Partial<Record<string, Promise<void>>>>({})
+  const pagesLoadedRef = useRef(false)
+  const pagesPromiseRef = useRef<Promise<void> | null>(null)
 
   const normalizedType = section ? normalizeSectionType(section.section_type) : null
   const defaults = normalizedType ? typeDefaults?.[normalizedType] : undefined
@@ -582,6 +1066,73 @@ export function SectionEditorDrawer({
   }
 
   const isDirty = baseSnapshot ? stableStringify(formPayload) !== stableStringify(baseSnapshot) : false
+
+  const ensureAnchorsLoaded = useCallback(
+    async (pageId: string) => {
+      const pid = (pageId ?? "").trim()
+      if (!pid) return
+      if (anchorsCacheRef.current[pid]) return
+      if (anchorsPromiseRef.current[pid]) {
+        await anchorsPromiseRef.current[pid]
+        return
+      }
+
+      setAnchorsLoadingByPageId((prev) => ({ ...prev, [pid]: true }))
+      const p = (async () => {
+        try {
+          const { data, error } = await supabase
+            .from("sections")
+            .select("key, position")
+            .eq("page_id", pid)
+            .not("key", "is", null)
+            .order("position", { ascending: true })
+
+          if (error) throw new Error(error.message)
+
+          const keys = ((data ?? []) as Array<{ key: string | null }>)
+            .map((r) => String(r.key ?? ""))
+            .filter(Boolean)
+          anchorsCacheRef.current[pid] = keys
+          setAnchorsByPageId((prev) => ({ ...prev, [pid]: keys }))
+        } finally {
+          setAnchorsLoadingByPageId((prev) => ({ ...prev, [pid]: false }))
+          delete anchorsPromiseRef.current[pid]
+        }
+      })()
+
+      anchorsPromiseRef.current[pid] = p
+      await p
+    },
+    [supabase]
+  )
+
+  const ensurePagesLoaded = useCallback(async () => {
+    if (pagesLoadedRef.current) return
+    if (pagesPromiseRef.current) {
+      await pagesPromiseRef.current
+      return
+    }
+
+    setPagesLoading(true)
+    const p = (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("pages")
+          .select("id, slug, title")
+          .order("slug", { ascending: true })
+
+        if (error) throw new Error(error.message)
+        setPages((data ?? []) as CmsPageRow[])
+        pagesLoadedRef.current = true
+      } finally {
+        setPagesLoading(false)
+        pagesPromiseRef.current = null
+      }
+    })()
+
+    pagesPromiseRef.current = p
+    await p
+  }, [supabase])
 
   async function load({ forceHydrate = false }: { forceHydrate?: boolean } = {}) {
     if (!section) return
@@ -664,6 +1215,8 @@ export function SectionEditorDrawer({
       setLoading(false)
     }
   }
+
+  // Link picker loads pages/anchors lazily (when the user opens the picker).
 
   function hydrateFrom(v: SectionVersionRow | null) {
     if (!v) {
@@ -793,6 +1346,29 @@ export function SectionEditorDrawer({
     }
   }
 
+  async function onConfirmDeleteDraft() {
+    if (!section) return
+    if (!activeDraft) return
+    setError(null)
+    setDeleteDraftLoading(true)
+    try {
+      const { error: delError } = await supabase
+        .from("section_versions")
+        .delete()
+        .eq("section_id", section.id)
+        .eq("status", "draft")
+      if (delError) throw new Error(delError.message)
+
+      setDeleteDraftOpen(false)
+      await load({ forceHydrate: true })
+      await onChanged()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to delete draft.")
+    } finally {
+      setDeleteDraftLoading(false)
+    }
+  }
+
   async function onRestore(fromVersionId: string) {
     if (!section) return
     setError(null)
@@ -835,17 +1411,137 @@ export function SectionEditorDrawer({
   const showSubtitle = fieldCaps.subtitle !== false
   const showCtaPrimary = fieldCaps.cta_primary === true
   const showCtaSecondary = fieldCaps.cta_secondary === true
-  const showBackgroundMedia = fieldCaps.background_media === true
+  const showBackgroundMedia = type === "hero_cta" || fieldCaps.background_media === true
 
   const heroBullets = asArray<string>(content.bullets)
   const heroTrust = asString(content.trustLine)
-
   const whatCards = asArray<Record<string, unknown>>(content.cards)
   const howSteps = asArray<Record<string, unknown>>(content.steps)
   const workflowItems = asArray<Record<string, unknown>>(content.items)
   const techItems = asArray<Record<string, unknown>>(content.items)
   const faqItems = asArray<Record<string, unknown>>(content.items)
   const navLinks = asArray<Record<string, unknown>>(content.links)
+  const navLogo = asRecord(content.logo)
+  const navLogoUrl = asString(navLogo.url)
+  const navLogoAlt = asString(navLogo.alt, "Site logo")
+  const navLogoWidthRaw = Number(navLogo.widthPx)
+  const navLogoWidth = Number.isFinite(navLogoWidthRaw)
+    ? Math.min(320, Math.max(60, Math.round(navLogoWidthRaw)))
+    : 140
+
+  function applyNavLogoUrl(url: string) {
+    setContent((c) => {
+      const existing = asRecord(c.logo)
+      const existingWidthRaw = Number(existing.widthPx)
+      const existingWidth = Number.isFinite(existingWidthRaw)
+        ? Math.min(320, Math.max(60, Math.round(existingWidthRaw)))
+        : 140
+      const existingAlt = asString(existing.alt, "").trim()
+      return {
+        ...c,
+        logo: {
+          ...existing,
+          url,
+          alt: existingAlt || "Site logo",
+          widthPx: existingWidth,
+        },
+      }
+    })
+  }
+
+  function applyCardImageUrl(cardIndex: number, url: string) {
+    setContent((c) => {
+      const cards = asArray<Record<string, unknown>>(c.cards)
+      if (cardIndex < 0 || cardIndex >= cards.length) return c
+      const nextCards = cards.slice()
+      const card = asRecord(nextCards[cardIndex])
+      const image = asRecord(card.image)
+      const existingWidthRaw = Number(image.widthPx)
+      const existingWidth = Number.isFinite(existingWidthRaw)
+        ? Math.min(420, Math.max(80, Math.round(existingWidthRaw)))
+        : DEFAULT_CARD_IMAGE_WIDTH
+      nextCards[cardIndex] = {
+        ...card,
+        image: {
+          ...image,
+          url,
+          alt: asString(image.alt) || asString(card.title),
+          widthPx: existingWidth,
+        },
+      }
+      return {
+        ...c,
+        cards: nextCards,
+      }
+    })
+  }
+
+  function applyCardImageWidth(cardIndex: number, widthPx: number) {
+    setContent((c) => {
+      const cards = asArray<Record<string, unknown>>(c.cards)
+      if (cardIndex < 0 || cardIndex >= cards.length) return c
+      const nextCards = cards.slice()
+      const card = asRecord(nextCards[cardIndex])
+      const image = asRecord(card.image)
+      nextCards[cardIndex] = {
+        ...card,
+        image: {
+          ...image,
+          widthPx: Math.min(420, Math.max(80, Math.round(widthPx))),
+        },
+      }
+      return {
+        ...c,
+        cards: nextCards,
+      }
+    })
+  }
+
+  function setCardDisplayForCard(cardIndex: number, nextPatch: Partial<CardDisplayState>) {
+    setContent((c) => {
+      const cards = asArray<Record<string, unknown>>(c.cards)
+      if (!cards.length || cardIndex < 0 || cardIndex >= cards.length) return c
+      const globalDisplay = toCardDisplay(c.cardDisplay)
+      const nextCards = cards.map((card, idx) => {
+        const cardRecord = asRecord(card)
+        const normalized = toCardDisplay(cardRecord.display ?? globalDisplay)
+        const nextDisplay = idx === cardIndex ? { ...normalized, ...nextPatch } : normalized
+        if (idx !== cardIndex) {
+          return {
+            ...cardRecord,
+            display: nextDisplay,
+          }
+        }
+
+        const nextCard: Record<string, unknown> = {
+          ...cardRecord,
+          display: nextDisplay,
+        }
+
+        if (nextPatch.bestForMode === "list") {
+          const existingBestForList = asStringArray(cardRecord.bestForList).filter((item) => item.trim().length > 0)
+          const bestForText = asString(cardRecord.bestFor).trim()
+          if (!existingBestForList.length && bestForText) {
+            nextCard.bestForList = [bestForText]
+          }
+        }
+
+        return {
+          ...nextCard,
+        }
+      })
+      return {
+        ...c,
+        cards: nextCards,
+      }
+    })
+  }
+
+  const dismissMobileKeyboard = () => {
+    if (typeof document === "undefined") return
+    const active = document.activeElement as HTMLElement | null
+    if (active && typeof active.blur === "function") active.blur()
+  }
 
   return (
     <>
@@ -867,6 +1563,14 @@ export function SectionEditorDrawer({
         }
         position="right"
         size="xl"
+        classNames={{
+          content: "editor-drawer-content",
+          body: "editor-drawer-body",
+        }}
+        closeButtonProps={{
+          onMouseDown: dismissMobileKeyboard,
+          onTouchStart: dismissMobileKeyboard,
+        }}
       >
         <Stack gap="md">
           {error ? (
@@ -909,25 +1613,46 @@ export function SectionEditorDrawer({
                   ) : null}
                 </Group>
 
-                <Group gap="xs">
-                  <Button
-                    size="xs"
-                    variant="default"
-                    loading={loading}
-                    onClick={onSaveDraft}
-                    disabled={!isDirty}
-                  >
-                    Save draft
-                  </Button>
-                  <Button
-                    size="xs"
-                    loading={loading}
-                    onClick={onPublishDraft}
-                    disabled={!activeDraft || isDirty}
-                  >
-                    Publish
-                  </Button>
-                </Group>
+                <Menu withinPortal={false} position="bottom-end" shadow="md">
+                  <Menu.Target>
+                    <Button
+                      size="xs"
+                      variant="default"
+                      rightSection={<IconChevronDown size={14} />}
+                      disabled={loading}
+                      onMouseDown={dismissMobileKeyboard}
+                      onTouchStart={dismissMobileKeyboard}
+                    >
+                      Actions
+                    </Button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Label>Actions</Menu.Label>
+                    <Menu.Item
+                      closeMenuOnClick
+                      onClick={() => void onSaveDraft()}
+                      disabled={!isDirty || loading}
+                    >
+                      Save draft
+                    </Menu.Item>
+                    <Menu.Item
+                      color="red"
+                      leftSection={<IconTrash size={14} />}
+                      closeMenuOnClick
+                      onClick={() => setDeleteDraftOpen(true)}
+                      disabled={!activeDraft || loading}
+                    >
+                      Delete draft
+                    </Menu.Item>
+                    <Menu.Item
+                      closeMenuOnClick
+                      onClick={() => void onPublishDraft()}
+                      disabled={!activeDraft || isDirty || loading}
+                    >
+                      Publish
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
               </Group>
 
               {isDirty ? (
@@ -961,11 +1686,17 @@ export function SectionEditorDrawer({
                   />
                 ) : null}
                 {showCtaPrimary ? (
-                  <TextInput
-                    label="Primary CTA href"
+                  <LinkMenuField
+                    label="Primary CTA link"
                     value={ctaPrimaryHref}
-                    onChange={(e) => setCtaPrimaryHref(e.currentTarget.value)}
-                    placeholder="#contact"
+                    onChange={setCtaPrimaryHref}
+                    currentPageId={section?.page_id ?? ""}
+                    pages={pages}
+                    pagesLoading={pagesLoading}
+                    anchorsByPageId={anchorsByPageId}
+                    anchorsLoadingByPageId={anchorsLoadingByPageId}
+                    ensurePagesLoaded={ensurePagesLoaded}
+                    ensureAnchorsLoaded={ensureAnchorsLoaded}
                   />
                 ) : null}
                 {showCtaSecondary ? (
@@ -976,33 +1707,35 @@ export function SectionEditorDrawer({
                   />
                 ) : null}
                 {showCtaSecondary ? (
-                  <TextInput
-                    label="Secondary CTA href"
+                  <LinkMenuField
+                    label="Secondary CTA link"
                     value={ctaSecondaryHref}
-                    onChange={(e) => setCtaSecondaryHref(e.currentTarget.value)}
-                    placeholder="#services"
+                    onChange={setCtaSecondaryHref}
+                    currentPageId={section?.page_id ?? ""}
+                    pages={pages}
+                    pagesLoading={pagesLoading}
+                    anchorsByPageId={anchorsByPageId}
+                    anchorsLoadingByPageId={anchorsLoadingByPageId}
+                    ensurePagesLoaded={ensurePagesLoaded}
+                    ensureAnchorsLoaded={ensureAnchorsLoaded}
                   />
                 ) : null}
               </SimpleGrid>
 
               {showBackgroundMedia ? (
-                <Group align="end" gap="sm">
-                  <TextInput
-                    label="Background media URL"
-                    value={backgroundMediaUrl}
-                    onChange={(e) => setBackgroundMediaUrl(e.currentTarget.value)}
-                    placeholder="https://..."
-                    style={{ flex: 1 }}
-                  />
-                  <Button
-                    size="sm"
-                    variant="default"
-                    leftSection={<IconUpload size={16} />}
-                    onClick={() => setUploadOpen(true)}
-                  >
-                    Upload
-                  </Button>
-                </Group>
+                <ImageFieldPicker
+                  title={type === "hero_cta" ? "Hero background image" : "Background image"}
+                  value={backgroundMediaUrl}
+                  urlLabel="Background image URL"
+                  placeholder="https://..."
+                  withinPortal={false}
+                  disabled={loading}
+                  onChange={setBackgroundMediaUrl}
+                  onRemove={() => setBackgroundMediaUrl("")}
+                  onUploadFile={onUploadBackground}
+                  onChooseFromLibrary={() => setBackgroundLibraryOpen(true)}
+                  onError={setError}
+                />
               ) : null}
             </Stack>
           </Paper>
@@ -1015,6 +1748,7 @@ export function SectionEditorDrawer({
               <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                 <Select
                   label="Padding Y"
+                  comboboxProps={{ withinPortal: false }}
                   data={["", "py-4", "py-6", "py-8", "py-10", "py-12"]}
                   value={formatting.paddingY}
                   onChange={(v) =>
@@ -1026,6 +1760,7 @@ export function SectionEditorDrawer({
                 />
                 <Select
                   label="Max width"
+                  comboboxProps={{ withinPortal: false }}
                   data={["", "max-w-3xl", "max-w-4xl", "max-w-5xl", "max-w-6xl"]}
                   value={formatting.maxWidth}
                   onChange={(v) =>
@@ -1037,6 +1772,7 @@ export function SectionEditorDrawer({
                 />
                 <Select
                   label="Text align"
+                  comboboxProps={{ withinPortal: false }}
                   data={[
                     { value: "", label: "(default)" },
                     { value: "left", label: "left" },
@@ -1050,24 +1786,114 @@ export function SectionEditorDrawer({
                     }))
                   }
                 />
-                <Box />
+                {type === "hero_cta" ? (
+                  <ColorInput
+                    label="Hero image overlay color"
+                    value={formatting.heroImageOverlayColor}
+                    onChange={(value) =>
+                      setFormatting((s) => ({
+                        ...s,
+                        heroImageOverlayColor: value,
+                      }))
+                    }
+                    placeholder="#000000"
+                    format="hex"
+                    withPicker
+                  />
+                ) : (
+                  <Box />
+                )}
               </SimpleGrid>
+
+              {type === "hero_cta" ? (
+                <>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={600}>Hero image overlay opacity</Text>
+                    <Text size="xs" c="dimmed">{Math.round(formatting.heroImageOverlayOpacity * 100)}%</Text>
+                    <Slider
+                      label={(v) => `Hero image overlay opacity ${Math.round(v * 100)}%`}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={formatting.heroImageOverlayOpacity}
+                      onChange={(v) =>
+                        setFormatting((s) => ({
+                          ...s,
+                          heroImageOverlayOpacity: Math.min(1, Math.max(0, v)),
+                        }))
+                      }
+                    />
+                  </Stack>
+
+                  <Stack gap={4}>
+                    <Text size="sm" fw={600}>Hero blend strength</Text>
+                    <Text size="xs" c="dimmed">{Math.round(formatting.heroBlendStrength * 100)}%</Text>
+                    <Slider
+                      label={(v) => `Hero blend strength ${Math.round(v * 100)}%`}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={formatting.heroBlendStrength}
+                      onChange={(v) =>
+                        setFormatting((s) => ({
+                          ...s,
+                          heroBlendStrength: Math.min(1, Math.max(0, v)),
+                        }))
+                      }
+                    />
+                  </Stack>
+
+                  <Stack gap={4}>
+                    <Text size="sm" fw={600}>Trust line font size</Text>
+                    <Text size="xs" c="dimmed">{Math.round(formatting.trustLineFontSizePx)}px</Text>
+                    <Slider
+                      label={(v) => `Trust line font size ${Math.round(v)}px`}
+                      min={10}
+                      max={28}
+                      step={1}
+                      value={formatting.trustLineFontSizePx}
+                      onChange={(v) =>
+                        setFormatting((s) => ({
+                          ...s,
+                          trustLineFontSizePx: Math.min(28, Math.max(10, Math.round(v))),
+                        }))
+                      }
+                    />
+                  </Stack>
+
+                  <ColorInput
+                    label="Trust line color"
+                    value={formatting.trustLineColor}
+                    onChange={(value) =>
+                      setFormatting((s) => ({
+                        ...s,
+                        trustLineColor: value,
+                      }))
+                    }
+                    placeholder="#9ca3af"
+                    format="hex"
+                    withPicker
+                  />
+                </>
+              ) : null}
 
               <Textarea
                 label="containerClass (whitelisted Tailwind tokens)"
                 value={formatting.containerClass}
-                onChange={(e) =>
-                  setFormatting((s) => ({ ...s, containerClass: e.currentTarget.value }))
-                }
+                onChange={(e) => {
+                  const nextValue = inputValueFromEvent(e)
+                  setFormatting((s) => ({ ...s, containerClass: nextValue }))
+                }}
                 autosize
                 minRows={2}
               />
               <Textarea
                 label="sectionClass (whitelisted Tailwind tokens)"
                 value={formatting.sectionClass}
-                onChange={(e) =>
-                  setFormatting((s) => ({ ...s, sectionClass: e.currentTarget.value }))
-                }
+                onChange={(e) => {
+                  const nextValue = inputValueFromEvent(e)
+                  setFormatting((s) => ({ ...s, sectionClass: nextValue }))
+                }}
                 autosize
                 minRows={2}
               />
@@ -1102,6 +1928,7 @@ export function SectionEditorDrawer({
                 <Stack gap="sm">
                   <Select
                     label="Mobile padding Y"
+                    comboboxProps={{ withinPortal: false }}
                     data={["", "py-4", "py-6", "py-8", "py-10", "py-12"]}
                     value={formatting.mobile.paddingY}
                     onChange={(v) =>
@@ -1122,38 +1949,40 @@ export function SectionEditorDrawer({
                   <Textarea
                     label="Mobile containerClass"
                     value={formatting.mobile.containerClass}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const nextValue = inputValueFromEvent(e)
                       setFormatting((s) =>
                         s.mobile
                           ? {
                               ...s,
                               mobile: {
                                 ...s.mobile,
-                                containerClass: e.currentTarget.value,
+                                containerClass: nextValue,
                               },
                             }
                           : s
                       )
-                    }
+                    }}
                     autosize
                     minRows={2}
                   />
                   <Textarea
                     label="Mobile sectionClass"
                     value={formatting.mobile.sectionClass}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const nextValue = inputValueFromEvent(e)
                       setFormatting((s) =>
                         s.mobile
                           ? {
                               ...s,
                               mobile: {
                                 ...s.mobile,
-                                sectionClass: e.currentTarget.value,
+                                sectionClass: nextValue,
                               },
                             }
                           : s
                       )
-                    }
+                    }}
                     autosize
                     minRows={2}
                   />
@@ -1183,9 +2012,10 @@ export function SectionEditorDrawer({
                   <Textarea
                     label="Trust line"
                     value={heroTrust}
-                    onChange={(e) =>
-                      setContent((c) => ({ ...c, trustLine: e.currentTarget.value }))
-                    }
+                    onChange={(e) => {
+                      const nextValue = inputValueFromEvent(e)
+                      setContent((c) => ({ ...c, trustLine: nextValue }))
+                    }}
                     autosize
                     minRows={2}
                   />
@@ -1198,24 +2028,47 @@ export function SectionEditorDrawer({
                     <Text size="sm" fw={600}>
                       Cards
                     </Text>
-                    <Button
-                      size="xs"
-                      variant="default"
-                      leftSection={<IconPlus size={14} />}
-                      onClick={() =>
-                        setContent((c) => ({
-                          ...c,
-                          cards: [...whatCards, { title: "", text: "", youGet: [], bestFor: "" }],
-                        }))
-                      }
-                    >
-                      Add card
-                    </Button>
+                    <Group gap="xs">
+                      <Button
+                        size="xs"
+                        variant="default"
+                        leftSection={<IconPlus size={14} />}
+                        onClick={() =>
+                          setContent((c) => ({
+                            ...c,
+                            cards: [
+                              ...whatCards,
+                              {
+                                title: "",
+                                text: "",
+                                textRichText: emptyRichTextDoc(),
+                                image: { url: "", alt: "", widthPx: DEFAULT_CARD_IMAGE_WIDTH },
+                                display: toCardDisplay(undefined),
+                                youGet: [],
+                                bestFor: "",
+                                bestForList: [],
+                              },
+                            ],
+                          }))
+                        }
+                      >
+                        Add card
+                      </Button>
+                    </Group>
                   </Group>
                   <Stack gap="xs">
                     {whatCards.map((card, idx) => {
                       const r = asRecord(card)
-                      const youGet = asArray<string>(r.youGet)
+                      const cardDisplay = toCardDisplay(r.display ?? content.cardDisplay)
+                      const youGet = asStringArray(r.youGet)
+                      const bestFor = asString(r.bestFor)
+                      const bestForList = asStringArray(r.bestForList)
+                      const cardImage = asRecord(r.image)
+                      const cardImageUrl = asString(cardImage.url)
+                      const cardImageWidthRaw = Number(cardImage.widthPx)
+                      const cardImageWidth = Number.isFinite(cardImageWidthRaw)
+                        ? Math.min(420, Math.max(80, Math.round(cardImageWidthRaw)))
+                        : DEFAULT_CARD_IMAGE_WIDTH
                       return (
                         <Paper key={idx} withBorder p="sm" radius="md">
                           <Stack gap="xs">
@@ -1223,58 +2076,206 @@ export function SectionEditorDrawer({
                               <Badge size="sm" variant="default">
                                 Card {idx + 1}
                               </Badge>
-                              <ActionIcon
-                                variant="default"
-                                aria-label="Remove card"
-                                onClick={() =>
-                                  setContent((c) => ({
-                                    ...c,
-                                    cards: whatCards.filter((_, i) => i !== idx),
-                                  }))
-                                }
-                              >
-                                <IconX size={16} />
-                              </ActionIcon>
+                              <Group gap="xs">
+                                <Popover withinPortal={false} position="bottom-end" width={220} shadow="md">
+                                  <Popover.Target>
+                                    <Button
+                                      size="xs"
+                                      variant="default"
+                                      leftSection={<IconAdjustmentsHorizontal size={14} />}
+                                    >
+                                      Fields
+                                    </Button>
+                                  </Popover.Target>
+                                  <Popover.Dropdown>
+                                    <Stack gap={8}>
+                                      <Checkbox
+                                        label="Title"
+                                        checked={cardDisplay.showTitle}
+                                        onChange={(e) =>
+                                          setCardDisplayForCard(idx, { showTitle: e.currentTarget.checked })
+                                        }
+                                      />
+                                      <Checkbox
+                                        label="Text"
+                                        checked={cardDisplay.showText}
+                                        onChange={(e) =>
+                                          setCardDisplayForCard(idx, { showText: e.currentTarget.checked })
+                                        }
+                                      />
+                                      <Checkbox
+                                        label="Image"
+                                        checked={cardDisplay.showImage}
+                                        onChange={(e) =>
+                                          setCardDisplayForCard(idx, { showImage: e.currentTarget.checked })
+                                        }
+                                      />
+                                      <Checkbox
+                                        label="You get"
+                                        checked={cardDisplay.showYouGet}
+                                        onChange={(e) =>
+                                          setCardDisplayForCard(idx, { showYouGet: e.currentTarget.checked })
+                                        }
+                                      />
+                                      <Checkbox
+                                        label="Best for"
+                                        checked={cardDisplay.showBestFor}
+                                        onChange={(e) =>
+                                          setCardDisplayForCard(idx, { showBestFor: e.currentTarget.checked })
+                                        }
+                                      />
+                                    </Stack>
+                                  </Popover.Dropdown>
+                                </Popover>
+                                <ActionIcon
+                                  variant="default"
+                                  aria-label="Remove card"
+                                  onClick={() =>
+                                    setContent((c) => ({
+                                      ...c,
+                                      cards: whatCards.filter((_, i) => i !== idx),
+                                    }))
+                                  }
+                                >
+                                  <IconX size={16} />
+                                </ActionIcon>
+                              </Group>
                             </Group>
-                            <TextInput
-                              label="Title"
-                              value={asString(r.title)}
-                              onChange={(e) => {
-                                const next = whatCards.slice()
-                                next[idx] = { ...r, title: e.currentTarget.value }
-                                setContent((c) => ({ ...c, cards: next }))
-                              }}
-                            />
-                            <Textarea
-                              label="Text"
-                              value={asString(r.text)}
-                              onChange={(e) => {
-                                const next = whatCards.slice()
-                                next[idx] = { ...r, text: e.currentTarget.value }
-                                setContent((c) => ({ ...c, cards: next }))
-                              }}
-                              autosize
-                              minRows={2}
-                            />
-                            <ListEditor
-                              label="You get (list)"
-                              items={youGet}
-                              onChange={(nextList) => {
-                                const next = whatCards.slice()
-                                next[idx] = { ...r, youGet: nextList }
-                                setContent((c) => ({ ...c, cards: next }))
-                              }}
-                              placeholder="workflow map"
-                            />
-                            <TextInput
-                              label="Best for"
-                              value={asString(r.bestFor)}
-                              onChange={(e) => {
-                                const next = whatCards.slice()
-                                next[idx] = { ...r, bestFor: e.currentTarget.value }
-                                setContent((c) => ({ ...c, cards: next }))
-                              }}
-                            />
+                            {cardDisplay.showTitle ? (
+                              <TextInput
+                                label="Title"
+                                value={asString(r.title)}
+                                onChange={(e) => {
+                                  const next = whatCards.slice()
+                                  next[idx] = { ...r, title: e.currentTarget.value }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                              />
+                            ) : null}
+                            {cardDisplay.showText ? (
+                              <TipTapJsonEditor
+                                label="Text"
+                                value={richTextWithFallback(r.textRichText, r.text)}
+                                onChange={(nextJson) => {
+                                  const next = whatCards.slice()
+                                  next[idx] = { ...r, textRichText: nextJson }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                                onError={setError}
+                              />
+                            ) : null}
+                            {cardDisplay.showImage ? (
+                              <ImageFieldPicker
+                                title="Card image"
+                                value={cardImageUrl}
+                                urlLabel="Image URL"
+                                onChange={(nextUrl) => applyCardImageUrl(idx, nextUrl)}
+                                onRemove={() => applyCardImageUrl(idx, "")}
+                                onUploadFile={async (file) => {
+                                  const { publicUrl } = await uploadToCmsMedia(file)
+                                  applyCardImageUrl(idx, publicUrl)
+                                }}
+                                onChooseFromLibrary={() => setCardImageLibraryTarget(idx)}
+                                disabled={loading}
+                                onError={setError}
+                                withinPortal={false}
+                                compact
+                                advancedUrl
+                                previewHeight={132}
+                              >
+                                <Stack gap={4}>
+                                  <Group justify="space-between">
+                                    <Text size="sm">Width</Text>
+                                    <Text size="sm" c="dimmed">
+                                      {cardImageWidth}px
+                                    </Text>
+                                  </Group>
+                                  <Slider
+                                    min={80}
+                                    max={420}
+                                    step={1}
+                                    value={cardImageWidth}
+                                    onChange={(nextWidth) => applyCardImageWidth(idx, nextWidth)}
+                                  />
+                                </Stack>
+                              </ImageFieldPicker>
+                            ) : null}
+                            {cardDisplay.showYouGet ? (
+                              <Stack gap="xs">
+                                <Group justify="space-between" align="center" wrap="nowrap">
+                                  <Text size="sm" fw={500}>
+                                    You get
+                                  </Text>
+                                  <SegmentedControl
+                                    size="xs"
+                                    value={cardDisplay.youGetMode}
+                                    data={[
+                                      { label: "Block", value: "block" },
+                                      { label: "List", value: "list" },
+                                    ]}
+                                    onChange={(nextMode) =>
+                                      setCardDisplayForCard(idx, {
+                                        youGetMode: nextMode === "list" ? "list" : "block",
+                                      })
+                                    }
+                                  />
+                                </Group>
+                                <ListEditor
+                                  label="You get (list)"
+                                  items={youGet}
+                                  onChange={(nextList) => {
+                                    const next = whatCards.slice()
+                                    next[idx] = { ...r, youGet: nextList }
+                                    setContent((c) => ({ ...c, cards: next }))
+                                  }}
+                                  placeholder="workflow map"
+                                />
+                              </Stack>
+                            ) : null}
+                            {cardDisplay.showBestFor ? (
+                              <Stack gap="xs">
+                                <Group justify="space-between" align="center" wrap="nowrap">
+                                  <Text size="sm" fw={500}>
+                                    Best for
+                                  </Text>
+                                  <SegmentedControl
+                                    size="xs"
+                                    value={cardDisplay.bestForMode}
+                                    data={[
+                                      { label: "Block", value: "block" },
+                                      { label: "List", value: "list" },
+                                    ]}
+                                    onChange={(nextMode) =>
+                                      setCardDisplayForCard(idx, {
+                                        bestForMode: nextMode === "list" ? "list" : "block",
+                                      })
+                                    }
+                                  />
+                                </Group>
+                                {cardDisplay.bestForMode === "list" ? (
+                                  <ListEditor
+                                    label="Best for (list)"
+                                    items={bestForList}
+                                    onChange={(nextList) => {
+                                      const next = whatCards.slice()
+                                      next[idx] = { ...r, bestForList: nextList }
+                                      setContent((c) => ({ ...c, cards: next }))
+                                    }}
+                                    placeholder="teams with repetitive manual workflows"
+                                  />
+                                ) : (
+                                  <TextInput
+                                    label="Best for"
+                                    value={bestFor}
+                                    onChange={(e) => {
+                                      const next = whatCards.slice()
+                                      next[idx] = { ...r, bestFor: e.currentTarget.value }
+                                      setContent((c) => ({ ...c, cards: next }))
+                                    }}
+                                  />
+                                )}
+                              </Stack>
+                            ) : null}
                           </Stack>
                         </Paper>
                       )
@@ -1301,7 +2302,7 @@ export function SectionEditorDrawer({
                       onClick={() =>
                         setContent((c) => ({
                           ...c,
-                          steps: [...howSteps, { title: "", body: "" }],
+                          steps: [...howSteps, { title: "", body: "", bodyRichText: emptyRichTextDoc() }],
                         }))
                       }
                     >
@@ -1340,16 +2341,15 @@ export function SectionEditorDrawer({
                                 setContent((c) => ({ ...c, steps: next }))
                               }}
                             />
-                            <Textarea
+                            <TipTapJsonEditor
                               label="Body"
-                              value={asString(r.body)}
-                              onChange={(e) => {
+                              value={richTextWithFallback(r.bodyRichText, r.body)}
+                              onChange={(nextJson) => {
                                 const next = howSteps.slice()
-                                next[idx] = { ...r, body: e.currentTarget.value }
+                                next[idx] = { ...r, bodyRichText: nextJson }
                                 setContent((c) => ({ ...c, steps: next }))
                               }}
-                              autosize
-                              minRows={2}
+                              onError={setError}
                             />
                           </Stack>
                         </Paper>
@@ -1372,7 +2372,7 @@ export function SectionEditorDrawer({
                       onClick={() =>
                         setContent((c) => ({
                           ...c,
-                          items: [...workflowItems, { title: "", body: "" }],
+                          items: [...workflowItems, { title: "", body: "", bodyRichText: emptyRichTextDoc() }],
                         }))
                       }
                     >
@@ -1411,16 +2411,15 @@ export function SectionEditorDrawer({
                                 setContent((c) => ({ ...c, items: next }))
                               }}
                             />
-                            <Textarea
+                            <TipTapJsonEditor
                               label="Body"
-                              value={asString(r.body)}
-                              onChange={(e) => {
+                              value={richTextWithFallback(r.bodyRichText, r.body)}
+                              onChange={(nextJson) => {
                                 const next = workflowItems.slice()
-                                next[idx] = { ...r, body: e.currentTarget.value }
+                                next[idx] = { ...r, bodyRichText: nextJson }
                                 setContent((c) => ({ ...c, items: next }))
                               }}
-                              autosize
-                              minRows={2}
+                              onError={setError}
                             />
                           </Stack>
                         </Paper>
@@ -1435,6 +2434,7 @@ export function SectionEditorDrawer({
                   label="Body"
                   value={asRecord(content.bodyRichText)}
                   onChange={(next) => setContent((c) => ({ ...c, bodyRichText: next }))}
+                  onError={setError}
                 />
               ) : null}
 
@@ -1567,6 +2567,7 @@ export function SectionEditorDrawer({
                                 next[idx] = { ...r, answerRichText: nextJson }
                                 setContent((c) => ({ ...c, items: next }))
                               }}
+                              onError={setError}
                             />
                           </Stack>
                         </Paper>
@@ -1577,17 +2578,90 @@ export function SectionEditorDrawer({
               ) : null}
 
               {type === "cta_block" ? (
-                <Textarea
+                <TipTapJsonEditor
                   label="Body"
-                  value={asString(content.body)}
-                  onChange={(e) => setContent((c) => ({ ...c, body: e.currentTarget.value }))}
-                  autosize
-                  minRows={2}
+                  value={richTextWithFallback(content.bodyRichText, content.body)}
+                  onChange={(next) => setContent((c) => ({ ...c, bodyRichText: next }))}
+                  onError={setError}
                 />
               ) : null}
 
               {type === "nav_links" ? (
                 <Stack gap="sm">
+                  <ImageFieldPicker
+                    title="Logo"
+                    value={navLogoUrl}
+                    urlLabel="Logo URL"
+                    placeholder="https://.../logo.png"
+                    onChange={applyNavLogoUrl}
+                    onRemove={() =>
+                      setContent((c) => {
+                        const existing = asRecord(c.logo)
+                        return {
+                          ...c,
+                          logo: {
+                            ...existing,
+                            url: "",
+                          },
+                        }
+                      })
+                    }
+                    onUploadFile={async (file) => {
+                      const { publicUrl } = await uploadToCmsMedia(file)
+                      applyNavLogoUrl(publicUrl)
+                    }}
+                    onChooseFromLibrary={() => setNavLogoLibraryOpen(true)}
+                    disabled={loading}
+                    onError={setError}
+                    withinPortal={false}
+                  >
+                    <TextInput
+                      label="Alt text"
+                      value={navLogoAlt}
+                      onChange={(e) => {
+                        const nextValue = inputValueFromEvent(e)
+                        setContent((c) => {
+                          const existing = asRecord(c.logo)
+                          return {
+                            ...c,
+                            logo: {
+                              ...existing,
+                              alt: nextValue,
+                            },
+                          }
+                        })
+                      }}
+                      placeholder="Site logo"
+                    />
+
+                    <Stack gap={4}>
+                      <Group justify="space-between">
+                        <Text size="sm">Width</Text>
+                        <Text size="sm" c="dimmed">
+                          {navLogoWidth}px
+                        </Text>
+                      </Group>
+                      <Slider
+                        min={60}
+                        max={320}
+                        step={1}
+                        value={navLogoWidth}
+                        onChange={(nextWidth) =>
+                          setContent((c) => {
+                            const existing = asRecord(c.logo)
+                            return {
+                              ...c,
+                              logo: {
+                                ...existing,
+                                widthPx: nextWidth,
+                              },
+                            }
+                          })
+                        }
+                      />
+                    </Stack>
+                  </ImageFieldPicker>
+
                   <Group justify="space-between">
                     <Text size="sm" fw={600}>
                       Links
@@ -1629,7 +2703,7 @@ export function SectionEditorDrawer({
                                 <IconX size={16} />
                               </ActionIcon>
                             </Group>
-                            <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm">
+                            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                               <TextInput
                                 label="Label"
                                 value={asString(r.label)}
@@ -1639,25 +2713,21 @@ export function SectionEditorDrawer({
                                   setContent((c) => ({ ...c, links: next }))
                                 }}
                               />
-                              <TextInput
-                                label="Href"
+                              <LinkMenuField
+                                label="Link"
                                 value={asString(r.href)}
-                                onChange={(e) => {
+                                onChange={(nextHref) => {
                                   const next = navLinks.slice()
-                                  next[idx] = { ...r, href: e.currentTarget.value }
+                                  next[idx] = { ...r, href: nextHref }
                                   setContent((c) => ({ ...c, links: next }))
                                 }}
-                                placeholder="#faq"
-                              />
-                              <TextInput
-                                label="Anchor ID"
-                                value={asString(r.anchorId)}
-                                onChange={(e) => {
-                                  const next = navLinks.slice()
-                                  next[idx] = { ...r, anchorId: e.currentTarget.value }
-                                  setContent((c) => ({ ...c, links: next }))
-                                }}
-                                placeholder="faq"
+                                currentPageId={section?.page_id ?? ""}
+                                pages={pages}
+                                pagesLoading={pagesLoading}
+                                anchorsByPageId={anchorsByPageId}
+                                anchorsLoadingByPageId={anchorsLoadingByPageId}
+                                ensurePagesLoaded={ensurePagesLoaded}
+                                ensureAnchorsLoaded={ensureAnchorsLoaded}
                               />
                             </SimpleGrid>
                           </Stack>
@@ -1681,58 +2751,60 @@ export function SectionEditorDrawer({
               <Text fw={600} size="sm">
                 Version history
               </Text>
-              <Table withTableBorder withColumnBorders striped>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Version</Table.Th>
-                    <Table.Th>Status</Table.Th>
-                    <Table.Th>Created</Table.Th>
-                    <Table.Th>Published</Table.Th>
-                    <Table.Th />
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {versions.map((v) => (
-                    <Table.Tr key={v.id}>
-                      <Table.Td>v{v.version}</Table.Td>
-                      <Table.Td>
-                        <StatusBadge status={v.status} />
-                      </Table.Td>
-	                      <Table.Td>
-	                        <Text c="dimmed" size="sm">
-	                          {formatDateTime(v.created_at)}
-	                        </Text>
-	                      </Table.Td>
-	                      <Table.Td>
-	                        <Text c="dimmed" size="sm">
-	                          {formatDateTime(v.published_at)}
-	                        </Text>
-		                      </Table.Td>
-	                      <Table.Td>
-	                        <Group justify="end">
-	                          <Button
-	                            size="xs"
-	                            variant="default"
-	                            leftSection={<IconRestore size={14} />}
-                            onClick={() => onRestore(v.id)}
-                          >
-                            Restore to draft
-                          </Button>
-                        </Group>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                  {!versions.length ? (
+              <ScrollArea type="auto" offsetScrollbars="x">
+                <Table withTableBorder withColumnBorders striped style={{ minWidth: 760 }}>
+                  <Table.Thead>
                     <Table.Tr>
-                      <Table.Td colSpan={5}>
-                        <Text c="dimmed" size="sm">
-                          No versions.
-                        </Text>
-                      </Table.Td>
+                      <Table.Th>Version</Table.Th>
+                      <Table.Th>Status</Table.Th>
+                      <Table.Th>Created</Table.Th>
+                      <Table.Th>Published</Table.Th>
+                      <Table.Th />
                     </Table.Tr>
-                  ) : null}
-                </Table.Tbody>
-              </Table>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {versions.map((v) => (
+                      <Table.Tr key={v.id}>
+                        <Table.Td>v{v.version}</Table.Td>
+                        <Table.Td>
+                          <StatusBadge status={v.status} />
+                        </Table.Td>
+                        <Table.Td>
+                          <Text c="dimmed" size="sm">
+                            {formatDateTime(v.created_at)}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text c="dimmed" size="sm">
+                            {formatDateTime(v.published_at)}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Group justify="end" style={{ whiteSpace: "nowrap" }}>
+                            <Button
+                              size="xs"
+                              variant="default"
+                              leftSection={<IconRestore size={14} />}
+                              onClick={() => onRestore(v.id)}
+                            >
+                              Restore to draft
+                            </Button>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                    {!versions.length ? (
+                      <Table.Tr>
+                        <Table.Td colSpan={5}>
+                          <Text c="dimmed" size="sm">
+                            No versions.
+                          </Text>
+                        </Table.Td>
+                      </Table.Tr>
+                    ) : null}
+                  </Table.Tbody>
+                </Table>
+              </ScrollArea>
             </Stack>
           </Paper>
 
@@ -1742,36 +2814,85 @@ export function SectionEditorDrawer({
         </Stack>
       </Drawer>
 
-      <Modal opened={uploadOpen} onClose={() => setUploadOpen(false)} title="Upload image" centered>
+      <Modal
+        opened={deleteDraftOpen}
+        onClose={() => (deleteDraftLoading ? null : setDeleteDraftOpen(false))}
+        title="Delete draft?"
+        centered
+      >
         <Stack gap="sm">
-          <Text size="sm" c="dimmed">
-            Upload to Supabase Storage bucket <code>cms-media</code>. The public URL will be used.
+          <Text size="sm">
+            This permanently deletes the current draft version(s) for this section. Published content is unchanged.
           </Text>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={async (e) => {
-              const file = e.currentTarget.files?.[0]
-              e.currentTarget.value = ""
-              if (!file) return
-              try {
-                setLoading(true)
-                await onUploadBackground(file)
-                setUploadOpen(false)
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Upload failed.")
-              } finally {
-                setLoading(false)
-              }
-            }}
-          />
+          {isDirty ? (
+            <Text size="sm" c="dimmed">
+              Your unsaved changes in this editor will be discarded.
+            </Text>
+          ) : null}
+
+          {section && activeDraft ? (
+            <Paper withBorder p="sm" radius="md">
+              <Stack gap={4}>
+                <Group gap="xs">
+                  <Badge variant="default">
+                    {type ? formatType(type, typeDefaults ?? undefined) : "Section"}
+                  </Badge>
+                  {section.key ? (
+                    <Text c="dimmed" size="xs">
+                      #{section.key}
+                    </Text>
+                  ) : null}
+                  <Badge size="xs" color="yellow" variant="light">
+                    draft v{activeDraft.version}
+                  </Badge>
+                </Group>
+              </Stack>
+            </Paper>
+          ) : null}
+
           <Group justify="end">
-            <Button variant="default" onClick={() => setUploadOpen(false)}>
-              Close
+            <Button
+              variant="default"
+              onClick={() => setDeleteDraftOpen(false)}
+              disabled={deleteDraftLoading}
+            >
+              Cancel
+            </Button>
+            <Button color="red" onClick={() => void onConfirmDeleteDraft()} loading={deleteDraftLoading}>
+              Delete draft
             </Button>
           </Group>
         </Stack>
       </Modal>
+
+      <MediaLibraryModal
+        opened={backgroundLibraryOpen}
+        onClose={() => setBackgroundLibraryOpen(false)}
+        onSelect={(item) => {
+          setBackgroundMediaUrl(item.url)
+          setBackgroundLibraryOpen(false)
+        }}
+      />
+
+      <MediaLibraryModal
+        opened={navLogoLibraryOpen}
+        onClose={() => setNavLogoLibraryOpen(false)}
+        onSelect={(item) => {
+          applyNavLogoUrl(item.url)
+          setNavLogoLibraryOpen(false)
+        }}
+      />
+
+      <MediaLibraryModal
+        opened={cardImageLibraryTarget !== null}
+        onClose={() => setCardImageLibraryTarget(null)}
+        onSelect={(item) => {
+          if (cardImageLibraryTarget !== null) {
+            applyCardImageUrl(cardImageLibraryTarget, item.url)
+          }
+          setCardImageLibraryTarget(null)
+        }}
+      />
     </>
   )
 }

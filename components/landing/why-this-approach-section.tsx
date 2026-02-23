@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
+import { SectionHeading } from "@/components/landing/section-primitives"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -32,11 +33,9 @@ export function WhyThisApproachSection({
     style={sectionStyle}
     >
       <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
-        <h2 id="why-title" className="text-lg font-semibold tracking-tight">
-          {title}
-        </h2>
+        <SectionHeading id="why-title" title={title} />
 
-        <Card className="gap-3 border-border/60 bg-card/40 py-4" style={panelStyle}>
+        <Card className="surface-panel gap-3 py-4" style={panelStyle}>
           <CardContent className="space-y-2 px-4">
             <h3 className="text-sm font-semibold">{heading}</h3>
             <div

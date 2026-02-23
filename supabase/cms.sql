@@ -24,6 +24,15 @@ begin;
 create extension if not exists pgcrypto;
 
 -- -----------------------------------------------------------------------------
+-- Supabase Storage bucket bootstrap (idempotent)
+-- -----------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('cms-media', 'cms-media', true)
+on conflict (id) do update set
+  name = excluded.name,
+  public = excluded.public;
+
+-- -----------------------------------------------------------------------------
 -- Utility: safe Tailwind class whitelist (DB-side validation)
 -- -----------------------------------------------------------------------------
 create table if not exists public.tailwind_class_whitelist (
@@ -309,6 +318,23 @@ alter table public.audit_log enable row level security;
 alter table public.media enable row level security;
 alter table public.tailwind_class_whitelist enable row level security;
 alter table public.section_type_defaults enable row level security;
+alter table storage.objects enable row level security;
+
+-- storage.objects (public read, admin write) for cms-media bucket
+drop policy if exists "cms_media_public_read" on storage.objects;
+create policy "cms_media_public_read"
+  on storage.objects
+  for select
+  to anon, authenticated
+  using (bucket_id = 'cms-media');
+
+drop policy if exists "cms_media_admin_write" on storage.objects;
+create policy "cms_media_admin_write"
+  on storage.objects
+  for all
+  to authenticated
+  using (bucket_id = 'cms-media' and public.is_admin())
+  with check (bucket_id = 'cms-media' and public.is_admin());
 -- profiles
 drop policy if exists "profiles_select_own_or_admin" on public.profiles;
 create policy "profiles_select_own_or_admin"
@@ -1022,6 +1048,11 @@ insert into public.section_type_defaults (
       jsonb_build_object('label', 'Examples', 'href', '#examples', 'anchorId', 'examples'),
       jsonb_build_object('label', 'FAQ', 'href', '#faq', 'anchorId', 'faq'),
       jsonb_build_object('label', 'Contact', 'href', '#contact', 'anchorId', 'contact')
+    ),
+    'logo', jsonb_build_object(
+      'url', '',
+      'alt', 'Site logo',
+      'widthPx', 140
     )
   ),
   jsonb_build_object(
@@ -1033,7 +1064,8 @@ insert into public.section_type_defaults (
       'background_media', false
     ),
     'content', jsonb_build_object(
-      'links', 'links[]'
+      'links', 'links[]',
+      'logo', 'object(url,alt,widthPx)'
     )
   )
 ),
@@ -1092,24 +1124,66 @@ insert into public.section_type_defaults (
     'textAlign', 'left'
   ),
   jsonb_build_object(
+    'cardDisplay', jsonb_build_object(
+      'showTitle', true,
+      'showText', true,
+      'showImage', false,
+      'showYouGet', false,
+      'showBestFor', false,
+      'youGetMode', 'block',
+      'bestForMode', 'block'
+    ),
     'cards', jsonb_build_array(
       jsonb_build_object(
         'title', '48-Hour Automation Audit',
         'text', 'A rapid assessment of one workflow with a prioritized plan and ROI estimate.',
+        'display', jsonb_build_object(
+          'showTitle', true,
+          'showText', true,
+          'showImage', false,
+          'showYouGet', false,
+          'showBestFor', false,
+          'youGetMode', 'block',
+          'bestForMode', 'block'
+        ),
+        'image', jsonb_build_object('url', '', 'alt', '', 'widthPx', 240),
         'youGet', jsonb_build_array('workflow map', 'backlog of fixes', 'architecture sketch', 'rough hours saved/week'),
-        'bestFor', 'deciding what to automate first (and what not to)'
+        'bestFor', 'deciding what to automate first (and what not to)',
+        'bestForList', jsonb_build_array()
       ),
       jsonb_build_object(
         'title', '10-Day Automation Sprint',
         'text', 'One production-ready workflow shipped end-to-end using n8n + Postgres.',
+        'display', jsonb_build_object(
+          'showTitle', true,
+          'showText', true,
+          'showImage', false,
+          'showYouGet', false,
+          'showBestFor', false,
+          'youGetMode', 'block',
+          'bestForMode', 'block'
+        ),
+        'image', jsonb_build_object('url', '', 'alt', '', 'widthPx', 240),
         'youGet', jsonb_build_array('automation + monitoring', 'audit logs', 'handover docs + walkthrough video'),
-        'bestFor', 'removing a recurring bottleneck immediately'
+        'bestFor', 'removing a recurring bottleneck immediately',
+        'bestForList', jsonb_build_array()
       ),
       jsonb_build_object(
         'title', 'Ongoing Automation Retainer',
         'text', 'Monthly improvements + maintenance for your automation layer.',
+        'display', jsonb_build_object(
+          'showTitle', true,
+          'showText', true,
+          'showImage', false,
+          'showYouGet', false,
+          'showBestFor', false,
+          'youGetMode', 'block',
+          'bestForMode', 'block'
+        ),
+        'image', jsonb_build_object('url', '', 'alt', '', 'widthPx', 240),
         'youGet', jsonb_build_array('new workflows + enhancements', 'reliability fixes', 'monitoring and support'),
-        'bestFor', 'continuous ops/finance efficiency gains'
+        'bestFor', 'continuous ops/finance efficiency gains',
+        'bestForList', jsonb_build_array()
       )
     )
   ),
@@ -1122,7 +1196,14 @@ insert into public.section_type_defaults (
       'background_media', false
     ),
     'content', jsonb_build_object(
-      'cards', 'cards[]'
+      'cards', 'cards[]',
+      'cardDisplay', 'cardDisplay',
+      'cards.display', 'cardDisplay',
+      'cards.image', 'image',
+      'cards.image.widthPx', 'number',
+      'cards.display.youGetMode', '"block"|"list"',
+      'cards.display.bestForMode', '"block"|"list"',
+      'cards.bestForList', 'string[]'
     )
   )
 ),
@@ -1584,24 +1665,66 @@ select
     'textAlign', 'left'
   ),
   jsonb_build_object(
+    'cardDisplay', jsonb_build_object(
+      'showTitle', true,
+      'showText', true,
+      'showImage', false,
+      'showYouGet', false,
+      'showBestFor', false,
+      'youGetMode', 'block',
+      'bestForMode', 'block'
+    ),
     'cards', jsonb_build_array(
       jsonb_build_object(
         'title', '48-Hour Automation Audit',
         'text', 'A rapid assessment of one workflow with a prioritized plan and ROI estimate.',
+        'display', jsonb_build_object(
+          'showTitle', true,
+          'showText', true,
+          'showImage', false,
+          'showYouGet', false,
+          'showBestFor', false,
+          'youGetMode', 'block',
+          'bestForMode', 'block'
+        ),
+        'image', jsonb_build_object('url', '', 'alt', '', 'widthPx', 240),
         'youGet', jsonb_build_array('workflow map', 'backlog of fixes', 'architecture sketch', 'rough hours saved/week'),
-        'bestFor', 'deciding what to automate first (and what not to)'
+        'bestFor', 'deciding what to automate first (and what not to)',
+        'bestForList', jsonb_build_array()
       ),
       jsonb_build_object(
         'title', '10-Day Automation Sprint',
         'text', 'One production-ready workflow shipped end-to-end using n8n + Postgres.',
+        'display', jsonb_build_object(
+          'showTitle', true,
+          'showText', true,
+          'showImage', false,
+          'showYouGet', false,
+          'showBestFor', false,
+          'youGetMode', 'block',
+          'bestForMode', 'block'
+        ),
+        'image', jsonb_build_object('url', '', 'alt', '', 'widthPx', 240),
         'youGet', jsonb_build_array('automation + monitoring', 'audit logs', 'handover docs + walkthrough video'),
-        'bestFor', 'removing a recurring bottleneck immediately'
+        'bestFor', 'removing a recurring bottleneck immediately',
+        'bestForList', jsonb_build_array()
       ),
       jsonb_build_object(
         'title', 'Ongoing Automation Retainer',
         'text', 'Monthly improvements + maintenance for your automation layer.',
+        'display', jsonb_build_object(
+          'showTitle', true,
+          'showText', true,
+          'showImage', false,
+          'showYouGet', false,
+          'showBestFor', false,
+          'youGetMode', 'block',
+          'bestForMode', 'block'
+        ),
+        'image', jsonb_build_object('url', '', 'alt', '', 'widthPx', 240),
         'youGet', jsonb_build_array('new workflows + enhancements', 'reliability fixes', 'monitoring and support'),
-        'bestFor', 'continuous ops/finance efficiency gains'
+        'bestFor', 'continuous ops/finance efficiency gains',
+        'bestForList', jsonb_build_array()
       )
     )
   )

@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
+import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import { Metric } from "@/components/ui/metric"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -23,32 +23,27 @@ export function TechStackSection({
   items: Array<{ label: string; value: string }>
 }) {
   return (
-    <section
+    <SectionShell
       id={sectionId}
-      className={cn("scroll-mt-16 py-6", sectionClassName)}
-      aria-labelledby="tech-title"
-    style={sectionStyle}
+      labelledBy="tech-title"
+      sectionClassName={sectionClassName}
+      sectionStyle={sectionStyle}
+      containerClassName={containerClassName}
+      containerStyle={containerStyle}
     >
-      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
-        <h2 id="tech-title" className="text-lg font-semibold tracking-tight">
-          {title}
-        </h2>
+      <SectionHeading id="tech-title" title={title} />
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {items.map((item) => (
-            <Card
-              key={item.label}
-              className="gap-2 border-border/60 bg-card/40 py-3"
-              style={panelStyle}
-            >
-              <CardContent className="flex items-start gap-2 px-4">
-                <Badge variant="secondary">{item.label}</Badge>
-                <p className="text-sm text-muted-foreground">{item.value}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {items.map((item) => (
+          <Metric
+            key={item.label}
+            label={item.label}
+            value={<p className="text-muted-foreground">{item.value}</p>}
+            className={cn("interactive-lift")}
+            style={panelStyle}
+          />
+        ))}
       </div>
-    </section>
+    </SectionShell>
   )
 }

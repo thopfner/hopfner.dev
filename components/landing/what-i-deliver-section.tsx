@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
+import { SectionHeading } from "@/components/landing/section-primitives"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -50,11 +51,9 @@ export function WhatIDeliverSection({
     style={sectionStyle}
     >
       <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
-        <h2 id="services-title" className="text-lg font-semibold tracking-tight">
-          {title}
-        </h2>
+        <SectionHeading id="services-title" title={title} />
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {cards.map((item, idx) => {
             const hasYouGetBlock =
               item.display.showYouGet &&
@@ -80,12 +79,15 @@ export function WhatIDeliverSection({
             return (
             <Card
               key={`${item.title}-${idx}`}
-              className="gap-3 border-border/60 bg-card/40 py-4"
+              className="surface-panel interactive-lift gap-3 py-4"
               style={panelStyle}
             >
               {item.display.showImage && item.imageUrl ? (
                 <div className="flex justify-center px-4">
-                  <div className="overflow-hidden rounded-md border border-border/60 bg-card">
+                  <div
+                    className="overflow-hidden rounded-md border border-border/60 bg-card"
+                    style={{ backgroundColor: "color-mix(in srgb, var(--card) calc(var(--page-panel-opacity, 1) * 100%), transparent)" }}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={item.imageUrl}

@@ -18,12 +18,13 @@ export async function getPublishedPageBySlug(slug: string): Promise<{
   tailwindWhitelist: TailwindWhitelist
   sectionTypeDefaults: CmsSectionTypeDefaultsMap
   siteFormattingSettings: SiteFormattingSettings
+  customSectionSchemas: Record<string, Record<string, unknown>>
 }> {
   const supabase = getSupabasePublicClient()
 
   const { data: page, error: pageError } = await supabase
     .from("pages")
-    .select("id, slug, title, formatting_override")
+    .select("id, slug, title, bg_image_url, formatting_override")
     .eq("slug", slug)
     .single()
 
@@ -43,6 +44,28 @@ export async function getPublishedPageBySlug(slug: string): Promise<{
     if (!normalized) return null
     return { ...s, section_type: normalized as CmsSectionType }
   }).filter(Boolean) as CmsSectionRow[]
+
+  const { data: registryData, error: registryError } = await supabase
+    .from("section_type_registry")
+    .select("key, renderer, composer_schema, is_active")
+    .eq("is_active", true)
+
+  if (registryError) throw new Error(registryError.message)
+
+  const registryRows = (registryData ?? []) as Array<{ key: string; renderer: string; composer_schema?: Record<string, unknown> }>
+
+  const composedTypeKeys = new Set(
+    registryRows
+      .filter((r) => r.renderer === "composed")
+      .map((r) => r.key)
+  )
+
+  const customSectionSchemas = registryRows.reduce((acc, row) => {
+    if (row.renderer === "composed") {
+      acc[row.key] = (row.composer_schema ?? {}) as Record<string, unknown>
+    }
+    return acc
+  }, {} as Record<string, Record<string, unknown>>)
 
   const sectionIds = sectionRows.map((s) => s.id)
   const globalIds = Array.from(new Set(sectionRows.map((s) => s.global_section_id).filter(Boolean) as string[]))
@@ -78,12 +101,36 @@ export async function getPublishedPageBySlug(slug: string): Promise<{
     .map((s) => {
       const localPublished = localPublishedBySectionId.get(s.id)
       const globalPublished = s.global_section_id ? globalPublishedById.get(s.global_section_id) : undefined
-      const published = localPublished ?? globalPublished
+      const linkedToGlobal = Boolean(s.global_section_id)
+      const isComposed = composedTypeKeys.has(String(s.section_type))
+
+      const fallbackComposedPublished = {
+        id: `composed:${s.id}`,
+        section_id: s.id,
+        version: 1,
+        status: "published" as const,
+        title: null,
+        subtitle: null,
+        cta_primary_label: null,
+        cta_primary_href: null,
+        cta_secondary_label: null,
+        cta_secondary_href: null,
+        background_media_url: null,
+        formatting: {},
+        content: {},
+        created_at: new Date(0).toISOString(),
+        published_at: new Date(0).toISOString(),
+      }
+
+      const published = linkedToGlobal
+        ? (globalPublished ?? (isComposed ? fallbackComposedPublished : undefined))
+        : (localPublished ?? globalPublished ?? (isComposed ? fallbackComposedPublished : undefined))
+
       if (!published) return null
       return {
         ...s,
         published,
-        source: localPublished ? "page" : "global",
+        source: linkedToGlobal || !localPublished ? "global" : "page",
       } satisfies CmsPublishedSection
     })
     .filter(Boolean) as CmsPublishedSection[]
@@ -118,5 +165,6 @@ export async function getPublishedPageBySlug(slug: string): Promise<{
     tailwindWhitelist,
     sectionTypeDefaults,
     siteFormattingSettings: (siteFmtData?.settings as SiteFormattingSettings) ?? {},
+    customSectionSchemas,
   }
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useEffect, useId, useRef, useState } from "react"
 
 import { Menu, X } from "lucide-react"
@@ -15,13 +16,19 @@ export function SiteHeader({
   logo,
   cta,
   containerClassName,
+  topBackdropEnabled,
+  navOverlayOpacity = 0.18,
 }: {
   links: HeaderNavLink[]
   logo?: { url: string; alt: string; widthPx: number }
   cta: { label: string; href: string }
   containerClassName?: string
+  topBackdropEnabled?: boolean
+  navOverlayOpacity?: number
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [activeHash, setActiveHash] = useState("")
+  const pathname = usePathname()
   const menuId = useId()
   const mobileMenuRef = useRef<HTMLDivElement | null>(null)
 
@@ -71,8 +78,63 @@ export function SiteHeader({
     }
   }, [mobileOpen])
 
+  useEffect(() => {
+    const updateHash = () => setActiveHash(window.location.hash || "")
+
+    updateHash()
+    window.addEventListener("hashchange", updateHash)
+
+    const anchors = links
+      .map((item) => item.anchorId?.trim())
+      .filter((anchorId): anchorId is string => Boolean(anchorId))
+
+    if (!anchors.length) {
+      return () => window.removeEventListener("hashchange", updateHash)
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
+
+        if (!visible?.target?.id) return
+        setActiveHash(`#${visible.target.id}`)
+      },
+      { rootMargin: "-20% 0px -65% 0px", threshold: [0.15, 0.3, 0.5] }
+    )
+
+    anchors.forEach((id) => {
+      const el = document.getElementById(id)
+      if (el) observer.observe(el)
+    })
+
+    return () => {
+      window.removeEventListener("hashchange", updateHash)
+      observer.disconnect()
+    }
+  }, [links])
+
+  const overlayOpacity = Math.min(0.6, Math.max(0, navOverlayOpacity))
+
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+    <header
+      data-topbg={topBackdropEnabled ? "true" : "false"}
+      className={cn(
+        "sticky top-0 z-50",
+        topBackdropEnabled
+          ? "border-b-0 bg-transparent"
+          : "border-b border-border/60 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50"
+      )}
+      style={
+        topBackdropEnabled
+          ? {
+              backgroundColor: `rgba(0,0,0,${overlayOpacity})`,
+              backdropFilter: "blur(2px)",
+            }
+          : undefined
+      }
+    >
       <div
         className={cn(
           "mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2.5",
@@ -84,7 +146,7 @@ export function SiteHeader({
             type="button"
             size="icon"
             variant="outline"
-            className="h-11 w-11 shrink-0"
+            className="h-11 w-11 shrink-0 border-border/70 bg-background/70 text-foreground hover:bg-muted"
             aria-haspopup="menu"
             aria-expanded={mobileOpen}
             aria-controls={menuId}
@@ -107,25 +169,32 @@ export function SiteHeader({
             )}
           >
             <ul className="space-y-1">
-              {links.map((item, idx) => (
-                <li key={`mobile-${item.href}-${idx}`}>
-                  <Link
-                    href={item.href}
-                    role="menuitem"
-                    className="block rounded-sm px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {links.map((item, idx) => {
+                const isAnchorLink = item.href.startsWith("#")
+                const isActive = isAnchorLink
+                  ? activeHash === item.href || (item.anchorId ? activeHash === `#${item.anchorId}` : false)
+                  : pathname === item.href
+
+                return (
+                  <li key={`mobile-${item.href}-${idx}`}>
+                    <Link
+                      href={item.href}
+                      role="menuitem"
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "block rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        isActive ? "bg-primary font-semibold text-primary-foreground" : "text-foreground hover:bg-muted"
+                      )}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                )
+              })}
             </ul>
 
-            <div className="mt-2 border-t border-border pt-2">
-              <Button size="sm" asChild className="w-full" onClick={() => setMobileOpen(false)}>
-                <Link href={cta.href}>{cta.label}</Link>
-              </Button>
-            </div>
+            {/* CTA moved to header row */}
           </div>
         </div>
 
@@ -142,25 +211,38 @@ export function SiteHeader({
 
         <nav aria-label="Top navigation" className="min-w-0 flex-1">
           <ul className="hidden flex-wrap items-center gap-1 text-xs text-muted-foreground sm:text-sm md:flex">
-            {links.map((item, idx) => (
-              <li key={`${item.href}-${idx}`} className="flex items-center">
-                <Link
-                  href={item.href}
-                  className="truncate rounded-sm px-1 py-0.5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {item.label}
-                </Link>
-                {idx < links.length - 1 ? (
-                  <span aria-hidden className="px-1 text-muted-foreground/70">
-                    ·
-                  </span>
-                ) : null}
-              </li>
-            ))}
+            {links.map((item, idx) => {
+              const isAnchorLink = item.href.startsWith("#")
+              const isActive = isAnchorLink
+                ? activeHash === item.href || (item.anchorId ? activeHash === `#${item.anchorId}` : false)
+                : pathname === item.href
+
+              return (
+                <li key={`${item.href}-${idx}`} className="flex items-center">
+                  <Link
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "truncate rounded-md px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      isActive
+                        ? "bg-primary font-semibold text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                  {idx < links.length - 1 ? (
+                    <span aria-hidden className="px-1 text-muted-foreground/70">
+                      ·
+                    </span>
+                  ) : null}
+                </li>
+              )
+            })}
           </ul>
         </nav>
 
-        <Button size="sm" asChild className="hidden shrink-0 md:inline-flex">
+        <Button size="sm" variant="secondary" asChild className="shrink-0">
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
 

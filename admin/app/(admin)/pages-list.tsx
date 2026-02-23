@@ -29,6 +29,18 @@ type PageRow = {
   updated_at: string
 }
 
+function validateSlug(raw: string): string | null {
+  const slug = raw.trim()
+  if (!slug) return "Slug is required."
+  if (slug !== slug.toLowerCase()) return "Slug must be lowercase."
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    return "Slug must use only a-z, 0-9, and hyphens (no spaces)."
+  }
+  const reserved = new Set(["admin", "_next", "api", "well-known"])
+  if (reserved.has(slug)) return `Slug "${slug}" is reserved.`
+  return null
+}
+
 export function PagesList() {
   const supabase = useMemo(() => createClient(), [])
 
@@ -65,10 +77,15 @@ export function PagesList() {
     setCreating(true)
     setError(null)
     try {
-      const slug = newSlug.trim()
+      const slug = newSlug.trim().toLowerCase()
       const title = newTitle.trim()
-      if (!slug || !title) {
-        setError("Slug and title are required.")
+      const slugError = validateSlug(slug)
+      if (slugError) {
+        setError(slugError)
+        return
+      }
+      if (!title) {
+        setError("Title is required.")
         return
       }
       const { error: insertError } = await supabase
@@ -109,7 +126,7 @@ export function PagesList() {
             <TextInput
               label="Slug"
               value={newSlug}
-              onChange={(e) => setNewSlug(e.currentTarget.value)}
+              onChange={(e) => setNewSlug(e.currentTarget.value.toLowerCase())}
               placeholder="home"
               w={200}
             />

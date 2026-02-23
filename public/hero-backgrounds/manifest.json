@@ -1,0 +1,47 @@
+{
+  "model": "gemini-3-pro-image-preview",
+  "count": 6,
+  "prompt": "Create a premium dark abstract full-page mobile background in the same theme as the previous samples: deep navy-charcoal gradient, elegant flowing luminous contour lines, subtle cyan glow, minimal composition, no text, no logos, no icons, high-end enterprise AI aesthetic. Optimize composition for vertical smartphone full-screen display with clean negative space.",
+  "refs": [
+    "/var/www/html/claw.hopfner.dev/data/openclaw-config/media/inbound/file_74---3f7fdf03-7fab-4119-aa01-ea119c1c3682.jpg"
+  ],
+  "createdAt": "2026-02-21T17:11:09.840318+00:00",
+  "files": [
+    {
+      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-mobile-01.jpg",
+      "fileName": "page-bg-mobile-01.jpg",
+      "mime": "image/jpeg",
+      "upscaledTo": "2160x3840"
+    },
+    {
+      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-mobile-02.jpg",
+      "fileName": "page-bg-mobile-02.jpg",
+      "mime": "image/jpeg",
+      "upscaledTo": "2160x3840"
+    },
+    {
+      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-mobile-03.jpg",
+      "fileName": "page-bg-mobile-03.jpg",
+      "mime": "image/jpeg",
+      "upscaledTo": "2160x3840"
+    },
+    {
+      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-mobile-04.jpg",
+      "fileName": "page-bg-mobile-04.jpg",
+      "mime": "image/jpeg",
+      "upscaledTo": "2160x3840"
+    },
+    {
+      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-mobile-05.jpg",
+      "fileName": "page-bg-mobile-05.jpg",
+      "mime": "image/jpeg",
+      "upscaledTo": "2160x3840"
+    },
+    {
+      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-mobile-06.jpg",
+      "fileName": "page-bg-mobile-06.jpg",
+      "mime": "image/jpeg",
+      "upscaledTo": "2160x3840"
+    }
+  ]
+}

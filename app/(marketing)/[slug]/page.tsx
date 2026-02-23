@@ -1,3 +1,4 @@
+import { ComposedSection } from "@/components/landing/composed-section"
 import { FaqSection } from "@/components/landing/faq-section"
 import { FinalCtaSection } from "@/components/landing/final-cta-section"
 import { FooterGridSection } from "@/components/landing/footer-grid-section"
@@ -5,6 +6,7 @@ import { HeroSection } from "@/components/landing/hero-section"
 import { HowItWorksSection } from "@/components/landing/how-it-works-section"
 import { SiteHeader, type HeaderNavLink } from "@/components/landing/site-header"
 import { TechStackSection } from "@/components/landing/tech-stack-section"
+import { TopBackdrop } from "@/components/landing/top-backdrop"
 import { WhatIDeliverSection } from "@/components/landing/what-i-deliver-section"
 import { WhyThisApproachSection } from "@/components/landing/why-this-approach-section"
 import { WorkflowsSection } from "@/components/landing/workflows-section"
@@ -237,26 +239,31 @@ function sectionContainerProps(
   const fontFamily = asString(formatting.fontFamily)
   if (fontFamily) containerStyle.fontFamily = fontFamily
   const textColor = asString(formatting.textColor)
+  const mutedTextColor = asString(formatting.mutedTextColor)
   const accentColor = asString(formatting.accentColor)
   const backgroundColor = asString(formatting.backgroundColorToken)
   const shadowMode = asString(formatting.shadowMode)
   const innerShadowMode = asString(formatting.innerShadowMode)
   const innerShadowStrength = clampNumber(formatting.innerShadowStrength, 0, 1.8, 0)
+  const effectiveShadowScale = clampNumber(formatting.shadowScale, 0, 1.8, 1)
+  const effectiveInnerShadowScale = clampNumber(formatting.innerShadowScale, 0, 1.8, innerShadowStrength)
   if (textColor) {
     containerStyle.color = textColor
     cssVars["--foreground"] = textColor
     cssVars["--card-foreground"] = textColor
-    cssVars["--muted-foreground"] = `color-mix(in srgb, ${textColor} 72%, transparent)`
+    cssVars["--muted-foreground"] = mutedTextColor || `color-mix(in srgb, ${textColor} 72%, transparent)`
+  } else if (mutedTextColor) {
+    cssVars["--muted-foreground"] = mutedTextColor
   }
   Object.assign(cssVars, accentDerivedVars(accentColor))
   if (backgroundColor) cssVars["--background"] = backgroundColor
-  const outerShadowOn = shadowMode !== "off"
+  const outerShadowOn = shadowMode === "off" ? false : effectiveShadowScale > 0.01
   const innerShadowOn =
     innerShadowMode === "on"
-      ? innerShadowStrength > 0
+      ? effectiveInnerShadowScale > 0.01
       : innerShadowMode === "off"
         ? false
-        : true
+        : effectiveInnerShadowScale > 0.01
 
   if (!outerShadowOn) {
     cssVars["--section-shadow-ambient"] = "none"
@@ -267,7 +274,7 @@ function sectionContainerProps(
   }
 
   if (innerShadowMode === "on") {
-    cssVars["--section-inner-shadow"] = buildInnerShadow(innerShadowStrength)
+    cssVars["--section-inner-shadow"] = buildInnerShadow(effectiveInnerShadowScale)
   } else if (innerShadowMode === "off") {
     cssVars["--section-inner-shadow"] = "none"
   }
@@ -275,10 +282,14 @@ function sectionContainerProps(
   ;(panelStyle as CSSProperties & Record<string, string>)["--section-shadow-color"] =
     asString(formatting.shadowColorToken) || "var(--section-shadow-color)"
 
+  const panelOpacity = clampNumber(formatting.pagePanelOpacity, 0, 1, 1)
+  ;(panelStyle as CSSProperties & Record<string, string>)["--page-panel-opacity"] = String(panelOpacity)
+  panelStyle.backgroundColor = `color-mix(in srgb, var(--card) ${Math.round(panelOpacity * 100)}%, transparent)`
+
   const boxShadowLayers: string[] = []
   if (outerShadowOn) boxShadowLayers.push("var(--section-shadow-ambient)", "var(--section-shadow-lift)")
   if (innerShadowOn) boxShadowLayers.push("var(--section-inner-shadow)")
-  panelStyle.boxShadow = boxShadowLayers.length ? boxShadowLayers.join(", ") : "none"
+  panelStyle.boxShadow = boxShadowLayers.length ? boxShadowLayers.join(", ") : "var(--shadow-sm)"
 
   const widthMode = asString(formatting.widthMode)
   const align = asString(formatting.alignment)
@@ -303,6 +314,22 @@ function sectionContainerProps(
   }
 }
 
+function resolveSectionBackgroundColor(
+  formatting: Record<string, unknown>,
+  fallback: string
+): string {
+  const backgroundType = asString(formatting.backgroundType)
+  if (backgroundType === "color") {
+    const direct = asString(formatting.backgroundColor).trim()
+    if (direct) return direct
+  }
+
+  const token = asString(formatting.backgroundColorToken).trim()
+  if (token) return token
+
+  return fallback
+}
+
 export default async function MarketingPage({
   params,
 }: {
@@ -312,19 +339,23 @@ export default async function MarketingPage({
   const slug = (rawSlug ?? "").trim()
   if (!slug) notFound()
 
+  let page: { bg_image_url?: string | null }
   let sections: CmsPublishedSection[]
   let tailwindWhitelist: Set<string>
   let sectionTypeDefaults: CmsSectionTypeDefaultsMap
   let siteFormattingSettings: Record<string, unknown>
   let pageFormattingOverride: Record<string, unknown>
+  let customSectionSchemas: Record<string, Record<string, unknown>>
 
   try {
     const res = await getPublishedPageBySlug(slug)
+    page = res.page
     sections = res.sections
     tailwindWhitelist = res.tailwindWhitelist
     sectionTypeDefaults = res.sectionTypeDefaults
     siteFormattingSettings = asRecord(res.siteFormattingSettings)
     pageFormattingOverride = asRecord(res.page.formatting_override)
+    customSectionSchemas = res.customSectionSchemas
   } catch {
     notFound()
   }
@@ -380,6 +411,7 @@ export default async function MarketingPage({
   const rootShadowScale = clampNumber(mergedTokens.shadowScale ?? 1, 0, 1.8, 1)
   const rootInnerShadowScale = clampNumber(mergedTokens.innerShadowScale ?? 0, 0, 1.8, 0)
   const rootTextColor = asString(mergedTokens.textColor)
+  const rootMutedTextColor = asString(mergedTokens.mutedTextColor)
   const rootAccentColor = asString(mergedTokens.accentColor)
   const rootBackgroundColor = asString(mergedTokens.backgroundColor)
   const rootCardBackgroundColor = asString(mergedTokens.cardBackgroundColor)
@@ -413,10 +445,20 @@ export default async function MarketingPage({
   if (rootTextColor) {
     ;(rootStyle as Record<string, string>)["--foreground"] = rootTextColor
     ;(rootStyle as Record<string, string>)["--card-foreground"] = rootTextColor
-    ;(rootStyle as Record<string, string>)["--muted-foreground"] = `color-mix(in srgb, ${rootTextColor} 72%, transparent)`
+    ;(rootStyle as Record<string, string>)["--muted-foreground"] = rootMutedTextColor || `color-mix(in srgb, ${rootTextColor} 72%, transparent)`
+  } else if (rootMutedTextColor) {
+    ;(rootStyle as Record<string, string>)["--muted-foreground"] = rootMutedTextColor
   }
   if (rootBackgroundColor) (rootStyle as Record<string, string>)["--background"] = rootBackgroundColor
   if (rootCardBackgroundColor) (rootStyle as Record<string, string>)["--card"] = rootCardBackgroundColor
+
+  const pageBgImageUrl = asString(page.bg_image_url).trim() || null
+  const pageBackdropEnabled = Boolean(pageBgImageUrl)
+
+  const topBackdropScopeRaw = asString(pageFormattingOverride.topBackdropScope)
+  const topBackdropScope = topBackdropScopeRaw === "full-page" ? "full-page" : "hero-only"
+  const topNavOverlayOpacity = clampNumber(pageFormattingOverride.topNavOverlayOpacity, 0, 0.6, 0.18)
+  const topBgImageOpacity = clampNumber(pageFormattingOverride.topBackdropImageOpacity, 0, 1, 1)
 
   return (
     <div className="relative min-h-dvh bg-background" style={rootStyle}>
@@ -424,29 +466,32 @@ export default async function MarketingPage({
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_55%),radial-gradient(700px_circle_at_50%_100%,hsl(var(--foreground)/0.06),transparent_50%)]"
       />
-      {header ? (
-        <SiteHeader
-          links={headerLinks}
-          logo={headerLogo}
-          cta={headerCta}
-          containerClassName={cn(
-            sectionContainerProps(
-              deepMerge(
+      <TopBackdrop imageUrl={pageBackdropEnabled ? pageBgImageUrl : null} imageOpacity={topBgImageOpacity} navOverlayOpacity={topNavOverlayOpacity} scope={topBackdropScope}>
+        {header ? (
+          <SiteHeader
+            links={headerLinks}
+            logo={headerLogo}
+            cta={headerCta}
+            topBackdropEnabled={pageBackdropEnabled}
+            navOverlayOpacity={topNavOverlayOpacity}
+            containerClassName={cn(
+              sectionContainerProps(
                 deepMerge(
-                  deepMerge(siteFormattingSettings, pageFormattingOverride),
-                  asRecord(headerDefaults?.default_formatting)
+                  deepMerge(
+                    deepMerge(siteFormattingSettings, pageFormattingOverride),
+                    asRecord(headerDefaults?.default_formatting)
+                  ),
+                  deepMerge(asRecord(header.formatting_override), asRecord(header.published.formatting))
                 ),
-                deepMerge(asRecord(header.formatting_override), asRecord(header.published.formatting))
-              ),
-              tailwindWhitelist,
-              header.key
-            ).containerClassName
-          )}
-        />
-      ) : null}
+                tailwindWhitelist,
+                header.key
+              ).containerClassName
+            )}
+          />
+        ) : null}
 
-      <main className={cn("pb-10", firstBodyIsHero ? "pt-0" : "pt-4")}>
-        {orderedBodySections.map((section) => {
+        <main className={cn("pb-10", firstBodyIsHero ? "pt-0" : "pt-4")}>
+          {orderedBodySections.map((section, index) => {
           const v = section.published
           const defaults = defaultsFor(section.section_type)
           const content = deepMerge(
@@ -461,13 +506,60 @@ export default async function MarketingPage({
             deepMerge(asRecord(section.formatting_override), asRecord(v.formatting))
           )
           const props = sectionContainerProps(formatting, tailwindWhitelist, section.key)
+          const fullPageBackdropMode = pageBackdropEnabled && topBackdropScope === "full-page"
+          const propsWithFullPageBackdrop =
+            fullPageBackdropMode && section.section_type !== "hero_cta"
+              ? {
+                  ...props,
+                  sectionStyle: {
+                    ...(props.sectionStyle ?? {}),
+                    background: "transparent",
+                    backgroundColor: "transparent",
+                    backgroundImage: "none",
+                  } as CSSProperties,
+                }
+              : props
+
+          const previousSection = index > 0 ? orderedBodySections[index - 1] : null
+          const isImmediatelyAfterHero = previousSection?.section_type === "hero_cta"
+          const sectionBgColor = resolveSectionBackgroundColor(formatting, rootBackgroundColor || "hsl(var(--background))")
+          const shouldForceAfterHeroBg = isImmediatelyAfterHero && !fullPageBackdropMode
+          const adjustedProps = shouldForceAfterHeroBg
+            ? {
+                ...propsWithFullPageBackdrop,
+                sectionStyle: {
+                  ...(propsWithFullPageBackdrop.sectionStyle ?? {}),
+                  backgroundColor: sectionBgColor,
+                } as CSSProperties,
+              }
+            : propsWithFullPageBackdrop
 
           switch (section.section_type) {
             case "hero_cta": {
+              const nextSection = index < orderedBodySections.length - 1 ? orderedBodySections[index + 1] : null
+              let nextSectionBgColor = rootBackgroundColor || "hsl(var(--background))"
+              if (nextSection) {
+                const nextDefaults = defaultsFor(nextSection.section_type)
+                const nextFormatting = deepMerge(
+                  deepMerge(
+                    deepMerge(siteFormattingSettings, pageFormattingOverride),
+                    asRecord(nextDefaults?.default_formatting)
+                  ),
+                  deepMerge(
+                    asRecord(nextSection.formatting_override),
+                    asRecord(nextSection.published.formatting)
+                  )
+                )
+                nextSectionBgColor = resolveSectionBackgroundColor(
+                  nextFormatting,
+                  rootBackgroundColor || "hsl(var(--background))"
+                )
+              }
+
               return (
                 <HeroSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
                   fullBleed={asString(formatting.widthMode) === "full"}
                   minHeight={
                     asString(formatting.heroMinHeight) === "70svh" || asString(formatting.heroMinHeight) === "100svh"
@@ -486,6 +578,15 @@ export default async function MarketingPage({
                     href: pickText(v.cta_secondary_href, defaults?.default_cta_secondary_href) || "#services",
                   }}
                   trustLine={asString(content.trustLine)}
+                  backgroundImageUrl={pickText(v.background_media_url, defaults?.default_background_media_url)}
+                  imageOverlayColor={asString(formatting.heroImageOverlayColor)}
+                  imageOverlayOpacity={clampNumber(formatting.heroImageOverlayOpacity, 0, 1, 0)}
+                  transitionToNext={topBackdropScope === "full-page" && pageBackdropEnabled ? false : index < orderedBodySections.length - 1}
+                  nextSectionBgColor={nextSectionBgColor}
+                  trustLineFontSizePx={clampNumber(formatting.trustLineFontSizePx, 10, 28, 12)}
+                  trustLineColor={asString(formatting.trustLineColor)}
+                  heroBlendStrength={clampNumber(formatting.heroBlendStrength, 0, 1, 0.72)}
+                  useSharedTopBackdrop={pageBackdropEnabled && (topBackdropScope === "full-page" || (topBackdropScope === "hero-only" && index === 0))}
                 />
               )
             }
@@ -514,7 +615,7 @@ export default async function MarketingPage({
               return (
                 <WhatIDeliverSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
                   cards={cards}
                 />
@@ -529,7 +630,7 @@ export default async function MarketingPage({
               return (
                 <HowItWorksSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
                   steps={steps}
                 />
@@ -544,7 +645,7 @@ export default async function MarketingPage({
               return (
                 <WorkflowsSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
                   items={items}
                 />
@@ -555,7 +656,7 @@ export default async function MarketingPage({
               return (
                 <WhyThisApproachSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
                   heading={pickText(v.subtitle, defaults?.default_subtitle)}
                   bodyHtml={bodyHtml}
@@ -570,7 +671,7 @@ export default async function MarketingPage({
               return (
                 <TechStackSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
                   items={items}
                 />
@@ -585,7 +686,7 @@ export default async function MarketingPage({
               return (
                 <FaqSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
                   items={items}
                 />
@@ -596,7 +697,7 @@ export default async function MarketingPage({
               return (
                 <FinalCtaSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
                   headline={pickText(v.title, defaults?.default_title)}
                   body={asString(content.body)}
                   bodyHtml={bodyHtml}
@@ -659,10 +760,20 @@ export default async function MarketingPage({
                 return { label: asString(linkRec.label), href: asString(linkRec.href) }
               })
 
+              const footerFullBleed = asString(formatting.widthMode) === "full"
+              const footerContainerClassName = footerFullBleed
+                ? (props.containerClassName ?? "")
+                    .split(/\s+/)
+                    .filter((token) => token && !/^max-w-/.test(token))
+                    .join(" ")
+                : props.containerClassName
+
               return (
                 <FooterGridSection
                   key={section.id}
-                  {...props}
+                  {...adjustedProps}
+                  containerClassName={footerContainerClassName}
+                  fullBleed={footerFullBleed}
                   cards={cards}
                   brandText={asString(content.brandText)}
                   legal={{
@@ -672,11 +783,24 @@ export default async function MarketingPage({
                 />
               )
             }
-            default:
-              return null
+            default: {
+              const schema = customSectionSchemas?.[section.section_type]
+              if (!schema) return null
+              return (
+                <ComposedSection
+                  key={section.id}
+                  {...adjustedProps}
+                  schema={schema}
+                  content={asRecord(v.content)}
+                  title={asString(v.title)}
+                  subtitle={asString(v.subtitle)}
+                />
+              )
+            }
           }
-        })}
-      </main>
+          })}
+        </main>
+      </TopBackdrop>
     </div>
   )
 }

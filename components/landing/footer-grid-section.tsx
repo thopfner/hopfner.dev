@@ -26,6 +26,7 @@ export function FooterGridSection({
   sectionStyle,
   containerStyle,
   panelStyle,
+  fullBleed,
   cards,
   brandText,
   legal,
@@ -36,13 +37,20 @@ export function FooterGridSection({
   sectionStyle?: CSSProperties
   containerStyle?: CSSProperties
   panelStyle?: CSSProperties
+  fullBleed?: boolean
   cards: FooterCard[]
   brandText?: string
   legal?: { copyright?: string; links?: FooterLink[] }
 }) {
   return (
     <section id={sectionId} className={cn("scroll-mt-16 py-8", sectionClassName)} style={sectionStyle}>
-      <div className={cn("mx-auto max-w-6xl space-y-6 px-4", containerClassName)} style={containerStyle}>
+      <div
+        className={cn(
+          fullBleed ? "mx-auto max-w-none space-y-6 px-0" : "mx-auto max-w-6xl space-y-6 px-4",
+          containerClassName
+        )}
+        style={containerStyle}
+      >
         <div className={cn("grid grid-cols-1 gap-4", cards.length > 1 ? "md:grid-cols-2" : "md:grid-cols-1")}>
           {cards.map((card, idx) => {
             const title = (card.title ?? "").trim()
@@ -102,8 +110,10 @@ export function FooterGridSection({
                     <div className="space-y-2">
                       <input
                         type="email"
+                        aria-label="Email address"
+                        autoComplete="email"
                         placeholder={subscribePlaceholder}
-                        className="h-9 w-full rounded-md border border-input bg-background/50 px-3 text-sm"
+                        className="h-9 w-full rounded-md border border-input bg-background/50 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       />
                       <Button type="button" size="sm" className="w-full">
                         {subscribeButtonLabel}
@@ -114,12 +124,12 @@ export function FooterGridSection({
                   {cta1Label || cta2Label ? (
                     <div className="flex flex-wrap gap-2">
                       {cta1Label ? (
-                        <Button size="sm" asChild>
+                        <Button size="sm" variant="secondary" asChild>
                           <Link href={cta1Href || "#"}>{cta1Label}</Link>
                         </Button>
                       ) : null}
                       {cta2Label ? (
-                        <Button size="sm" variant="secondary" asChild>
+                        <Button size="sm" asChild>
                           <Link href={cta2Href || "#"}>{cta2Label}</Link>
                         </Button>
                       ) : null}
