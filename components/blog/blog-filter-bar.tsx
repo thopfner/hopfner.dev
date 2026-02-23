@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react"
 
 type TaxonomyOption = {
@@ -31,6 +31,17 @@ function useClickAway(ref: RefObject<HTMLElement | null>, onAway: () => void) {
     document.addEventListener("mousedown", handle)
     return () => document.removeEventListener("mousedown", handle)
   }, [ref, onAway])
+}
+
+function buildFilterHref(pathname: string, q: string, tags: string[], categories: string[]) {
+  const params = new URLSearchParams()
+
+  if (q.trim()) params.set("q", q.trim())
+  for (const tag of tags) params.append("tag", tag)
+  for (const category of categories) params.append("category", category)
+
+  const query = params.toString()
+  return query ? `${pathname}?${query}` : pathname
 }
 
 type MultiSelectComboboxProps = {
@@ -71,7 +82,7 @@ function MultiSelectCombobox({
   }, [options, query])
 
   return (
-    <div className="relative space-y-0.5 text-sm md:col-span-2">
+    <div className="relative space-y-0.5 text-sm md:col-span-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-foreground/70">{label}</span>
         {selected.length ? (
@@ -189,6 +200,9 @@ function MultiSelectCombobox({
 }
 
 export function BlogFilterBar({ q, selectedTags, selectedCategories, tags, categories }: BlogFilterBarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+
   const [searchValue, setSearchValue] = useState(q)
   const [tagValues, setTagValues] = useState<string[]>(selectedTags)
   const [categoryValues, setCategoryValues] = useState<string[]>(selectedCategories)
@@ -197,10 +211,40 @@ export function BlogFilterBar({ q, selectedTags, selectedCategories, tags, categ
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   useClickAway(wrapperRef, () => setOpenDropdown(null))
 
+  const canonicalHref = useMemo(
+    () => buildFilterHref(pathname, q, selectedTags, selectedCategories),
+    [pathname, q, selectedTags, selectedCategories]
+  )
+
+  const lastPushedHrefRef = useRef(canonicalHref)
+
+  useEffect(() => {
+    setSearchValue(q)
+    setTagValues(selectedTags)
+    setCategoryValues(selectedCategories)
+    lastPushedHrefRef.current = canonicalHref
+  }, [q, selectedTags, selectedCategories, canonicalHref])
+
+  function pushFilters(nextSearch: string, nextTags: string[], nextCategories: string[]) {
+    const href = buildFilterHref(pathname, nextSearch, nextTags, nextCategories)
+    if (href === lastPushedHrefRef.current) return
+    lastPushedHrefRef.current = href
+    router.replace(href, { scroll: false })
+  }
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      pushFilters(searchValue, tagValues, categoryValues)
+    }, 220)
+
+    return () => clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchValue, tagValues, categoryValues])
+
   return (
     <div ref={wrapperRef}>
-      <form action="/blog" method="get" className="grid grid-cols-1 gap-2 md:grid-cols-12">
-        <label className="space-y-0.5 text-sm md:col-span-4">
+      <form action="/blog" method="get" onSubmit={(event) => event.preventDefault()} className="grid grid-cols-1 gap-2 md:grid-cols-12">
+        <label className="space-y-0.5 text-sm md:col-span-6">
           <span className="text-foreground/70">Search</span>
           <input
             type="text"
@@ -220,8 +264,17 @@ export function BlogFilterBar({ q, selectedTags, selectedCategories, tags, categ
           open={openDropdown === "tag"}
           onOpen={() => setOpenDropdown("tag")}
           onToggleOpen={() => setOpenDropdown((prev) => (prev === "tag" ? null : "tag"))}
-          onSelect={(slug) => setTagValues((prev) => toggleItem(prev, slug))}
-          onClear={() => setTagValues([])}
+          onSelect={(slug) => {
+            setTagValues((prev) => {
+              const next = toggleItem(prev, slug)
+              pushFilters(searchValue, next, categoryValues)
+              return next
+            })
+          }}
+          onClear={() => {
+            setTagValues([])
+            pushFilters(searchValue, [], categoryValues)
+          }}
         />
 
         <MultiSelectCombobox
@@ -232,36 +285,33 @@ export function BlogFilterBar({ q, selectedTags, selectedCategories, tags, categ
           open={openDropdown === "category"}
           onOpen={() => setOpenDropdown("category")}
           onToggleOpen={() => setOpenDropdown((prev) => (prev === "category" ? null : "category"))}
-          onSelect={(slug) => setCategoryValues((prev) => toggleItem(prev, slug))}
-          onClear={() => setCategoryValues([])}
+          onSelect={(slug) => {
+            setCategoryValues((prev) => {
+              const next = toggleItem(prev, slug)
+              pushFilters(searchValue, tagValues, next)
+              return next
+            })
+          }}
+          onClear={() => {
+            setCategoryValues([])
+            pushFilters(searchValue, tagValues, [])
+          }}
         />
 
-        {tagValues.map((slug) => (
-          <input key={`tag-hidden-${slug}`} type="hidden" name="tag" value={slug} />
-        ))}
-
-        {categoryValues.map((slug) => (
-          <input key={`category-hidden-${slug}`} type="hidden" name="category" value={slug} />
-        ))}
-
-        <div className="space-y-0.5 text-sm md:col-span-2">
-          <span className="invisible">Apply</span>
+        <div className="space-y-0.5 text-sm md:col-span-12 md:flex md:justify-end">
+          <span className="hidden md:inline text-transparent">Reset</span>
           <button
-            type="submit"
-            className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
-          >
-            Apply
-          </button>
-        </div>
-
-        <div className="space-y-0.5 text-sm md:col-span-2">
-          <span className="invisible">Reset</span>
-          <Link
-            href="/blog"
-            className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-border px-4 text-sm text-foreground/80 transition-colors hover:bg-card"
+            type="button"
+            onClick={() => {
+              setSearchValue("")
+              setTagValues([])
+              setCategoryValues([])
+              pushFilters("", [], [])
+            }}
+            className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-border px-4 text-sm text-foreground/80 transition-colors hover:bg-card md:w-auto"
           >
             Reset
-          </Link>
+          </button>
         </div>
       </form>
     </div>
