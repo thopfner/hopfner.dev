@@ -1,31 +1,507 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { useSearchParams } from "next/navigation"
 import {
-  ActionIcon,
-  Badge,
-  Button,
-  ColorInput,
+  Autocomplete,
+  Box,
+  Button as MuiButton,
+  Chip as MuiChip,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Divider,
-  Group,
-  Menu,
-  Modal,
-  Paper,
-  MultiSelect,
-  Select,
-  Slider,
-  Stack,
-  Table,
-  Text,
-  TextInput,
-  Title,
-} from "@mantine/core"
+  IconButton,
+  InputAdornment,
+  ListItemIcon,
+  Menu as MuiMenu,
+  MenuItem,
+  Paper as MuiPaper,
+  Slider as MuiSlider,
+  Stack as MuiStack,
+  Table as MuiTable,
+  TableBody as MuiTableBody,
+  TableCell as MuiTableCell,
+  TableContainer,
+  TableHead as MuiTableHead,
+  TableRow as MuiTableRow,
+  TextField,
+  Typography,
+  type BoxProps,
+  type ButtonProps as MuiButtonProps,
+  type ChipProps as MuiChipProps,
+  type IconButtonProps,
+  type PaperProps as MuiPaperProps,
+  type SliderProps as MuiSliderProps,
+  type StackProps as MuiStackProps,
+  type TextFieldProps,
+  type TypographyProps,
+} from "@mui/material"
 import { IconDotsVertical, IconEdit, IconTrash } from "@tabler/icons-react"
 
 import { SectionEditorDrawer } from "@/components/section-editor-drawer"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError, toEditorErrorMessage } from "@/lib/cms/editor-error-message"
+
+type MantineSpace = "xs" | "sm" | "md" | "lg" | "xl" | number
+type MantineRadius = "xs" | "sm" | "md" | "lg" | "xl"
+type MantineAlign = "start" | "center" | "end" | "stretch"
+type MantineJustify = "start" | "center" | "end" | "space-between" | "space-around" | "space-evenly"
+type SelectDataItem = { value: string; label: string }
+type SelectData = string[] | SelectDataItem[]
+
+const SPACE_MAP: Record<Exclude<MantineSpace, number>, string> = {
+  xs: "8px",
+  sm: "12px",
+  md: "16px",
+  lg: "24px",
+  xl: "32px",
+}
+
+const RADIUS_MAP: Record<MantineRadius, string> = {
+  xs: "4px",
+  sm: "6px",
+  md: "10px",
+  lg: "14px",
+  xl: "999px",
+}
+
+function toCssSpace(value?: MantineSpace) {
+  if (value === undefined) return undefined
+  return typeof value === "number" ? `${value}px` : SPACE_MAP[value]
+}
+
+function toCssRadius(value?: MantineRadius) {
+  if (!value) return undefined
+  return RADIUS_MAP[value]
+}
+
+function toFlexAlign(value?: MantineAlign): BoxProps["alignItems"] {
+  if (value === "start") return "flex-start"
+  if (value === "end") return "flex-end"
+  if (value === "stretch") return "stretch"
+  return value ?? "center"
+}
+
+function toFlexJustify(value?: MantineJustify): BoxProps["justifyContent"] {
+  if (value === "start") return "flex-start"
+  if (value === "end") return "flex-end"
+  return value ?? "flex-start"
+}
+
+function normalizeSelectData(data: SelectData): SelectDataItem[] {
+  if (!data.length) return []
+  if (typeof data[0] === "string") {
+    return (data as string[]).map((item) => ({ value: item, label: item }))
+  }
+  return data as SelectDataItem[]
+}
+
+type ButtonProps = Omit<MuiButtonProps, "variant" | "size" | "color"> & {
+  variant?: "filled" | "light" | "default" | "subtle"
+  size?: "xs" | "sm" | "md"
+  loading?: boolean
+  color?: "red"
+}
+
+function Button({ variant, size, loading, color, disabled, startIcon, sx, ...props }: ButtonProps) {
+  const muiVariant: MuiButtonProps["variant"] =
+    variant === "light" || variant === "default" ? "outlined" : variant === "subtle" ? "text" : "contained"
+  const muiSize: MuiButtonProps["size"] = size === "xs" || size === "sm" ? "small" : "medium"
+  const muiColor: MuiButtonProps["color"] = color === "red" ? "error" : "primary"
+
+  return (
+    <MuiButton
+      variant={muiVariant}
+      size={muiSize}
+      color={muiColor}
+      disabled={disabled || loading}
+      startIcon={loading ? <CircularProgress color="inherit" size={14} /> : startIcon}
+      sx={{ textTransform: "none", ...sx }}
+      {...props}
+    />
+  )
+}
+
+type ActionIconProps = Omit<IconButtonProps, "color" | "size"> & {
+  color?: "red" | "dark" | "gray"
+  size?: "xs" | "sm" | "md"
+  variant?: "subtle" | "default"
+}
+
+function ActionIcon({ color, size, variant, sx, ...props }: ActionIconProps) {
+  const muiSize: IconButtonProps["size"] = size === "xs" || size === "sm" ? "small" : "medium"
+  const muiColor: IconButtonProps["color"] = color === "red" ? "error" : "default"
+
+  return (
+    <IconButton
+      size={muiSize}
+      color={muiColor}
+      sx={{
+        ...(variant === "default"
+          ? {
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: "8px",
+            }
+          : null),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type BadgeTone = "dark" | "violet" | "teal" | "gray" | "yellow" | "red"
+type BadgeProps = Omit<MuiChipProps, "label" | "variant" | "color" | "size" | "children"> & {
+  size?: "xs" | "sm" | "md"
+  variant?: "filled" | "light" | "default"
+  color?: BadgeTone
+  radius?: MantineRadius
+  children: ReactNode
+}
+
+function badgeLightStyles(color?: BadgeTone) {
+  switch (color) {
+    case "teal":
+      return { bgcolor: "rgba(2, 132, 199, 0.14)", color: "#0f766e", borderColor: "rgba(2, 132, 199, 0.35)" }
+    case "yellow":
+      return { bgcolor: "rgba(245, 158, 11, 0.18)", color: "#92400e", borderColor: "rgba(245, 158, 11, 0.4)" }
+    case "red":
+      return { bgcolor: "rgba(239, 68, 68, 0.16)", color: "#b91c1c", borderColor: "rgba(239, 68, 68, 0.38)" }
+    case "violet":
+      return { bgcolor: "rgba(124, 58, 237, 0.14)", color: "#6d28d9", borderColor: "rgba(124, 58, 237, 0.38)" }
+    case "gray":
+      return { bgcolor: "rgba(100, 116, 139, 0.14)", color: "#475569", borderColor: "rgba(100, 116, 139, 0.35)" }
+    case "dark":
+      return { bgcolor: "rgba(15, 23, 42, 0.15)", color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.4)" }
+    default:
+      return { bgcolor: "transparent", color: "inherit", borderColor: "divider" }
+  }
+}
+
+function Badge({ size, variant, color, radius, children, sx, ...props }: BadgeProps) {
+  const muiVariant: MuiChipProps["variant"] = variant === "filled" ? "filled" : "outlined"
+  const muiColor: MuiChipProps["color"] =
+    color === "teal" ? "success" : color === "yellow" ? "warning" : color === "red" ? "error" : color === "violet" ? "secondary" : "default"
+  const lightStyles = badgeLightStyles(color)
+
+  return (
+    <MuiChip
+      size={size === "xs" || size === "sm" ? "small" : "medium"}
+      variant={muiVariant}
+      color={muiColor}
+      label={children}
+      sx={{
+        borderRadius: toCssRadius(radius),
+        ...(variant === "light" ? lightStyles : null),
+        ...(variant === "filled" && color === "dark"
+          ? {
+              bgcolor: "text.primary",
+              color: "background.paper",
+            }
+          : null),
+        ...(size === "xs"
+          ? {
+              height: "20px",
+              "& .MuiChip-label": { px: 1, fontSize: "0.68rem" },
+            }
+          : null),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type PaperProps = Omit<MuiPaperProps, "variant"> & {
+  withBorder?: boolean
+  p?: MantineSpace
+  radius?: MantineRadius
+}
+
+function Paper({ withBorder, p, radius, sx, ...props }: PaperProps) {
+  return (
+    <MuiPaper
+      variant={withBorder ? "outlined" : undefined}
+      sx={{
+        p: toCssSpace(p),
+        borderRadius: toCssRadius(radius),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type StackProps = Omit<MuiStackProps, "gap" | "alignItems" | "mt"> & {
+  gap?: MantineSpace
+  align?: MantineAlign
+  mt?: MantineSpace
+}
+
+function Stack({ gap, align, mt, sx, ...props }: StackProps) {
+  return (
+    <MuiStack
+      sx={{
+        gap: toCssSpace(gap),
+        alignItems: align ? toFlexAlign(align) : undefined,
+        mt: toCssSpace(mt),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type GroupProps = Omit<BoxProps, "display" | "alignItems" | "justifyContent" | "gap" | "mt"> & {
+  gap?: MantineSpace
+  align?: MantineAlign
+  justify?: MantineJustify
+  grow?: boolean
+  wrap?: "wrap" | "nowrap"
+  mt?: MantineSpace
+}
+
+function Group({ gap, align, justify, grow, wrap, mt, sx, children, ...props }: GroupProps) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: wrap ?? "wrap",
+        alignItems: toFlexAlign(align),
+        justifyContent: toFlexJustify(justify),
+        gap: toCssSpace(gap ?? "sm"),
+        mt: toCssSpace(mt),
+        ...(grow
+          ? {
+              "& > *": {
+                flex: 1,
+                minWidth: 0,
+              },
+            }
+          : null),
+        ...sx,
+      }}
+      {...props}
+    >
+      {children}
+    </Box>
+  )
+}
+
+type TextProps = Omit<TypographyProps, "variant" | "color" | "mt"> & {
+  size?: "xs" | "sm" | "md"
+  c?: "dimmed" | "red" | "yellow"
+  fw?: number
+  lineClamp?: number
+  mt?: MantineSpace
+}
+
+function Text({ size, c, fw, lineClamp, mt, sx, ...props }: TextProps) {
+  const variant: TypographyProps["variant"] = size === "xs" ? "caption" : size === "sm" ? "body2" : "body1"
+  const color = c === "dimmed" ? "text.secondary" : c === "red" ? "error.main" : c === "yellow" ? "warning.main" : undefined
+
+  return (
+    <Typography
+      variant={variant}
+      sx={{
+        color,
+        fontWeight: fw,
+        mt: toCssSpace(mt),
+        ...(lineClamp
+          ? {
+              display: "-webkit-box",
+              WebkitLineClamp: lineClamp,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }
+          : null),
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
+
+type TitleProps = Omit<TypographyProps, "variant" | "component" | "order"> & {
+  order?: 1 | 2 | 3 | 4 | 5 | 6
+  size?: TypographyProps["variant"]
+}
+
+function Title({ order = 2, size, sx, ...props }: TitleProps) {
+  const byOrder: Record<1 | 2 | 3 | 4 | 5 | 6, TypographyProps["variant"]> = {
+    1: "h4",
+    2: "h5",
+    3: "h6",
+    4: "subtitle1",
+    5: "subtitle2",
+    6: "body1",
+  }
+
+  return <Typography variant={size ?? byOrder[order]} sx={{ fontWeight: 700, ...sx }} {...props} />
+}
+
+type TextInputProps = Omit<TextFieldProps, "size"> & {
+  size?: "xs" | "sm" | "md"
+}
+
+function TextInput({ size, fullWidth = true, ...props }: TextInputProps) {
+  return <TextField size={size === "xs" || size === "sm" ? "small" : "medium"} fullWidth={fullWidth} {...props} />
+}
+
+type SelectProps = {
+  label?: string
+  placeholder?: string
+  value?: string | null
+  onChange?: (value: string | null) => void
+  data: SelectData
+  searchable?: boolean
+  disabled?: boolean
+}
+
+function Select({ label, placeholder, value, onChange, data, searchable, disabled }: SelectProps) {
+  const options = normalizeSelectData(data)
+  const selected = options.find((option) => option.value === (value ?? "")) ?? null
+
+  return (
+    <Autocomplete
+      disablePortal
+      options={options}
+      value={selected}
+      readOnly={!searchable}
+      openOnFocus
+      disabled={disabled}
+      onChange={(_event, option) => onChange?.(option?.value ?? null)}
+      isOptionEqualToValue={(option, nextValue) => option.value === nextValue.value}
+      getOptionLabel={(option) => option.label}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          fullWidth
+          label={label}
+          placeholder={placeholder}
+        />
+      )}
+    />
+  )
+}
+
+type MultiSelectProps = {
+  label?: string
+  placeholder?: string
+  value: string[]
+  onChange?: (value: string[]) => void
+  data: SelectData
+  searchable?: boolean
+}
+
+function MultiSelect({ label, placeholder, value, onChange, data, searchable }: MultiSelectProps) {
+  const options = normalizeSelectData(data)
+  const selected = options.filter((option) => value.includes(option.value))
+
+  return (
+    <Autocomplete
+      disablePortal
+      multiple
+      options={options}
+      value={selected}
+      readOnly={!searchable}
+      filterSelectedOptions
+      disableCloseOnSelect
+      onChange={(_event, nextValues) => onChange?.(nextValues.map((nextValue) => nextValue.value))}
+      isOptionEqualToValue={(option, nextValue) => option.value === nextValue.value}
+      getOptionLabel={(option) => option.label}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          fullWidth
+          label={label}
+          placeholder={placeholder}
+        />
+      )}
+    />
+  )
+}
+
+type ColorInputProps = {
+  label?: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+}
+
+function ColorInput({ label, value, onChange, placeholder }: ColorInputProps) {
+  const trimmed = value.trim()
+  const pickerValue = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(trimmed) ? trimmed : "#000000"
+
+  return (
+    <TextField
+      fullWidth
+      label={label}
+      value={value}
+      onChange={(event) => onChange(event.currentTarget.value)}
+      placeholder={placeholder}
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <input
+              aria-label={`${label ?? "color"} picker`}
+              type="color"
+              value={pickerValue}
+              onChange={(event) => onChange(event.currentTarget.value)}
+              style={{ width: 24, height: 24, border: "none", background: "transparent", cursor: "pointer", padding: 0 }}
+            />
+          </InputAdornment>
+        ),
+      }}
+    />
+  )
+}
+
+type SliderLabel = "always" | "hover" | "never" | ((value: number) => string)
+type SliderProps = Omit<MuiSliderProps, "value" | "defaultValue" | "onChange" | "valueLabelDisplay" | "valueLabelFormat"> & {
+  value: number
+  onChange: (value: number) => void
+  label?: SliderLabel
+}
+
+function Slider({ label, value, onChange, ...props }: SliderProps) {
+  const valueLabelDisplay: MuiSliderProps["valueLabelDisplay"] =
+    label === "always" ? "on" : label === "never" ? "off" : label === "hover" || typeof label === "function" ? "auto" : "off"
+
+  return (
+    <MuiSlider
+      value={value}
+      onChange={(_event, nextValue) => {
+        if (typeof nextValue === "number") onChange(nextValue)
+      }}
+      valueLabelDisplay={valueLabelDisplay}
+      valueLabelFormat={typeof label === "function" ? (nextValue) => label(Number(nextValue)) : undefined}
+      {...props}
+    />
+  )
+}
+
+type ModalSize = "xs" | "sm" | "md" | "lg" | "xl"
+type ModalProps = {
+  opened: boolean
+  onClose: () => void
+  title?: ReactNode
+  size?: ModalSize
+  centered?: boolean
+  children: ReactNode
+}
+
+function Modal({ opened, onClose, title, size = "sm", children }: ModalProps) {
+  return (
+    <Dialog open={opened} onClose={() => onClose()} maxWidth={size} fullWidth>
+      {title ? <DialogTitle>{title}</DialogTitle> : null}
+      <DialogContent>{children}</DialogContent>
+    </Dialog>
+  )
+}
 
 const SECTION_TYPES: BuiltinCmsSectionType[] = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block", "footer_grid"]
 
@@ -116,6 +592,89 @@ type FormattingTemplateRow = {
   is_system: boolean
   created_at: string
   updated_at: string
+}
+
+type SectionActionsMenuProps = {
+  row: Row
+  onEdit: (row: Row) => void
+  onAttach: (row: Row) => void
+  onToggle: (row: Row) => void
+  onDelete: (row: Row) => void
+}
+
+function SectionActionsMenu({ row, onEdit, onAttach, onToggle, onDelete }: SectionActionsMenuProps) {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const open = Boolean(anchorEl)
+
+  function closeMenu() {
+    setAnchorEl(null)
+  }
+
+  return (
+    <>
+      <ActionIcon
+        variant="default"
+        aria-label={`Actions for ${row.key}`}
+        onClick={(event) => setAnchorEl(event.currentTarget)}
+      >
+        <IconDotsVertical size={16} />
+      </ActionIcon>
+      <MuiMenu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={closeMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Typography
+          variant="caption"
+          sx={{ px: 2, py: 1, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}
+        >
+          Actions
+        </Typography>
+        <MenuItem
+          onClick={() => {
+            closeMenu()
+            onEdit(row)
+          }}
+        >
+          <ListItemIcon>
+            <IconEdit size={14} />
+          </ListItemIcon>
+          Edit
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            closeMenu()
+            onAttach(row)
+          }}
+        >
+          Attach to page(s)…
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            closeMenu()
+            onToggle(row)
+          }}
+        >
+          {row.enabled ? "Disable" : "Enable"}
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            closeMenu()
+            onDelete(row)
+          }}
+          sx={{ color: "error.main" }}
+        >
+          <ListItemIcon sx={{ color: "error.main" }}>
+            <IconTrash size={14} />
+          </ListItemIcon>
+          Delete…
+        </MenuItem>
+      </MuiMenu>
+    </>
+  )
 }
 
 function parseNum(v: string, fallback: number) {
@@ -651,34 +1210,18 @@ export function GlobalSectionsPage() {
 
   function renderSectionActions(row: Row) {
     return (
-      <Menu withinPortal position="bottom-end" shadow="md">
-        <Menu.Target>
-          <ActionIcon variant="default" aria-label={`Actions for ${row.key}`}>
-            <IconDotsVertical size={16} />
-          </ActionIcon>
-        </Menu.Target>
-        <Menu.Dropdown>
-          <Menu.Label>Actions</Menu.Label>
-          <Menu.Item leftSection={<IconEdit size={14} />} onClick={() => openEditor(row)}>
-            Edit
-          </Menu.Item>
-          <Menu.Item
-            onClick={() => {
-              setAttachTarget(row)
-              setAttachPageIds([])
-            }}
-          >
-            Attach to page(s)…
-          </Menu.Item>
-          <Menu.Item onClick={() => void toggle(row)}>
-            {row.enabled ? "Disable" : "Enable"}
-          </Menu.Item>
-          <Menu.Divider />
-          <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => setDeleteTarget(row)}>
-            Delete…
-          </Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
+      <SectionActionsMenu
+        row={row}
+        onEdit={openEditor}
+        onAttach={(target) => {
+          setAttachTarget(target)
+          setAttachPageIds([])
+        }}
+        onToggle={(target) => {
+          void toggle(target)
+        }}
+        onDelete={setDeleteTarget}
+      />
     )
   }
 
@@ -883,36 +1426,52 @@ export function GlobalSectionsPage() {
               </Stack>
 
               <div className="hidden sm:block">
-                <Table striped highlightOnHover>
-                  <Table.Thead><Table.Tr><Table.Th>Section</Table.Th><Table.Th>State</Table.Th><Table.Th>Impact</Table.Th><Table.Th>Used on</Table.Th><Table.Th /></Table.Tr></Table.Thead>
-                  <Table.Tbody>
+                <TableContainer component={Box}>
+                  <MuiTable
+                    size="small"
+                    sx={{
+                      "& tbody tr:nth-of-type(odd)": { backgroundColor: "action.hover" },
+                      "& tbody tr:hover": { backgroundColor: "action.selected" },
+                    }}
+                  >
+                    <MuiTableHead>
+                      <MuiTableRow>
+                        <MuiTableCell sx={{ fontWeight: 700 }}>Section</MuiTableCell>
+                        <MuiTableCell sx={{ fontWeight: 700 }}>State</MuiTableCell>
+                        <MuiTableCell sx={{ fontWeight: 700 }}>Impact</MuiTableCell>
+                        <MuiTableCell sx={{ fontWeight: 700 }}>Used on</MuiTableCell>
+                        <MuiTableCell sx={{ width: "1%", whiteSpace: "nowrap" }} />
+                      </MuiTableRow>
+                    </MuiTableHead>
+                    <MuiTableBody>
                     {rows.map((row) => {
                       const impact = impactByGlobalId[row.id]
                       const usage = usageByGlobalId[row.id] ?? []
                       return (
-                        <Table.Tr key={row.id}>
-                          <Table.Td>
+                        <MuiTableRow key={row.id}>
+                          <MuiTableCell>
                             <Group gap="xs"><Badge variant="default">{row.section_type}</Badge><Text fw={600}>{row.key}</Text></Group>
                             {row.label ? <Text size="xs" c="dimmed">{row.label}</Text> : null}
-                          </Table.Td>
-                          <Table.Td><Badge color={row.lifecycle_state === "published" ? "teal" : row.lifecycle_state === "archived" ? "gray" : "yellow"} variant="light">{row.lifecycle_state ?? "draft"}</Badge></Table.Td>
-                          <Table.Td><Text size="sm">{impact?.enabled_references ?? 0} enabled refs</Text><Text size="xs" c="dimmed">{impact?.distinct_pages ?? 0} pages • {impact?.total_references ?? 0} total refs</Text></Table.Td>
-                          <Table.Td>
+                          </MuiTableCell>
+                          <MuiTableCell><Badge color={row.lifecycle_state === "published" ? "teal" : row.lifecycle_state === "archived" ? "gray" : "yellow"} variant="light">{row.lifecycle_state ?? "draft"}</Badge></MuiTableCell>
+                          <MuiTableCell><Text size="sm">{impact?.enabled_references ?? 0} enabled refs</Text><Text size="xs" c="dimmed">{impact?.distinct_pages ?? 0} pages • {impact?.total_references ?? 0} total refs</Text></MuiTableCell>
+                          <MuiTableCell>
                             <Stack gap={2}>
                               {usage.slice(0, 3).map((u, idx) => <Text key={`${u.page_slug}-${idx}`} size="xs">/{u.page_slug}{u.section_key ? `#${u.section_key}` : ""}</Text>)}
                               {usage.length > 3 ? <Text size="xs" c="dimmed">+{usage.length - 3} more</Text> : null}
                             </Stack>
-                          </Table.Td>
-                          <Table.Td>
+                          </MuiTableCell>
+                          <MuiTableCell align="right">
                             <Group gap="xs" justify="end">
                               {renderSectionActions(row)}
                             </Group>
-                          </Table.Td>
-                        </Table.Tr>
+                          </MuiTableCell>
+                        </MuiTableRow>
                       )
                     })}
-                  </Table.Tbody>
-                </Table>
+                    </MuiTableBody>
+                  </MuiTable>
+                </TableContainer>
               </div>
             </>
           )}
