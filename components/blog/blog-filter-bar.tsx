@@ -33,85 +33,154 @@ function useClickAway(ref: RefObject<HTMLElement | null>, onAway: () => void) {
   }, [ref, onAway])
 }
 
-type MultiSelectDropdownProps = {
+type MultiSelectComboboxProps = {
   label: string
   placeholder: string
   options: TaxonomyOption[]
   selected: string[]
   open: boolean
+  onOpen: () => void
   onToggleOpen: () => void
   onSelect: (slug: string) => void
   onClear: () => void
 }
 
-function MultiSelectDropdown({
+function MultiSelectCombobox({
   label,
   placeholder,
   options,
   selected,
   open,
+  onOpen,
   onToggleOpen,
   onSelect,
   onClear,
-}: MultiSelectDropdownProps) {
+}: MultiSelectComboboxProps) {
+  const [query, setQuery] = useState("")
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
   const optionNameBySlug = useMemo(
     () => Object.fromEntries(options.map((option) => [option.slug, option.name])),
     [options]
   )
 
-  const selectedText = useMemo(() => {
-    if (!selected.length) return placeholder
-    if (selected.length <= 2) return selected.map((slug) => optionNameBySlug[slug] ?? slug).join(", ")
-    return `${selected.length} selected`
-  }, [optionNameBySlug, placeholder, selected])
+  const filteredOptions = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return options
+    return options.filter((option) => option.name.toLowerCase().includes(q) || option.slug.toLowerCase().includes(q))
+  }, [options, query])
 
   return (
     <div className="relative space-y-0.5 text-sm md:col-span-2">
-      <span className="text-foreground/70">{label}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-foreground/70">{label}</span>
+        {selected.length ? (
+          <button
+            type="button"
+            onClick={() => {
+              onClear()
+              setQuery("")
+            }}
+            className="text-[11px] text-foreground/60 hover:text-foreground"
+          >
+            Clear all
+          </button>
+        ) : null}
+      </div>
 
-      <button
-        type="button"
-        onClick={onToggleOpen}
-        className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 text-left text-sm"
+      <div
+        onClick={() => {
+          onOpen()
+          inputRef.current?.focus()
+        }}
+        className="flex min-h-9 w-full flex-wrap items-center gap-1 rounded-lg border border-border bg-background px-2 py-1"
       >
-        <span className="truncate">{selectedText}</span>
-        <span aria-hidden className="text-foreground/60">▾</span>
-      </button>
+        {selected.map((slug) => (
+          <span
+            key={`${label}-${slug}`}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-card/50 px-2 py-0.5 text-xs"
+          >
+            <span className="truncate">{optionNameBySlug[slug] ?? slug}</span>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                onSelect(slug)
+              }}
+              className="text-foreground/60 hover:text-foreground"
+              aria-label={`Remove ${optionNameBySlug[slug] ?? slug}`}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onFocus={onOpen}
+          onChange={(event) => {
+            if (!open) onOpen()
+            setQuery(event.currentTarget.value)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault()
+            }
+
+            if (event.key === "Backspace" && !query && selected.length) {
+              event.preventDefault()
+              onSelect(selected[selected.length - 1])
+            }
+          }}
+          placeholder={selected.length ? "" : placeholder}
+          className="h-7 min-w-20 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-foreground/50"
+        />
+
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onToggleOpen()
+            if (!open) setTimeout(() => inputRef.current?.focus(), 0)
+          }}
+          className="text-foreground/60 hover:text-foreground"
+          aria-label={`Toggle ${label} options`}
+        >
+          ▾
+        </button>
+      </div>
 
       {open ? (
         <div className="absolute z-30 mt-1 w-full rounded-lg border border-border bg-background p-1 shadow-xl">
-          <div className="max-h-52 overflow-auto">
-            {options.map((option) => {
-              const checked = selected.includes(option.slug)
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => onSelect(option.slug)}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                    checked ? "bg-card" : "hover:bg-card/70"
-                  }`}
-                >
-                  <span
-                    className={`inline-flex h-4 w-4 items-center justify-center rounded border text-[10px] ${
-                      checked ? "border-foreground bg-foreground text-background" : "border-border"
+          <div className="max-h-56 overflow-auto">
+            {filteredOptions.length ? (
+              filteredOptions.map((option) => {
+                const checked = selected.includes(option.slug)
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => onSelect(option.slug)}
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                      checked ? "bg-card" : "hover:bg-card/70"
                     }`}
                   >
-                    {checked ? "✓" : ""}
-                  </span>
-                  <span className="truncate">{option.name}</span>
-                </button>
-              )
-            })}
-          </div>
-          <div className="mt-1 border-t border-border px-1 pt-1">
-            <button
-              type="button"
-              onClick={onClear}
-              className="w-full rounded-md px-2 py-1.5 text-left text-xs text-foreground/70 hover:bg-card"
-            >
-              Clear
-            </button>
+                    <span
+                      className={`inline-flex h-4 w-4 items-center justify-center rounded border text-[10px] ${
+                        checked ? "border-foreground bg-foreground text-background" : "border-border"
+                      }`}
+                    >
+                      {checked ? "✓" : ""}
+                    </span>
+                    <span className="truncate">{option.name}</span>
+                  </button>
+                )
+              })
+            ) : (
+              <div className="px-2 py-2 text-xs text-foreground/60">No matches</div>
+            )}
           </div>
         </div>
       ) : null}
@@ -143,23 +212,25 @@ export function BlogFilterBar({ q, selectedTags, selectedCategories, tags, categ
           />
         </label>
 
-        <MultiSelectDropdown
+        <MultiSelectCombobox
           label="Tags"
           placeholder="All tags"
           options={tags}
           selected={tagValues}
           open={openDropdown === "tag"}
+          onOpen={() => setOpenDropdown("tag")}
           onToggleOpen={() => setOpenDropdown((prev) => (prev === "tag" ? null : "tag"))}
           onSelect={(slug) => setTagValues((prev) => toggleItem(prev, slug))}
           onClear={() => setTagValues([])}
         />
 
-        <MultiSelectDropdown
+        <MultiSelectCombobox
           label="Categories"
           placeholder="All categories"
           options={categories}
           selected={categoryValues}
           open={openDropdown === "category"}
+          onOpen={() => setOpenDropdown("category")}
           onToggleOpen={() => setOpenDropdown((prev) => (prev === "category" ? null : "category"))}
           onSelect={(slug) => setCategoryValues((prev) => toggleItem(prev, slug))}
           onClear={() => setCategoryValues([])}
