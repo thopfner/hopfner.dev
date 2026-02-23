@@ -220,7 +220,7 @@ export default async function BlogIndexPage({
 
       <section className="space-y-3">
         {rest.length ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className={`grid gap-4 ${hasActiveFilters ? "grid-cols-1" : "sm:grid-cols-2"}`}>
             {rest.map((post) => (
               <article
                 key={post.version_id}
