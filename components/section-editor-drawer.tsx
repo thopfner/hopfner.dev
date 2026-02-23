@@ -52,7 +52,9 @@ import { MediaLibraryModal } from "@/components/media-library-modal"
 import { MediaPickerMenu } from "@/components/media-picker-menu"
 import { createClient } from "@/lib/supabase/browser"
 
-type CmsSectionType =
+const ADMIN_SHELL_HEADER_HEIGHT_PX = 52
+
+type BuiltinCmsSectionType =
   | "nav_links"
   | "hero_cta"
   | "card_grid"
@@ -63,6 +65,8 @@ type CmsSectionType =
   | "faq_list"
   | "cta_block"
   | "footer_grid"
+
+type CmsSectionType = BuiltinCmsSectionType | string
 
 type SectionTypeDefault = {
   section_type: CmsSectionType
@@ -233,6 +237,129 @@ function richTextWithFallback(rich: unknown, fallbackText: unknown): Record<stri
   return plainTextToRichTextDoc(asString(fallbackText))
 }
 
+function richTextDocToPlainText(input: unknown): string {
+  function walk(node: unknown): string[] {
+    const record = asRecord(node)
+    const nodeType = asString(record.type)
+
+    if (nodeType === "text") {
+      const textValue = asString(record.text)
+      return textValue ? [textValue] : []
+    }
+
+    const children = asArray<unknown>(record.content)
+    const parts = children.flatMap((child) => walk(child))
+
+    if (["paragraph", "heading", "blockquote", "listItem"].includes(nodeType)) {
+      return parts.length ? [parts.join(" ")] : []
+    }
+
+    return parts
+  }
+
+  const pieces = walk(input).map((piece) => piece.trim()).filter(Boolean)
+  return pieces.join("\n")
+}
+
+type ComposerBlockType = "heading" | "subtitle" | "rich_text" | "cards" | "faq" | "image" | "list" | "cta"
+
+type ComposerBlock = {
+  id: string
+  type: ComposerBlockType
+  title?: string
+  body?: string
+  imageUrl?: string
+  listStyle?: "basic" | "steps"
+  items?: string[]
+  steps?: Array<{ title?: string; body?: string }>
+  cards?: Array<{ title: string; body: string }>
+  faqs?: Array<{ q: string; a: string }>
+  ctaPrimaryLabel?: string
+  ctaPrimaryHref?: string
+  ctaSecondaryLabel?: string
+  ctaSecondaryHref?: string
+}
+
+type ComposerColumn = { id: string; blocks: ComposerBlock[] }
+type ComposerRow = { id: string; columns: ComposerColumn[] }
+type ComposerSchema = {
+  rows?: ComposerRow[]
+}
+
+type FlattenedComposerBlock = {
+  rowId: string
+  columnId: string
+  rowIndex: number
+  columnIndex: number
+  block: ComposerBlock
+}
+
+function normalizeComposerSchema(input: unknown): ComposerSchema {
+  if (!input || typeof input !== "object") return { rows: [] }
+  const raw = input as ComposerSchema
+  const rows = asArray<ComposerRow>(raw.rows)
+  return {
+    rows: rows.map((row, rowIndex) => ({
+      id: asString(row.id, `row-${rowIndex + 1}`),
+      columns: asArray<ComposerColumn>(row.columns)
+        .slice(0, 3)
+        .map((col, colIndex) => ({
+          id: asString(col.id, `col-${colIndex + 1}`),
+          blocks: asArray<ComposerBlock>(col.blocks).map((block, blockIndex) => ({
+            ...block,
+            id: asString(block.id, `blk-${rowIndex + 1}-${colIndex + 1}-${blockIndex + 1}`),
+            type: (asString(block.type, "rich_text") as ComposerBlockType),
+            listStyle:
+              asString(block.type) === "list"
+                ? asString(block.listStyle) === "basic"
+                  ? "basic"
+                  : "steps"
+                : block.listStyle,
+          })),
+        })),
+    })),
+  }
+}
+
+function flattenComposerSchemaBlocks(schema: ComposerSchema | null): FlattenedComposerBlock[] {
+  if (!schema) return []
+  const rows = asArray<ComposerRow>(schema.rows)
+  const out: FlattenedComposerBlock[] = []
+  rows.forEach((row, rowIndex) => {
+    const columns = asArray<ComposerColumn>(row.columns)
+    columns.forEach((column, columnIndex) => {
+      const blocks = asArray<ComposerBlock>(column.blocks)
+      blocks.forEach((block) => {
+        out.push({
+          rowId: asString(row.id, `row-${rowIndex + 1}`),
+          columnId: asString(column.id, `col-${columnIndex + 1}`),
+          rowIndex,
+          columnIndex,
+          block,
+        })
+      })
+    })
+  })
+  return out
+}
+
+const BUILTIN_SECTION_TYPES = new Set<BuiltinCmsSectionType>([
+  "nav_links",
+  "hero_cta",
+  "card_grid",
+  "steps_list",
+  "title_body_list",
+  "rich_text_block",
+  "label_value_list",
+  "faq_list",
+  "cta_block",
+  "footer_grid",
+])
+
+function isBuiltinSectionType(type: string): type is BuiltinCmsSectionType {
+  return BUILTIN_SECTION_TYPES.has(type as BuiltinCmsSectionType)
+}
+
 function normalizeSectionType(raw: string): CmsSectionType | null {
   switch (raw) {
     case "nav_links":
@@ -265,12 +392,12 @@ function normalizeSectionType(raw: string): CmsSectionType | null {
     case "final_cta":
       return "cta_block"
     default:
-      return null
+      return raw?.trim() ? raw.trim() : null
   }
 }
 
 function formatType(type: CmsSectionType, defaults?: SectionTypeDefaultsMap) {
-  return defaults?.[type]?.label ?? type.replaceAll("_", " ")
+  return defaults?.[type as BuiltinCmsSectionType]?.label ?? type.replaceAll("_", " ")
 }
 
 type CmsPageRow = { id: string; slug: string; title: string }
@@ -1029,6 +1156,7 @@ export function SectionEditorDrawer({
   const [error, setError] = useState<string | null>(null)
   const [versions, setVersions] = useState<SectionVersionRow[]>([])
   const [allowedClasses, setAllowedClasses] = useState<Set<string>>(new Set())
+  const [customComposerSchema, setCustomComposerSchema] = useState<ComposerSchema | null>(null)
 
   const [baseSnapshot, setBaseSnapshot] = useState<VersionPayload | null>(null)
   const legacyDraftCleanupWarnedRef = useRef(false)
@@ -1053,6 +1181,7 @@ export function SectionEditorDrawer({
   const [backgroundLibraryOpen, setBackgroundLibraryOpen] = useState(false)
   const [navLogoLibraryOpen, setNavLogoLibraryOpen] = useState(false)
   const [cardImageLibraryTarget, setCardImageLibraryTarget] = useState<number | null>(null)
+  const [customImageLibraryTargetId, setCustomImageLibraryTargetId] = useState<string | null>(null)
 
   const [pages, setPages] = useState<CmsPageRow[]>([])
   const [pagesLoading, setPagesLoading] = useState(false)
@@ -1064,7 +1193,12 @@ export function SectionEditorDrawer({
   const pagesPromiseRef = useRef<Promise<void> | null>(null)
 
   const normalizedType = section ? normalizeSectionType(section.section_type) : null
-  const defaults = normalizedType ? typeDefaults?.[normalizedType] : undefined
+  const defaults = normalizedType && isBuiltinSectionType(normalizedType) ? typeDefaults?.[normalizedType] : undefined
+  const isCustomComposedType = Boolean(normalizedType && !isBuiltinSectionType(normalizedType))
+  const flattenedCustomBlocks = useMemo(
+    () => flattenComposerSchemaBlocks(customComposerSchema),
+    [customComposerSchema]
+  )
 
   const published = versions.find((v) => v.status === "published") ?? null
   const drafts = versions.filter((v) => v.status === "draft").sort((a, b) => b.version - a.version)
@@ -1205,6 +1339,32 @@ export function SectionEditorDrawer({
 
       const clsRows = (clsData ?? []) as Array<{ class: string }>
       setAllowedClasses(new Set(clsRows.map((r) => r.class)))
+
+      let nextCustomComposerSchema: ComposerSchema | null = null
+      if (section) {
+        const nextType = normalizeSectionType(String(section.section_type))
+        if (nextType && !isBuiltinSectionType(nextType)) {
+          const { data: registryRow, error: registryError } = await supabase
+            .from("section_type_registry")
+            .select("key, renderer, composer_schema, is_active")
+            .eq("key", nextType)
+            .maybeSingle<{
+              key: string
+              renderer: "legacy" | "composed"
+              composer_schema: Record<string, unknown> | null
+              is_active: boolean
+            }>()
+
+          if (registryError) {
+            throw new Error(registryError.message)
+          }
+
+          if (registryRow?.is_active && registryRow.renderer === "composed") {
+            nextCustomComposerSchema = normalizeComposerSchema(registryRow.composer_schema)
+          }
+        }
+      }
+      setCustomComposerSchema(nextCustomComposerSchema)
 
       if (forceHydrate || !isDirty) {
         const nextPublished = versionRows.find((v) => v.status === "published") ?? null
@@ -1556,6 +1716,36 @@ export function SectionEditorDrawer({
     })
   }
 
+  function getMergedCustomBlock(block: ComposerBlock): ComposerBlock {
+    const customBlocks = asRecord(content.customBlocks)
+    const override = asRecord(customBlocks[block.id])
+    return {
+      ...block,
+      ...override,
+    }
+  }
+
+  function setCustomBlockPatch(blockId: string, patch: Record<string, unknown>) {
+    setContent((prev) => {
+      const existingCustomBlocks = asRecord(prev.customBlocks)
+      const current = asRecord(existingCustomBlocks[blockId])
+      return {
+        ...prev,
+        customBlocks: {
+          ...existingCustomBlocks,
+          [blockId]: {
+            ...current,
+            ...patch,
+          },
+        },
+      }
+    })
+  }
+
+  function applyCustomBlockImageUrl(blockId: string, url: string) {
+    setCustomBlockPatch(blockId, { imageUrl: url })
+  }
+
   return (
     <>
       <Drawer
@@ -1576,6 +1766,19 @@ export function SectionEditorDrawer({
         }
         position="right"
         size="xl"
+        zIndex={1500}
+        styles={{
+          content: {
+            top: `${ADMIN_SHELL_HEADER_HEIGHT_PX}px`,
+            height: `calc(100dvh - ${ADMIN_SHELL_HEADER_HEIGHT_PX}px)`,
+          },
+          header: {
+            position: "sticky",
+            top: 0,
+            zIndex: 2,
+            backgroundColor: "var(--mantine-color-body)",
+          },
+        }}
         classNames={{
           content: "editor-drawer-content",
           body: "editor-drawer-body",
@@ -3248,6 +3451,355 @@ export function SectionEditorDrawer({
                 </Stack>
               ) : null}
 
+              {isCustomComposedType ? (
+                <Stack gap="sm">
+                  {flattenedCustomBlocks.length ? (
+                    flattenedCustomBlocks.map(({ rowIndex, columnIndex, block }) => {
+                      const merged = getMergedCustomBlock(block)
+                      const listStyle = asString(merged.listStyle) === "basic" ? "basic" : "steps"
+                      const listItems = asStringArray(merged.items)
+                      const listSteps = asArray<Record<string, unknown>>(merged.steps)
+                      const cards = asArray<Record<string, unknown>>(merged.cards)
+                      const faqs = asArray<Record<string, unknown>>(merged.faqs)
+                      const imageUrl = asString(merged.imageUrl)
+
+                      return (
+                        <Paper key={`custom-${block.id}`} withBorder p="sm" radius="md">
+                          <Stack gap="xs">
+                            <Group justify="space-between" align="center">
+                              <Group gap="xs">
+                                <Badge size="xs" variant="default">Row {rowIndex + 1}</Badge>
+                                <Badge size="xs" variant="default">Column {columnIndex + 1}</Badge>
+                              </Group>
+                              <Badge size="sm" color="violet" variant="light">
+                                {block.type.replaceAll("_", " ")}
+                              </Badge>
+                            </Group>
+
+                            {block.type === "heading" ? (
+                              <TextInput
+                                label="Heading"
+                                value={asString(merged.title)}
+                                onChange={(e) => setCustomBlockPatch(block.id, { title: e.currentTarget.value })}
+                              />
+                            ) : null}
+
+                            {block.type === "subtitle" ? (
+                              <Textarea
+                                label="Subtitle"
+                                value={asString(merged.body)}
+                                onChange={(e) => setCustomBlockPatch(block.id, { body: inputValueFromEvent(e) })}
+                                autosize
+                                minRows={2}
+                              />
+                            ) : null}
+
+                            {block.type === "rich_text" ? (
+                              <TipTapJsonEditor
+                                label="Body"
+                                value={richTextWithFallback((merged as Record<string, unknown>).bodyRichText, merged.body)}
+                                onChange={(nextJson) =>
+                                  setCustomBlockPatch(block.id, {
+                                    bodyRichText: nextJson,
+                                    body: richTextDocToPlainText(nextJson),
+                                  })
+                                }
+                                onError={setError}
+                              />
+                            ) : null}
+
+                            {block.type === "image" ? (
+                              <ImageFieldPicker
+                                title="Image"
+                                value={imageUrl}
+                                urlLabel="Image URL"
+                                onChange={(nextUrl) => applyCustomBlockImageUrl(block.id, nextUrl)}
+                                onRemove={() => applyCustomBlockImageUrl(block.id, "")}
+                                onUploadFile={async (file) => {
+                                  const { publicUrl } = await uploadToCmsMedia(file)
+                                  applyCustomBlockImageUrl(block.id, publicUrl)
+                                }}
+                                onChooseFromLibrary={() => setCustomImageLibraryTargetId(block.id)}
+                                disabled={loading}
+                                onError={setError}
+                                withinPortal={false}
+                                compact
+                                advancedUrl
+                              >
+                                <TextInput
+                                  label="Alt text"
+                                  value={asString(merged.title)}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { title: e.currentTarget.value })}
+                                />
+                              </ImageFieldPicker>
+                            ) : null}
+
+                            {block.type === "cards" ? (
+                              <Stack gap="xs">
+                                <Group justify="space-between">
+                                  <Text size="sm" fw={600}>Cards</Text>
+                                  <Button
+                                    size="xs"
+                                    variant="default"
+                                    leftSection={<IconPlus size={14} />}
+                                    onClick={() =>
+                                      setCustomBlockPatch(block.id, {
+                                        cards: [...cards, { title: "", body: "" }],
+                                      })
+                                    }
+                                  >
+                                    Add card
+                                  </Button>
+                                </Group>
+                                {cards.map((card, cardIndex) => {
+                                  const cardRecord = asRecord(card)
+                                  return (
+                                    <Paper key={`${block.id}-card-${cardIndex}`} withBorder p="sm" radius="md">
+                                      <Stack gap="xs">
+                                        <Group justify="space-between">
+                                          <Badge size="sm" variant="default">Card {cardIndex + 1}</Badge>
+                                          <ActionIcon
+                                            variant="default"
+                                            aria-label="Remove card"
+                                            onClick={() =>
+                                              setCustomBlockPatch(block.id, {
+                                                cards: cards.filter((_, i) => i !== cardIndex),
+                                              })
+                                            }
+                                          >
+                                            <IconX size={16} />
+                                          </ActionIcon>
+                                        </Group>
+                                        <TextInput
+                                          label="Title"
+                                          value={asString(cardRecord.title)}
+                                          onChange={(e) => {
+                                            const next = cards.slice()
+                                            next[cardIndex] = { ...cardRecord, title: e.currentTarget.value }
+                                            setCustomBlockPatch(block.id, { cards: next })
+                                          }}
+                                        />
+                                        <Textarea
+                                          label="Body"
+                                          value={asString(cardRecord.body)}
+                                          onChange={(e) => {
+                                            const next = cards.slice()
+                                            next[cardIndex] = { ...cardRecord, body: inputValueFromEvent(e) }
+                                            setCustomBlockPatch(block.id, { cards: next })
+                                          }}
+                                          autosize
+                                          minRows={2}
+                                        />
+                                      </Stack>
+                                    </Paper>
+                                  )
+                                })}
+                                {!cards.length ? <Text c="dimmed" size="sm">No cards.</Text> : null}
+                              </Stack>
+                            ) : null}
+
+                            {block.type === "faq" ? (
+                              <Stack gap="xs">
+                                <Group justify="space-between">
+                                  <Text size="sm" fw={600}>FAQ</Text>
+                                  <Button
+                                    size="xs"
+                                    variant="default"
+                                    leftSection={<IconPlus size={14} />}
+                                    onClick={() =>
+                                      setCustomBlockPatch(block.id, {
+                                        faqs: [...faqs, { q: "", a: "" }],
+                                      })
+                                    }
+                                  >
+                                    Add FAQ
+                                  </Button>
+                                </Group>
+                                {faqs.map((faq, faqIndex) => {
+                                  const faqRecord = asRecord(faq)
+                                  return (
+                                    <Paper key={`${block.id}-faq-${faqIndex}`} withBorder p="sm" radius="md">
+                                      <Stack gap="xs">
+                                        <Group justify="space-between">
+                                          <Badge size="sm" variant="default">FAQ {faqIndex + 1}</Badge>
+                                          <ActionIcon
+                                            variant="default"
+                                            aria-label="Remove FAQ"
+                                            onClick={() =>
+                                              setCustomBlockPatch(block.id, {
+                                                faqs: faqs.filter((_, i) => i !== faqIndex),
+                                              })
+                                            }
+                                          >
+                                            <IconX size={16} />
+                                          </ActionIcon>
+                                        </Group>
+                                        <TextInput
+                                          label="Question"
+                                          value={asString(faqRecord.q)}
+                                          onChange={(e) => {
+                                            const next = faqs.slice()
+                                            next[faqIndex] = { ...faqRecord, q: e.currentTarget.value }
+                                            setCustomBlockPatch(block.id, { faqs: next })
+                                          }}
+                                        />
+                                        <TipTapJsonEditor
+                                          label="Answer"
+                                          value={richTextWithFallback((faqRecord as Record<string, unknown>).aRichText, faqRecord.a)}
+                                          onChange={(nextJson) => {
+                                            const next = faqs.slice()
+                                            next[faqIndex] = {
+                                              ...faqRecord,
+                                              aRichText: nextJson,
+                                              a: richTextDocToPlainText(nextJson),
+                                            }
+                                            setCustomBlockPatch(block.id, { faqs: next })
+                                          }}
+                                          onError={setError}
+                                        />
+                                      </Stack>
+                                    </Paper>
+                                  )
+                                })}
+                                {!faqs.length ? <Text c="dimmed" size="sm">No FAQs.</Text> : null}
+                              </Stack>
+                            ) : null}
+
+                            {block.type === "list" ? (
+                              <Stack gap="xs">
+                                <SegmentedControl
+                                  size="xs"
+                                  value={listStyle}
+                                  data={[
+                                    { label: "Steps", value: "steps" },
+                                    { label: "Basic list", value: "basic" },
+                                  ]}
+                                  onChange={(nextStyle) => setCustomBlockPatch(block.id, { listStyle: nextStyle === "basic" ? "basic" : "steps" })}
+                                />
+
+                                {listStyle === "basic" ? (
+                                  <ListEditor
+                                    label="List items"
+                                    items={listItems}
+                                    onChange={(next) => setCustomBlockPatch(block.id, { items: next })}
+                                    placeholder="List item"
+                                  />
+                                ) : (
+                                  <Stack gap="xs">
+                                    <Group justify="space-between">
+                                      <Text size="sm" fw={600}>Steps</Text>
+                                      <Button
+                                        size="xs"
+                                        variant="default"
+                                        leftSection={<IconPlus size={14} />}
+                                        onClick={() =>
+                                          setCustomBlockPatch(block.id, {
+                                            steps: [...listSteps, { title: "", body: "" }],
+                                          })
+                                        }
+                                      >
+                                        Add step
+                                      </Button>
+                                    </Group>
+                                    {listSteps.map((step, stepIndex) => {
+                                      const stepRecord = asRecord(step)
+                                      return (
+                                        <Paper key={`${block.id}-step-${stepIndex}`} withBorder p="sm" radius="md">
+                                          <Stack gap="xs">
+                                            <Group justify="space-between">
+                                              <Badge size="sm" variant="default">Step {stepIndex + 1}</Badge>
+                                              <ActionIcon
+                                                variant="default"
+                                                aria-label="Remove step"
+                                                onClick={() =>
+                                                  setCustomBlockPatch(block.id, {
+                                                    steps: listSteps.filter((_, i) => i !== stepIndex),
+                                                  })
+                                                }
+                                              >
+                                                <IconX size={16} />
+                                              </ActionIcon>
+                                            </Group>
+                                            <TextInput
+                                              label="Title"
+                                              value={asString(stepRecord.title)}
+                                              onChange={(e) => {
+                                                const next = listSteps.slice()
+                                                next[stepIndex] = { ...stepRecord, title: e.currentTarget.value }
+                                                setCustomBlockPatch(block.id, { steps: next })
+                                              }}
+                                            />
+                                            <Textarea
+                                              label="Body"
+                                              value={asString(stepRecord.body)}
+                                              onChange={(e) => {
+                                                const next = listSteps.slice()
+                                                next[stepIndex] = { ...stepRecord, body: inputValueFromEvent(e) }
+                                                setCustomBlockPatch(block.id, { steps: next })
+                                              }}
+                                              autosize
+                                              minRows={2}
+                                            />
+                                          </Stack>
+                                        </Paper>
+                                      )
+                                    })}
+                                    {!listSteps.length ? <Text c="dimmed" size="sm">No steps.</Text> : null}
+                                  </Stack>
+                                )}
+                              </Stack>
+                            ) : null}
+
+                            {block.type === "cta" ? (
+                              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                                <TextInput
+                                  label="Primary CTA label"
+                                  value={asString(merged.ctaPrimaryLabel)}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { ctaPrimaryLabel: e.currentTarget.value })}
+                                />
+                                <LinkMenuField
+                                  label="Primary CTA link"
+                                  value={asString(merged.ctaPrimaryHref)}
+                                  onChange={(nextHref) => setCustomBlockPatch(block.id, { ctaPrimaryHref: nextHref })}
+                                  currentPageId={section?.page_id ?? ""}
+                                  pages={pages}
+                                  pagesLoading={pagesLoading}
+                                  anchorsByPageId={anchorsByPageId}
+                                  anchorsLoadingByPageId={anchorsLoadingByPageId}
+                                  ensurePagesLoaded={ensurePagesLoaded}
+                                  ensureAnchorsLoaded={ensureAnchorsLoaded}
+                                />
+                                <TextInput
+                                  label="Secondary CTA label"
+                                  value={asString(merged.ctaSecondaryLabel)}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { ctaSecondaryLabel: e.currentTarget.value })}
+                                />
+                                <LinkMenuField
+                                  label="Secondary CTA link"
+                                  value={asString(merged.ctaSecondaryHref)}
+                                  onChange={(nextHref) => setCustomBlockPatch(block.id, { ctaSecondaryHref: nextHref })}
+                                  currentPageId={section?.page_id ?? ""}
+                                  pages={pages}
+                                  pagesLoading={pagesLoading}
+                                  anchorsByPageId={anchorsByPageId}
+                                  anchorsLoadingByPageId={anchorsLoadingByPageId}
+                                  ensurePagesLoaded={ensurePagesLoaded}
+                                  ensureAnchorsLoaded={ensureAnchorsLoaded}
+                                />
+                              </SimpleGrid>
+                            ) : null}
+                          </Stack>
+                        </Paper>
+                      )
+                    })
+                  ) : (
+                    <Text c="dimmed" size="sm">
+                      No blocks found for this custom section type. Add blocks in Section Library first.
+                    </Text>
+                  )}
+                </Stack>
+              ) : null}
+
               {!type ? (
                 <Text c="dimmed" size="sm">
                   Select a section.
@@ -3401,6 +3953,17 @@ export function SectionEditorDrawer({
             applyCardImageUrl(cardImageLibraryTarget, item.url)
           }
           setCardImageLibraryTarget(null)
+        }}
+      />
+
+      <MediaLibraryModal
+        opened={customImageLibraryTargetId !== null}
+        onClose={() => setCustomImageLibraryTargetId(null)}
+        onSelect={(item) => {
+          if (customImageLibraryTargetId) {
+            applyCustomBlockImageUrl(customImageLibraryTargetId, item.url)
+          }
+          setCustomImageLibraryTargetId(null)
         }}
       />
     </>

@@ -1251,9 +1251,14 @@ function SectionRow({
       }}
       tabIndex={0}
       className="cursor-pointer select-none"
+      sx={{
+        backgroundColor: "background.paper",
+        "&:hover": {
+          backgroundColor: "action.hover",
+        },
+      }}
       style={{
         ...style,
-        background: "color-mix(in srgb, var(--mui-palette-background-paper, #ffffff) 94%, transparent)",
         minHeight: 92,
       }}
     >

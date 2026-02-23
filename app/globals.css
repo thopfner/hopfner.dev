@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .editor-drawer-body {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .editor-drawer-content .mantine-Input-input,
+  .editor-drawer-content .mantine-Textarea-input,
+  .editor-drawer-content .mantine-Select-input {
+    font-size: 16px;
+  }
+}
+
+.editor-drawer-content .mantine-RichTextEditor-content :where(ul) {
+  list-style: disc;
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.editor-drawer-content .mantine-RichTextEditor-content :where(ol) {
+  list-style: decimal;
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.editor-drawer-content .mantine-RichTextEditor-content :where(li) {
+  margin: 0.25rem 0;
+}
+
+.editor-drawer-content .mantine-RichTextEditor-content :where(h2) {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.editor-drawer-content .mantine-RichTextEditor-content :where(h3) {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}

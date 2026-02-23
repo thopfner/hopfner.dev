@@ -25,6 +25,7 @@ import CollectionsRoundedIcon from "@mui/icons-material/CollectionsRounded"
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded"
 import FolderRoundedIcon from "@mui/icons-material/FolderRounded"
+import FeedRoundedIcon from "@mui/icons-material/FeedRounded"
 
 import { createClient } from "@/lib/supabase/browser"
 
@@ -44,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Pages", aria: "Pages", icon: ArticleRoundedIcon },
   { href: "/section-library", label: "Library", aria: "Section library", icon: AutoStoriesRoundedIcon },
   { href: "/global-sections", label: "Global", aria: "Global sections", icon: FolderRoundedIcon },
+  { href: "/blog", label: "Blog", aria: "Blog", icon: FeedRoundedIcon },
   { href: "/media", label: "Media", aria: "Media", icon: CollectionsRoundedIcon },
 ]
 

@@ -5,17 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/server-admin"
 
 export const runtime = "nodejs"
 
-type CmsSectionType =
-  | "nav_links"
-  | "hero_cta"
-  | "card_grid"
-  | "steps_list"
-  | "title_body_list"
-  | "rich_text_block"
-  | "label_value_list"
-  | "faq_list"
-  | "cta_block"
-  | "footer_grid"
+type CmsSectionType = string
 
 type DuplicateOutcome = "duplicated" | "skipped" | "failed"
 
