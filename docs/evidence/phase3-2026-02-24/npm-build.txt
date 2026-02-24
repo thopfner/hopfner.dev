@@ -1,20 +1,21 @@
 
 > hopfner.dev-admin@0.1.0 build
-> next build
+> next build --webpack
 
-▲ Next.js 16.1.6 (Turbopack)
+▲ Next.js 16.1.6 (webpack)
 - Environments: .env.local
 
   Creating an optimized production build ...
-✓ Compiled successfully in 16.2s
+✓ Compiled successfully in 16.5s
   Running TypeScript ...
   Collecting page data using 2 workers ...
   Generating static pages using 2 workers (0/15) ...
   Generating static pages using 2 workers (3/15) 
   Generating static pages using 2 workers (7/15) 
   Generating static pages using 2 workers (11/15) 
-✓ Generating static pages using 2 workers (15/15) in 173.5ms
+✓ Generating static pages using 2 workers (15/15) in 407.1ms
   Finalizing page optimization ...
+  Collecting build traces ...
 
 Route (app)
 ┌ ƒ /

@@ -216,6 +216,7 @@ Mode: Autonomous (PO/PM gate + Independent QA gate)
 - Change summary:
   - Enforced full-width Autocomplete/select wrappers on affected admin forms.
   - Enforced label shrink behavior for placeholder-backed select controls.
+  - Hardened production build consistency by switching build script to `next build --webpack` to ensure stable `.next` startup artifacts.
 
 ### ADMIN-9.4 — Validation
 - Status: DONE (PASS)

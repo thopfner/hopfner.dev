@@ -27,10 +27,13 @@
   - Added `showPlaceholder` state and `InputLabel shrink={showPlaceholder || Boolean(currentValue)}` to prevent label/placeholder overlap.
 
 ### Runtime/deploy consistency fix
+- Stabilized production artifact generation by switching build script to webpack mode:
+  - `package.json`: `"build": "next build --webpack"`
+  - Why: Next 16 Turbopack build was intermittently producing `.next` without `BUILD_ID`, causing `next start` crash/restart loops and upstream 502/500 behavior.
 - Performed safe runtime refresh cycle after push:
   1. `pm2 stop hopfner.dev-admin`
   2. remove `.next`
-  3. `npm run build`
+  3. `npm run build` (webpack)
   4. `pm2 restart hopfner.dev-admin`
   5. verify previously failing chunk URLs and `/admin/global-sections` are no longer 500
 
