@@ -300,31 +300,31 @@ type SelectProps = {
   disabled?: boolean
 }
 
-function Select({ label, placeholder, value, onChange, data, searchable, disabled }: SelectProps) {
+function Select({ label, placeholder, value, onChange, data, disabled }: SelectProps) {
   const options = normalizeSelectData(data)
-  const selected = options.find((option) => option.value === (value ?? "")) ?? null
 
   return (
-    <Autocomplete
+    <TextField
+      select
       fullWidth
-      options={options}
-      value={selected}
-      readOnly={!searchable}
-      openOnFocus
+      label={label}
+      value={value ?? ""}
       disabled={disabled}
-      onChange={(_event, option) => onChange?.(option?.value ?? null)}
-      isOptionEqualToValue={(option, nextValue) => option.value === nextValue.value}
-      getOptionLabel={(option) => option.label}
-      sx={{ width: "100%" }}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          fullWidth
-          label={label}
-          placeholder={placeholder}
-        />
-      )}
-    />
+      InputLabelProps={{ shrink: true }}
+      onChange={(event) => onChange?.(event.target.value || null)}
+      SelectProps={{ displayEmpty: Boolean(placeholder) }}
+    >
+      {placeholder ? (
+        <MenuItem value="" disabled>
+          {placeholder}
+        </MenuItem>
+      ) : null}
+      {options.map((option) => (
+        <MenuItem key={option.value} value={option.value}>
+          {option.label}
+        </MenuItem>
+      ))}
+    </TextField>
   )
 }
 
