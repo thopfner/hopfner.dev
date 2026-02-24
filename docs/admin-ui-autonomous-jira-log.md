@@ -41,3 +41,46 @@ Mode: Autonomous (PO/PM gate + Independent QA gate)
 ## Next Automatic Step
 - Start **Phase 1 — Design System Consolidation (Foundation)**
 - Run implementation + independent QA validator at phase gate before Phase 2
+
+---
+
+## Epic ADMIN-6 — Phase 1 Design System Consolidation (Foundation)
+
+### ADMIN-6.1 — Shared primitive + wrapper duplication inventory
+- Status: DONE
+- Scope reviewed: `app/(admin)/global-sections/page-client.tsx`, `app/(admin)/section-library/page-client.tsx`, `app/(admin)/pages/[pageId]/page-editor.tsx`
+- Findings:
+  - Repeated spacing/radius/select/flex utility mappings (`toCssSpace`, `toCssRadius`, `toFlexAlign`, `toFlexJustify`, `normalizeSelectData`) across 3 admin pages.
+  - Repeated control mapping logic for button variant/size and repeated `ActionIcon` wrapper in 3 admin pages.
+  - API/business logic untouched by consolidation plan.
+
+### ADMIN-6.2 — Centralized admin UI primitives module
+- Status: DONE
+- Artifact created: `lib/admin/ui-primitives.tsx`
+- Contents:
+  - Shared token maps: spacing + radius
+  - Shared converters: spacing/radius/flex/select normalization
+  - Shared low-risk control helpers: button variant/size mappings
+  - Shared wrapper: `AdminActionIcon`
+
+### ADMIN-6.3 — Low-risk wrapper refactor (2+ pages)
+- Status: DONE
+- Refactors applied to 3 admin pages:
+  - `app/(admin)/global-sections/page-client.tsx`
+  - `app/(admin)/section-library/page-client.tsx`
+  - `app/(admin)/pages/[pageId]/page-editor.tsx`
+- Changes:
+  - Replaced local duplicate helpers with imports from `@/lib/admin/ui-primitives`
+  - Replaced local duplicated `ActionIcon` wrapper with `AdminActionIcon`
+  - Replaced duplicate inline button mapping logic with shared helpers (`toMuiButtonVariant`, `toMuiControlSize`)
+- Guardrails:
+  - No API route changes
+  - No business-logic changes
+  - No feature removals
+
+### ADMIN-6.4 — Validation
+- Status: DONE (PASS)
+- Commands:
+  - `npm run lint`
+  - `npm run build`
+- Result: both commands passed successfully on branch `work/2026-02-24-slow`.

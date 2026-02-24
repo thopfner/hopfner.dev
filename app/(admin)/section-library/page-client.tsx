@@ -14,7 +14,6 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   MenuItem,
   Paper as MuiPaper,
@@ -31,7 +30,6 @@ import {
   type ButtonProps as MuiButtonProps,
   type CardProps as MuiCardProps,
   type ChipProps as MuiChipProps,
-  type IconButtonProps,
   type PaperProps as MuiPaperProps,
   type SelectChangeEvent,
   type StackProps as MuiStackProps,
@@ -44,6 +42,21 @@ import { CSS } from "@dnd-kit/utilities"
 import { IconArrowsMaximize, IconTrash } from "@tabler/icons-react"
 
 import { MediaLibraryModal } from "@/components/media-library-modal"
+import {
+  AdminActionIcon as ActionIcon,
+  normalizeSelectData,
+  toCssRadius,
+  toCssSpace,
+  toFlexAlign,
+  toFlexJustify,
+  toMuiButtonVariant,
+  toMuiControlSize,
+  type AdminUiAlign as MantineAlign,
+  type AdminUiJustify as MantineJustify,
+  type AdminUiRadius as MantineRadius,
+  type AdminUiSpace as MantineSpace,
+  type AdminSelectData as SelectData,
+} from "@/lib/admin/ui-primitives"
 import type { MediaItem } from "@/lib/media/types"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError } from "@/lib/cms/editor-error-message"
@@ -99,60 +112,7 @@ const BUILTIN_PREVIEWS = [
   { key: "footer_grid", label: "Footer Grid", desc: "Footer links/cards/legal" },
 ]
 
-type MantineSpace = "xs" | "sm" | "md" | "lg" | "xl" | number
-type MantineRadius = "xs" | "sm" | "md" | "lg" | "xl"
-type MantineAlign = "start" | "center" | "end" | "stretch"
-type MantineJustify = "start" | "center" | "end" | "space-between" | "space-around" | "space-evenly"
 type SegmentedItem = { label: string; value: string }
-type SelectDataItem = { value: string; label: string }
-type SelectData = string[] | SelectDataItem[]
-
-const SPACE_MAP: Record<Exclude<MantineSpace, number>, string> = {
-  xs: "8px",
-  sm: "12px",
-  md: "16px",
-  lg: "24px",
-  xl: "32px",
-}
-
-const RADIUS_MAP: Record<MantineRadius, string> = {
-  xs: "4px",
-  sm: "6px",
-  md: "10px",
-  lg: "14px",
-  xl: "999px",
-}
-
-function toCssSpace(value?: MantineSpace): string | undefined {
-  if (value === undefined) return undefined
-  return typeof value === "number" ? `${value}px` : SPACE_MAP[value]
-}
-
-function toCssRadius(value?: MantineRadius): string | undefined {
-  if (!value) return undefined
-  return RADIUS_MAP[value]
-}
-
-function toFlexAlign(value?: MantineAlign): BoxProps["alignItems"] {
-  if (value === "start") return "flex-start"
-  if (value === "end") return "flex-end"
-  if (value === "stretch") return "stretch"
-  return value ?? "center"
-}
-
-function toFlexJustify(value?: MantineJustify): BoxProps["justifyContent"] {
-  if (value === "start") return "flex-start"
-  if (value === "end") return "flex-end"
-  return value ?? "flex-start"
-}
-
-function normalizeSelectData(data: SelectData): SelectDataItem[] {
-  if (!data.length) return []
-  if (typeof data[0] === "string") {
-    return (data as string[]).map((item) => ({ value: item, label: item }))
-  }
-  return data as SelectDataItem[]
-}
 
 function gridTemplate(count: number): string {
   return `repeat(${Math.max(1, count)}, minmax(0, 1fr))`
@@ -169,9 +129,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant, size, mt, loading, disabled, startIcon, sx, ...props },
   ref
 ) {
-  const muiVariant: MuiButtonProps["variant"] =
-    variant === "light" || variant === "default" ? "outlined" : variant === "subtle" ? "text" : "contained"
-  const muiSize: MuiButtonProps["size"] = size === "xs" || size === "sm" ? "small" : "medium"
+  const muiVariant: MuiButtonProps["variant"] = toMuiButtonVariant(variant)
+  const muiSize: MuiButtonProps["size"] = toMuiControlSize(size)
   return (
     <MuiButton
       ref={ref}
@@ -189,33 +148,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   )
 })
 
-type ActionIconProps = Omit<IconButtonProps, "color" | "size"> & {
-  color?: "red" | "dark" | "gray"
-  size?: "xs" | "sm" | "md"
-  variant?: "subtle" | "default"
-}
 
-function ActionIcon({ color, size, variant, sx, ...props }: ActionIconProps) {
-  const muiSize: IconButtonProps["size"] = size === "xs" || size === "sm" ? "small" : "medium"
-  const muiColor: IconButtonProps["color"] = color === "red" ? "error" : "default"
-  return (
-    <IconButton
-      size={muiSize}
-      color={muiColor}
-      sx={{
-        ...(variant === "default"
-          ? {
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: "8px",
-            }
-          : null),
-        ...sx,
-      }}
-      {...props}
-    />
-  )
-}
 
 type BadgeProps = Omit<MuiChipProps, "label" | "variant" | "color" | "size" | "children"> & {
   size?: "sm" | "md"
