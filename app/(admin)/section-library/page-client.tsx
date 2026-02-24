@@ -43,6 +43,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { IconArrowsMaximize, IconTrash } from "@tabler/icons-react"
 
 import { MediaLibraryModal } from "@/components/media-library-modal"
+import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
 import {
   AdminActionIcon as ActionIcon,
   normalizeSelectData,
@@ -862,6 +863,8 @@ export function SectionLibraryPage() {
   const [rows, setRows] = useState<RegistryRow[]>([])
   const searchParams = useSearchParams()
   const [catalogView, setCatalogView] = useState<"grid" | "list">("grid")
+  const [catalogQuery, setCatalogQuery] = useState("")
+  const [catalogSource, setCatalogSource] = useState<"all" | "builtin" | "custom">("all")
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
   const [fullscreenPreviewOpen, setFullscreenPreviewOpen] = useState(false)
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false)
@@ -877,6 +880,26 @@ export function SectionLibraryPage() {
   const [saving, setSaving] = useState(false)
 
   const customRows = rows.filter((r) => r.source === "custom")
+  const catalogQueryNormalized = catalogQuery.trim().toLowerCase()
+  const filteredBuiltins = useMemo(() => {
+    if (catalogSource === "custom") return []
+    if (!catalogQueryNormalized) return BUILTIN_PREVIEWS
+    return BUILTIN_PREVIEWS.filter(
+      (item) =>
+        item.label.toLowerCase().includes(catalogQueryNormalized) ||
+        item.key.toLowerCase().includes(catalogQueryNormalized) ||
+        item.desc.toLowerCase().includes(catalogQueryNormalized)
+    )
+  }, [catalogQueryNormalized, catalogSource])
+  const filteredCustomRows = useMemo(() => {
+    if (catalogSource === "builtin") return []
+    if (!catalogQueryNormalized) return customRows
+    return customRows.filter(
+      (item) =>
+        item.label.toLowerCase().includes(catalogQueryNormalized) ||
+        item.key.toLowerCase().includes(catalogQueryNormalized)
+    )
+  }, [catalogQueryNormalized, catalogSource, customRows])
   const active = customRows.find((r) => r.key === activeKey) || null
   const baselineSchema = useMemo(() => normalizeSchema(active?.composer_schema), [active])
   const isDirty = useMemo(
@@ -1260,34 +1283,67 @@ export function SectionLibraryPage() {
 
   return (
     <Stack gap="md">
-      <Group justify="space-between" align="center">
-        <div>
-          <Title order={2} size="h3">Section Library</Title>
-          <Text c="dimmed" size="sm">Preview built-ins and compose brand-new section types.</Text>
-        </div>
-        <Group>
-          <SegmentedControl
-            value={catalogView}
-            onChange={(v) => setCatalogView(v as "grid" | "list")}
-            data={[{ label: "Grid", value: "grid" }, { label: "List", value: "list" }]}
-          />
-          <Button onClick={() => setCreateOpen(true)}>New custom section type</Button>
-        </Group>
-      </Group>
+      <AdminPageHeader
+        title="Section Library"
+        description="Preview built-in section types and compose custom reusable sections for pages and globals."
+      />
 
-      {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
+      <AdminPanel compact>
+        <Stack gap="sm">
+          <Group justify="space-between" align="center">
+            <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>
+              <Tabs.List>
+                <Tabs.Tab value="catalog">Catalog</Tabs.Tab>
+                <Tabs.Tab value="composer">Composer</Tabs.Tab>
+              </Tabs.List>
+            </Tabs>
+            <Button onClick={() => setCreateOpen(true)}>New custom section type</Button>
+          </Group>
 
-      <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>        <Tabs.List>
-          <Tabs.Tab value="catalog">Catalog</Tabs.Tab>
-          <Tabs.Tab value="composer">Composer</Tabs.Tab>
-        </Tabs.List>
+          {activeTab === "catalog" ? (
+            <Group>
+              <TextField
+                label="Search"
+                placeholder="Search section types…"
+                size="small"
+                value={catalogQuery}
+                onChange={(e) => setCatalogQuery(e.target.value)}
+                sx={{ flex: "1 1 280px", minWidth: 0 }}
+              />
+              <TextField
+                select
+                size="small"
+                value={catalogSource}
+                onChange={(e) => setCatalogSource(e.target.value as typeof catalogSource)}
+                sx={{ width: 180 }}
+              >
+                <MenuItem value="all">All sources</MenuItem>
+                <MenuItem value="builtin">Built-in only</MenuItem>
+                <MenuItem value="custom">Custom only</MenuItem>
+              </TextField>
+              <SegmentedControl
+                value={catalogView}
+                onChange={(v) => setCatalogView(v as "grid" | "list")}
+                data={[{ label: "Grid", value: "grid" }, { label: "List", value: "list" }]}
+              />
+            </Group>
+          ) : null}
 
-        <Tabs.Panel value="catalog" pt="md">
-          <Stack gap="md">
+          {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
+        </Stack>
+      </AdminPanel>
+
+      <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>
+        <Tabs.Panel value="catalog" pt="sm">
+          <AdminPanel>
+            <Stack gap="md">
             <Title order={4}>Built-in Sections</Title>
+            {!filteredBuiltins.length ? (
+              <Typography variant="body2" color="text.secondary">No built-in section types match current search.</Typography>
+            ) : null}
             {catalogView === "grid" ? (
               <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }}>
-                {BUILTIN_PREVIEWS.map((item) => (
+                {filteredBuiltins.map((item) => (
                   <Card key={item.key} withBorder radius="md" shadow="xs" style={{ borderColor: "color-mix(in srgb, var(--border) 70%, transparent)" }}>
                     <Group justify="space-between" mb={6}>
                       <Text fw={600}>{item.label}</Text>
@@ -1299,7 +1355,7 @@ export function SectionLibraryPage() {
               </SimpleGrid>
             ) : (
               <Stack gap="xs">
-                {BUILTIN_PREVIEWS.map((item) => (
+                {filteredBuiltins.map((item) => (
                   <Paper key={item.key} withBorder p="sm">
                     <Group justify="space-between">
                       <Text fw={600}>{item.label}</Text>
@@ -1314,18 +1370,23 @@ export function SectionLibraryPage() {
             <Divider />
 
             <Title order={4}>Custom Section Types</Title>
-            {loading ? <Text c="dimmed">Loading…</Text> : null}
+            {loading ? (
+              <Typography variant="body2" color="text.secondary">Loading…</Typography>
+            ) : null}
             {!loading && !customRows.length ? (
               <Paper withBorder p="md" radius="md">
                 <Stack gap="xs" align="start">
-                  <Text c="dimmed">No custom section types yet.</Text>
+                  <Typography variant="body2" color="text.secondary">No custom section types yet.</Typography>
                   <Button size="xs" onClick={() => setCreateOpen(true)}>Create your first custom section</Button>
                 </Stack>
               </Paper>
             ) : null}
+            {!loading && customRows.length > 0 && filteredCustomRows.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">No custom section types match current search.</Typography>
+            ) : null}
             {catalogView === "grid" ? (
               <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }}>
-                {customRows.map((item) => (
+                {filteredCustomRows.map((item) => (
                   <Card key={item.key} withBorder radius="md" shadow="xs" style={{ borderColor: "color-mix(in srgb, var(--accent) 28%, var(--border))" }}>
                     <Group justify="space-between" mb={6}>
                       <Text fw={600}>{item.label}</Text>
@@ -1338,23 +1399,34 @@ export function SectionLibraryPage() {
               </SimpleGrid>
             ) : (
               <Stack gap="xs">
-                {customRows.map((item) => (
+                {filteredCustomRows.map((item) => (
                   <Paper key={item.key} withBorder p="sm">
-                    <Group justify="space-between">
-                      <div>
-                        <Text fw={600}>{item.label}</Text>
-                        <Text size="xs" c="dimmed">{item.key}</Text>
-                      </div>
-                      <Button size="xs" variant="light" onClick={() => { setActiveKey(item.key); setActiveTab("composer") }}>Open</Button>
-                    </Group>
+                    <Stack gap={8}>
+                      <Group justify="space-between" align="start">
+                        <Stack gap={2}>
+                          <Text fw={700}>{item.label}</Text>
+                          <Group gap="xs">
+                            <Badge size="sm" color="violet" variant="light">Custom</Badge>
+                            <Badge size="sm" variant="dot">{item.renderer}</Badge>
+                          </Group>
+                        </Stack>
+                        <Button size="xs" variant="light" onClick={() => { setActiveKey(item.key); setActiveTab("composer") }}>
+                          Open
+                        </Button>
+                      </Group>
+                      <Text size="xs" c="dimmed">Key: {item.key}</Text>
+                      <Text size="xs" c="dimmed">Source: {item.source}</Text>
+                    </Stack>
                   </Paper>
                 ))}
               </Stack>
             )}
           </Stack>
+          </AdminPanel>
         </Tabs.Panel>
 
-        <Tabs.Panel value="composer" pt="md">
+        <Tabs.Panel value="composer" pt="sm">
+          <AdminPanel>
           <Stack gap="xs" mb="sm">
             <Text size="sm" c="dimmed">Compose sections with rows and up to 3 columns, then reuse across any page.</Text>
           </Stack>
@@ -1636,6 +1708,7 @@ export function SectionLibraryPage() {
               </Paper>
             </Grid.Col>
           </Grid>
+          </AdminPanel>
         </Tabs.Panel>
       </Tabs>
 

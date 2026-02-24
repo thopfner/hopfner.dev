@@ -238,3 +238,47 @@ Mode: Autonomous (PO/PM gate + Independent QA gate)
   - verify hotfix URLs are no longer 500
 - Evidence:
   - `docs/evidence/phase3-2026-02-24/runtime-postrefresh.txt`
+
+---
+
+## Epic ADMIN-10 — Phase 4 Section Library Consistency Pass
+
+### ADMIN-10.1 — Shared admin shell/page primitives applied to Section Library
+- Status: DONE
+- File updated: `app/(admin)/section-library/page-client.tsx`
+- Changes:
+  - Added `AdminPageHeader` for consistent route-level title/description hierarchy.
+  - Added `AdminPanel` surfaces for toolbar, catalog content, and composer content parity.
+
+### ADMIN-10.2 — Catalog toolbar + list hierarchy alignment
+- Status: DONE
+- File updated: `app/(admin)/section-library/page-client.tsx`
+- Changes:
+  - Added lightweight catalog search + source filter using existing in-memory data.
+  - Preserved existing grid/list toggle behavior.
+  - Restructured custom list rows for clearer hierarchy: title + chips + meta + action.
+
+### ADMIN-10.3 — State treatment parity
+- Status: DONE
+- File updated: `app/(admin)/section-library/page-client.tsx`
+- Changes:
+  - Standardized loading/empty/filtered-empty state messaging to match pages-style hierarchy and tone.
+  - Preserved outlined error alert pattern.
+
+### ADMIN-10.4 — Validation
+- Status: DONE (PASS)
+- Commands:
+  - `npm run lint`
+  - `npm run build`
+- Evidence:
+  - `docs/evidence/phase4-2026-02-24/npm-lint.txt`
+  - `docs/evidence/phase4-2026-02-24/npm-build.txt`
+  - `docs/evidence/phase4-2026-02-24/phase4-summary.md`
+
+### ADMIN-10.5 — Risk notes
+- Status: DONE
+- Risk profile: LOW
+- Notes:
+  - No API or business logic changes.
+  - Supabase queries unchanged.
+  - Changes limited to presentational/layout consistency and local filtering of already-fetched data.
