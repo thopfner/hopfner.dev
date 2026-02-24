@@ -996,7 +996,7 @@ function TipTapJsonEditor({
     // Next.js renders Client Components on the server too; TipTap requires this to avoid hydration mismatches.
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       Link.configure({ openOnClick: false }),
       Image.configure({ allowBase64: false }),
     ],
