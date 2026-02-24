@@ -155,7 +155,7 @@ export function PagesList() {
     setLoading(true)
     setError(null)
     try {
-      const candidates = ["/api/pages/overview", "/admin/api/pages/overview"]
+      const candidates = ["/admin/api/pages/overview"]
       let payload: (Partial<PagesOverviewResponse> & { error?: string }) | null = null
       let ok = false
       let message = "Failed to load pages overview."
@@ -241,7 +241,7 @@ export function PagesList() {
     setPublishingAll(true)
     setError(null)
     try {
-      const candidates = ["/api/pages/publish-all", "/admin/api/pages/publish-all"]
+      const candidates = ["/admin/api/pages/publish-all"]
       let payload: (PublishAllResult & { error?: string }) | null = null
       let ok = false
       let message = "Failed to publish all changes."
