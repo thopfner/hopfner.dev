@@ -300,6 +300,7 @@ function Select({ label, placeholder, value, onChange, data, searchable, disable
   return (
     <Autocomplete
       disablePortal
+      fullWidth
       options={options}
       value={selected}
       readOnly={!searchable}
@@ -308,6 +309,7 @@ function Select({ label, placeholder, value, onChange, data, searchable, disable
       onChange={(_event, option) => onChange?.(option?.value ?? null)}
       isOptionEqualToValue={(option, nextValue) => option.value === nextValue.value}
       getOptionLabel={(option) => option.label}
+      sx={{ width: "100%" }}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -336,6 +338,7 @@ function MultiSelect({ label, placeholder, value, onChange, data, searchable }: 
   return (
     <Autocomplete
       disablePortal
+      fullWidth
       multiple
       options={options}
       value={selected}
@@ -345,6 +348,7 @@ function MultiSelect({ label, placeholder, value, onChange, data, searchable }: 
       onChange={(_event, nextValues) => onChange?.(nextValues.map((nextValue) => nextValue.value))}
       isOptionEqualToValue={(option, nextValue) => option.value === nextValue.value}
       getOptionLabel={(option) => option.label}
+      sx={{ width: "100%" }}
       renderInput={(params) => (
         <TextField
           {...params}

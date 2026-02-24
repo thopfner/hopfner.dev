@@ -459,6 +459,7 @@ function Select({ label, placeholder, value, onChange, data, size, style }: Sele
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = useState("")
   const currentValue = isControlled ? (value ?? "") : internalValue
+  const showPlaceholder = Boolean(placeholder)
   const labelId = useId()
 
   function handleChange(event: SelectChangeEvent<string>) {
@@ -469,13 +470,13 @@ function Select({ label, placeholder, value, onChange, data, size, style }: Sele
 
   return (
     <FormControl fullWidth size={size === "xs" || size === "sm" ? "small" : "medium"} style={style}>
-      {label ? <InputLabel id={labelId}>{label}</InputLabel> : null}
+      {label ? <InputLabel id={labelId} shrink={showPlaceholder || Boolean(currentValue)}>{label}</InputLabel> : null}
       <MuiSelect
         labelId={label ? labelId : undefined}
         label={label}
         value={currentValue}
         onChange={handleChange}
-        displayEmpty={Boolean(placeholder)}
+        displayEmpty={showPlaceholder}
         renderValue={(selected) => {
           const selectedValue = String(selected ?? "")
           if (!selectedValue) {

@@ -187,3 +187,53 @@ Mode: Autonomous (PO/PM gate + Independent QA gate)
   - No API/business logic changes.
   - No route behavior or workflow semantics changed.
   - Changes are UI-presentational consistency hardening only.
+
+---
+
+## Epic ADMIN-9 — 2026-02-24 Hotfix (Runtime Chunk 500 + Form Controls)
+
+### ADMIN-9.1 — Reproduce runtime chunk 500 failures
+- Status: DONE
+- Reproduction evidence: `docs/evidence/phase3-2026-02-24/runtime-precheck.txt`
+- Observed failing examples:
+  - `/admin/_next/static/chunks/9bfd6948c5f0f648.js` → 500
+  - `/admin/_next/static/chunks/b293a7f33e5cd254.js` → 500
+
+### ADMIN-9.2 — Root cause analysis
+- Status: DONE
+- Runtime root cause:
+  - PM2 logs showed `ChunkLoadError` + `MODULE_NOT_FOUND` for `.next/server/chunks/ssr/*` files, indicating runtime/deploy artifact inconsistency.
+- Form UI root cause:
+  - Custom select wrappers lacked consistent full-width container behavior.
+  - Section Library select label shrink state was not enforced when placeholder rendering was active, causing label/value overlap.
+
+### ADMIN-9.3 — Minimal-risk fixes
+- Status: DONE
+- Files updated:
+  - `app/(admin)/global-sections/page-client.tsx`
+  - `app/(admin)/pages/[pageId]/page-editor.tsx`
+  - `app/(admin)/section-library/page-client.tsx`
+- Change summary:
+  - Enforced full-width Autocomplete/select wrappers on affected admin forms.
+  - Enforced label shrink behavior for placeholder-backed select controls.
+
+### ADMIN-9.4 — Validation
+- Status: DONE (PASS)
+- Commands:
+  - `npm run lint`
+  - `npm run build`
+- Evidence:
+  - `docs/evidence/phase3-2026-02-24/npm-lint.txt`
+  - `docs/evidence/phase3-2026-02-24/npm-build.txt`
+  - `docs/evidence/phase3-2026-02-24/hotfix-runtime-form-2026-02-24.md`
+
+### ADMIN-9.5 — Runtime refresh + live verification
+- Status: DONE (PASS)
+- Procedure:
+  - stop pm2 app `hopfner.dev-admin`
+  - remove `.next`
+  - rebuild
+  - restart pm2 app
+  - verify hotfix URLs are no longer 500
+- Evidence:
+  - `docs/evidence/phase3-2026-02-24/runtime-postrefresh.txt`

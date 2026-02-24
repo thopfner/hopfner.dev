@@ -476,6 +476,7 @@ function Select({ label, placeholder, clearable, value, onChange, data, disabled
   return (
     <Autocomplete
       disablePortal
+      fullWidth
       options={options}
       value={selected}
       disabled={disabled}
@@ -483,7 +484,7 @@ function Select({ label, placeholder, clearable, value, onChange, data, disabled
       isOptionEqualToValue={(option, nextValue) => option.value === nextValue.value}
       getOptionLabel={(option) => option.label}
       disableClearable={!clearable}
-      sx={w !== undefined ? { width: w } : undefined}
+      sx={w !== undefined ? { width: w } : { width: "100%" }}
       renderInput={(params) => (
         <TextField
           {...params}
