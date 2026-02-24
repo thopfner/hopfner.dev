@@ -84,3 +84,12 @@ Mode: Autonomous (PO/PM gate + Independent QA gate)
   - `npm run lint`
   - `npm run build`
 - Result: both commands passed successfully on branch `work/2026-02-24-slow`.
+- Evidence:
+  - `docs/evidence/phase1-2026-02-24/npm-lint.txt`
+  - `docs/evidence/phase1-2026-02-24/npm-build.txt`
+  - `docs/evidence/phase1-2026-02-24/commit.txt`
+
+### ADMIN-6.5 — Phase 1 Gate Decision
+- Status: DONE (PASS)
+- Gate record: `docs/admin-ui-phase1-gate-decision.md`
+- Decision: Green-light Phase 2
