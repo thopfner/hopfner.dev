@@ -316,8 +316,8 @@ export function AdminShell({
             flexGrow: 1,
             minWidth: 0,
             mt: `${HEADER_HEIGHT}px`,
-            ml: { xs: 0, sm: `${desktopDrawerWidth}px` },
-            p: { xs: 1, sm: 2 },
+            ml: 0,
+            p: { xs: 1, sm: 1 },
           }}
         >
           <div className="admin-content">{children}</div>
