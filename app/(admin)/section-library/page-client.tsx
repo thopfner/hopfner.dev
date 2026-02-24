@@ -3,6 +3,7 @@
 import { createContext, forwardRef, useContext, useEffect, useId, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import {
+  Alert,
   Box,
   Button as MuiButton,
   Card as MuiCard,
@@ -1266,7 +1267,7 @@ export function SectionLibraryPage() {
         </Group>
       </Group>
 
-      {error ? <Text c="red" size="sm">{error}</Text> : null}
+      {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
 
       <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>        <Tabs.List>
           <Tabs.Tab value="catalog">Catalog</Tabs.Tab>

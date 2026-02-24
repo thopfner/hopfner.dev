@@ -381,6 +381,7 @@ export function PagesList() {
 
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.25 }}>
             <TextField
+              label="Search"
               placeholder="Search pages…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

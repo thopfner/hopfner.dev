@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { useSearchParams } from "next/navigation"
 import {
+  Alert,
   Autocomplete,
   Box,
   Button as MuiButton,
@@ -1178,7 +1179,7 @@ export function GlobalSectionsPage() {
           />
           <Button onClick={createGlobal}>Create</Button>
         </Group>
-        {error ? <Text c="red" size="sm" mt="sm">{error}</Text> : null}
+        {error ? <Alert severity="error" variant="outlined" sx={{ mt: 1 }}>{error}</Alert> : null}
       </Paper>
 
       <Paper withBorder p="md" radius="md">

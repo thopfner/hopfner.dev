@@ -9,10 +9,10 @@ type AdminPageHeaderProps = {
 export function AdminPageHeader({ title, description, sx }: AdminPageHeaderProps) {
   return (
     <Stack spacing={0.5} sx={sx}>
-      <Typography variant="h5" fontWeight={700}>
+      <Typography variant="h5" fontWeight={700} sx={{ lineHeight: 1.25 }}>
         {title}
       </Typography>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 880 }}>
         {description}
       </Typography>
     </Stack>

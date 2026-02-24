@@ -140,3 +140,50 @@ Mode: Autonomous (PO/PM gate + Independent QA gate)
   - No API routes, RPCs, or Supabase query logic changed.
   - No publish/state-transition business logic changed.
   - Changes are presentational and wrapper-level only; behavior-preserving by design.
+
+---
+
+## Epic ADMIN-8 — Phase 3 Targeted Visual QA Hardening
+
+### ADMIN-8.1 — Targeted route consistency pass
+- Status: DONE
+- Routes reviewed:
+  - `/blog`
+  - `/media`
+  - `/pages` (list)
+  - `/pages/[pageId]`
+  - `/global-sections`
+  - `/section-library`
+- Focus: spacing/typography/alignment + interaction/error state consistency.
+
+### ADMIN-8.2 — Low-risk UI polish fixes
+- Status: DONE
+- Files updated:
+  - `components/admin/ui.tsx`
+  - `app/(admin)/media/media-page-client.tsx`
+  - `app/(admin)/pages-list.tsx`
+  - `app/(admin)/global-sections/page-client.tsx`
+  - `app/(admin)/section-library/page-client.tsx`
+- Notes:
+  - Header rhythm/readability refinements in shared admin header.
+  - Media count chip now explicit (`Items: N`) for clearer state readability.
+  - Pages list search field now explicitly labeled.
+  - Global Sections + Section Library error messaging standardized to outlined alert state.
+
+### ADMIN-8.3 — Validation + evidence
+- Status: DONE (PASS)
+- Commands:
+  - `npm run lint`
+  - `npm run build`
+- Evidence:
+  - `docs/evidence/phase3-2026-02-24/npm-lint.txt`
+  - `docs/evidence/phase3-2026-02-24/npm-build.txt`
+  - `docs/evidence/phase3-2026-02-24/qa-notes.md`
+
+### ADMIN-8.4 — Risk & regression notes
+- Status: DONE
+- Risk profile: LOW
+- Notes:
+  - No API/business logic changes.
+  - No route behavior or workflow semantics changed.
+  - Changes are UI-presentational consistency hardening only.

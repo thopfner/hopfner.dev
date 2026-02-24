@@ -219,7 +219,7 @@ export function MediaPageClient() {
           {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
 
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
-            <Chip size="small" variant="outlined" label={`${items.length}`} />
+            <Chip size="small" variant="outlined" label={`Items: ${items.length}`} />
             <Button size="small" variant="text" onClick={() => setLibraryOpen(true)}>
               Open full library modal
             </Button>
