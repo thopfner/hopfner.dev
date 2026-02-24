@@ -423,8 +423,15 @@ type TextInputProps = Omit<TextFieldProps, "size"> & {
   size?: "xs" | "sm" | "md"
 }
 
-function TextInput({ size, fullWidth = true, ...props }: TextInputProps) {
-  return <TextField size={size === "xs" || size === "sm" ? "small" : "medium"} fullWidth={fullWidth} {...props} />
+function TextInput({ size, fullWidth = true, InputLabelProps, ...props }: TextInputProps) {
+  return (
+    <TextField
+      size={size === "xs" || size === "sm" ? "small" : "medium"}
+      fullWidth={fullWidth}
+      InputLabelProps={{ shrink: true, ...InputLabelProps }}
+      {...props}
+    />
+  )
 }
 
 type TextareaProps = Omit<TextFieldProps, "size" | "multiline"> & {

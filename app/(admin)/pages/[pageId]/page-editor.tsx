@@ -402,12 +402,13 @@ type TextInputProps = Omit<TextFieldProps, "size"> & {
   w?: number | string
 }
 
-function TextInput({ size, leftSection, w, InputProps, fullWidth, sx, ...props }: TextInputProps) {
+function TextInput({ size, leftSection, w, InputProps, fullWidth, sx, InputLabelProps, ...props }: TextInputProps) {
   const fullWidthValue = fullWidth ?? w === undefined
   return (
     <TextField
       size={size === "xs" || size === "sm" ? "small" : "medium"}
       fullWidth={fullWidthValue}
+      InputLabelProps={{ shrink: true, ...InputLabelProps }}
       InputProps={{
         ...InputProps,
         startAdornment: leftSection ? <InputAdornment position="start">{leftSection}</InputAdornment> : InputProps?.startAdornment,
@@ -475,7 +476,6 @@ function Select({ label, placeholder, clearable, value, onChange, data, disabled
 
   return (
     <Autocomplete
-      disablePortal
       fullWidth
       options={options}
       value={selected}

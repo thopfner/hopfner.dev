@@ -279,8 +279,15 @@ type TextInputProps = Omit<TextFieldProps, "size"> & {
   size?: "xs" | "sm" | "md"
 }
 
-function TextInput({ size, fullWidth = true, ...props }: TextInputProps) {
-  return <TextField size={size === "xs" || size === "sm" ? "small" : "medium"} fullWidth={fullWidth} {...props} />
+function TextInput({ size, fullWidth = true, InputLabelProps, ...props }: TextInputProps) {
+  return (
+    <TextField
+      size={size === "xs" || size === "sm" ? "small" : "medium"}
+      fullWidth={fullWidth}
+      InputLabelProps={{ shrink: true, ...InputLabelProps }}
+      {...props}
+    />
+  )
 }
 
 type SelectProps = {
@@ -299,7 +306,6 @@ function Select({ label, placeholder, value, onChange, data, searchable, disable
 
   return (
     <Autocomplete
-      disablePortal
       fullWidth
       options={options}
       value={selected}
@@ -337,7 +343,6 @@ function MultiSelect({ label, placeholder, value, onChange, data, searchable }: 
 
   return (
     <Autocomplete
-      disablePortal
       fullWidth
       multiple
       options={options}
