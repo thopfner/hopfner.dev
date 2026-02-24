@@ -1,6 +1,10 @@
-# API route inventory
+# API route inventory generated 2026-02-24T09:10:49Z
+
 app/api/blog/articles/[id]/route.ts
 app/api/blog/articles/route.ts
+app/api/blog/versions/[id]/approve/route.ts
+app/api/blog/versions/[id]/publish/route.ts
+app/api/blog/versions/[id]/reject/route.ts
 app/api/blog/versions/[id]/route.ts
 app/api/bootstrap/route.ts
 app/api/content/blueprint/rollback/route.ts

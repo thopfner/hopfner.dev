@@ -33,6 +33,10 @@ Capture baseline evidence before remediation begins. Store artifacts in a consis
   Status: pending measured capture during QA revalidation.
 - [ ] Accessibility quick scan recorded (focus order, labels, keyboard nav smoke).  
   Status: pending QA execution notes/artifacts.
+- [x] API smoke capture completed for required endpoints (`/api/pages/overview`, `/api/media`, `/api/blog/articles`, `/api/content/blueprint`).  
+  Evidence: `docs/evidence/phase0-2026-02-24/api-smoke-*.txt` (all captured; returned 404 on `/api/*` in this run context).
+- [x] Lint/build smoke outputs captured with current timestamps.  
+  Evidence: `docs/evidence/phase0-2026-02-24/npm-lint.txt`, `docs/evidence/phase0-2026-02-24/npm-build.txt`
 - [x] Artifact index generated (file paths + timestamp + environment).  
   Evidence: `docs/admin-ui-baseline-evidence-index.md`
 

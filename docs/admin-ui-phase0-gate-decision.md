@@ -8,8 +8,8 @@
 - **Release Owner Role:** PO/PM Gate Owner
 
 ## Decision Summary
-- **Decision:** Conditional Pass (pending QA revalidation execution)
-- **Approver Role:** Independent QA Validator (revalidation requested)
+- **Decision:** **FINAL FAIL**
+- **Approver Role:** Independent QA Validator (autonomous evidence execution recorded)
 - **Decision Date:** 2026-02-24
 - **Related QA fail run:** `a7466438-68cf-4e87-ac4e-67da33ca6447`
 
@@ -21,6 +21,12 @@
 - Route inventory artifact: `docs/evidence/phase0-2026-02-24/route-inventory.txt`
 - API route inventory artifact: `docs/evidence/phase0-2026-02-24/api-route-inventory.txt`
 - Lint artifact: `docs/evidence/phase0-2026-02-24/npm-lint.txt`
+- Build artifact: `docs/evidence/phase0-2026-02-24/npm-build.txt`
+- API smoke artifacts: 
+  - `docs/evidence/phase0-2026-02-24/api-smoke-pages-overview.txt`
+  - `docs/evidence/phase0-2026-02-24/api-smoke-media.txt`
+  - `docs/evidence/phase0-2026-02-24/api-smoke-blog-articles.txt`
+  - `docs/evidence/phase0-2026-02-24/api-smoke-content-blueprint.txt`
 
 ## Entry Criteria Status
 - [x] Phase scope is documented and frozen.  
@@ -40,7 +46,7 @@
 - [x] Required automated tests passing.  
   Status: **PASS** (`npm run lint` artifact captured)
 - [ ] Manual QA checks completed for priority routes.  
-  Status: **PARTIAL** (commands and artifact paths documented; screenshot capture pending QA execution)
+  Status: **FAIL** (no route/state screenshot evidence bundle captured in this run)
 - [x] No unresolved blocker defects introduced.  
   Status: **PASS** (no product code changed)
 - [x] Documentation updated (matrix, evidence links, known issues).  
@@ -50,7 +56,7 @@
 - [ ] All High severity in-scope findings are `Verified` or explicitly deferred with approval.  
   Status: **DEFERRED WITH APPROVAL REQUIRED** (requires independent QA execution to mark `Verified`)
 - [ ] Regression smoke suite passes.  
-  Status: **PARTIAL** (lint pass captured; full route smoke queued for revalidation)
+  Status: **FAIL** (API smoke artifacts for required endpoints returned 404 responses at `/api/*` in executed run context)
 - [ ] Baseline deltas reviewed and accepted.  
   Status: **PENDING APPROVAL** (revalidation requested)
 - [x] Rollback rehearsal/check validated.  
@@ -58,7 +64,7 @@
 - [ ] Stakeholder sign-off recorded.  
   Status: **PENDING** (awaiting independent QA sign-off)
 
-## Gate Conditions
-1. Independent QA must run the documented route/state capture commands in `docs/admin-ui-baseline-evidence-index.md` against target env.
-2. QA must attach resulting screenshot/API-smoke artifacts under `docs/evidence/phase0-2026-02-24/`.
-3. QA must update final verdict in this document from **Conditional Pass** to **Pass** or **Fail**.
+## Final Blockers (Explicit)
+1. Required manual route/state baseline screenshots are still missing from `docs/evidence/phase0-2026-02-24/screens/`.
+2. Required API smoke evidence for `/api/pages/overview`, `/api/media`, `/api/blog/articles`, `/api/content/blueprint` shows 404 responses in this execution context (see `api-smoke-*.txt`).
+3. Because blockers (1) and (2) remain, Phase 0 exit criteria are not satisfied; gate cannot be marked PASS.

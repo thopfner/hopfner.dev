@@ -2,14 +2,16 @@
 
 Date: 2026-02-24  
 Branch: `work/2026-02-24-slow`  
-Run context: QA gate fail `a7466438-68cf-4e87-ac4e-67da33ca6447` (remediation package)
+Execution window (UTC): 2026-02-24T09:10:49Z → 2026-02-24T09:12:47Z  
+Run context: Phase 0 QA revalidation evidence execution for prior gate fail `a7466438-68cf-4e87-ac4e-67da33ca6447`
 
 Artifact root: `docs/evidence/phase0-2026-02-24/`
 
 ## Core command outputs captured
-- Route inventory: `docs/evidence/phase0-2026-02-24/route-inventory.txt`
-- API route inventory: `docs/evidence/phase0-2026-02-24/api-route-inventory.txt`
-- Lint result: `docs/evidence/phase0-2026-02-24/npm-lint.txt`
+- Route inventory (generated 2026-02-24T09:10:49Z): `docs/evidence/phase0-2026-02-24/route-inventory.txt`
+- API route inventory incl. nested blog version routes (generated 2026-02-24T09:10:49Z): `docs/evidence/phase0-2026-02-24/api-route-inventory.txt`
+- Lint smoke (run 2026-02-24T09:10:53Z): `docs/evidence/phase0-2026-02-24/npm-lint.txt`
+- Build smoke (run 2026-02-24T09:11:05Z): `docs/evidence/phase0-2026-02-24/npm-build.txt`
 
 ## Route/State Evidence Map
 
@@ -75,9 +77,15 @@ Artifact root: `docs/evidence/phase0-2026-02-24/`
   - `curl -i https://<env-admin-host>/api/media`
   - `curl -i https://<env-admin-host>/api/blog/articles`
   - `curl -i https://<env-admin-host>/api/content/blueprint`
-- Current output/path: commands documented; output files should be stored under `docs/evidence/phase0-2026-02-24/api-smoke-*.txt` when executed against target env.
+- Current output/path: executed and captured under:
+  - `docs/evidence/phase0-2026-02-24/api-smoke-pages-overview.txt` (404 at `/api/pages/overview`; separate probe to `/admin/api/pages/overview` returned 401 unauthenticated)
+  - `docs/evidence/phase0-2026-02-24/api-smoke-media.txt` (404 at `/api/media`)
+  - `docs/evidence/phase0-2026-02-24/api-smoke-blog-articles.txt` (404 at `/api/blog/articles`)
+  - `docs/evidence/phase0-2026-02-24/api-smoke-content-blueprint.txt` (404 at `/api/content/blueprint`)
 
-## Validation commands used in this remediation commit
-- `find app -maxdepth 4 -type f -name 'page.tsx' | sort > docs/evidence/phase0-2026-02-24/route-inventory.txt`
-- `find app/api -maxdepth 4 -type f -name 'route.ts' | sort > docs/evidence/phase0-2026-02-24/api-route-inventory.txt`
-- `npm run lint > docs/evidence/phase0-2026-02-24/npm-lint.txt 2>&1`
+## Validation commands executed in this revalidation run
+- `find app -type f -name 'page.tsx' | sort` (redirected to `docs/evidence/phase0-2026-02-24/route-inventory.txt`)
+- `find app/api -type f -name 'route.ts' | sort` (redirected to `docs/evidence/phase0-2026-02-24/api-route-inventory.txt`)
+- `npm run lint` (redirected to `docs/evidence/phase0-2026-02-24/npm-lint.txt`)
+- `npm run build` (redirected to `docs/evidence/phase0-2026-02-24/npm-build.txt`)
+- `curl -i -sS http://localhost:3000/api/<endpoint>` for priority API smoke outputs (redirected to `docs/evidence/phase0-2026-02-24/api-smoke-*.txt`)
