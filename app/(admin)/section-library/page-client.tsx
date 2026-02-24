@@ -1378,9 +1378,30 @@ export function SectionLibraryPage() {
                   <Typography fontWeight={700} variant="body2">
                     Section types
                   </Typography>
-                  <MuiChip size="small" variant="outlined" label={`Total: ${catalogRows.length}`} />
-                  <MuiChip size="small" variant="outlined" label={`Built-in: ${BUILTIN_PREVIEWS.length}`} />
-                  <MuiChip size="small" color="secondary" variant="outlined" label={`Custom: ${customRows.length}`} />
+                  <MuiChip
+                    size="small"
+                    clickable
+                    onClick={() => setCatalogSource("all")}
+                    color={catalogSource === "all" ? "primary" : "default"}
+                    variant={catalogSource === "all" ? "filled" : "outlined"}
+                    label={`Total: ${catalogRows.length}`}
+                  />
+                  <MuiChip
+                    size="small"
+                    clickable
+                    onClick={() => setCatalogSource("builtin")}
+                    color={catalogSource === "builtin" ? "primary" : "default"}
+                    variant={catalogSource === "builtin" ? "filled" : "outlined"}
+                    label={`Built-in: ${BUILTIN_PREVIEWS.length}`}
+                  />
+                  <MuiChip
+                    size="small"
+                    clickable
+                    onClick={() => setCatalogSource("custom")}
+                    color={catalogSource === "custom" ? "secondary" : "default"}
+                    variant={catalogSource === "custom" ? "filled" : "outlined"}
+                    label={`Custom: ${customRows.length}`}
+                  />
                 </Box>
                 <Button size="sm" variant="default" onClick={() => setCreateOpen(true)}>
                   New custom section type
