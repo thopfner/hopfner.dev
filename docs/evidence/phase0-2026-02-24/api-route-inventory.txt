@@ -1,0 +1,14 @@
+# API route inventory
+app/api/blog/articles/[id]/route.ts
+app/api/blog/articles/route.ts
+app/api/blog/versions/[id]/route.ts
+app/api/bootstrap/route.ts
+app/api/content/blueprint/rollback/route.ts
+app/api/content/blueprint/route.ts
+app/api/content/sections/duplicate-all/route.ts
+app/api/global-sections/attach/route.ts
+app/api/internal/blog/ingest/route.ts
+app/api/media/route.ts
+app/api/media/upload/route.ts
+app/api/pages/overview/route.ts
+app/api/pages/publish-all/route.ts
