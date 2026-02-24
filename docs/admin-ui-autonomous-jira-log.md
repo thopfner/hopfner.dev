@@ -282,3 +282,18 @@ Mode: Autonomous (PO/PM gate + Independent QA gate)
   - No API or business logic changes.
   - Supabase queries unchanged.
   - Changes limited to presentational/layout consistency and local filtering of already-fetched data.
+
+### ADMIN-10.6 — Phase 4b Section Library ↔ Pages-list visual parity pass
+- Status: DONE
+- File updated: `app/(admin)/section-library/page-client.tsx`
+- Changes:
+  - Reworked catalog area into pages-list visual language (summary chips + toolbar rhythm + table-like rows).
+  - Added explicit column hierarchy: name, description/type, status/source, actions.
+  - Added responsive mobile stacked row variant aligned with pages-list density/typography/button rhythm.
+  - Preserved existing data behavior and composer workflow; no API/business-logic changes.
+- Validation:
+  - `npm run lint`
+  - `npm run build`
+- Evidence:
+  - `docs/evidence/phase4-2026-02-24/phase4b-lint.txt`
+  - `docs/evidence/phase4-2026-02-24/phase4b-build.txt`
