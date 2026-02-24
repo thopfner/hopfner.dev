@@ -93,3 +93,50 @@ Mode: Autonomous (PO/PM gate + Independent QA gate)
 - Status: DONE (PASS)
 - Gate record: `docs/admin-ui-phase1-gate-decision.md`
 - Decision: Green-light Phase 2
+
+---
+
+## Epic ADMIN-7 — Phase 2 UI Consistency Polish (Cross-Route)
+
+### ADMIN-7.1 — Shared header/surface primitives for key admin routes
+- Status: DONE
+- Artifact created: `components/admin/ui.tsx`
+- Additions:
+  - `AdminPageHeader` (standardized route title + supporting description hierarchy)
+  - `AdminPanel` (standardized outlined surface + consistent interior spacing)
+- Rationale: reduce repeated per-page heading/panel wrappers while keeping behavior unchanged.
+
+### ADMIN-7.2 — Incremental consistency pass across high-traffic routes
+- Status: DONE
+- Routes updated:
+  - `app/(admin)/pages-list.tsx`
+  - `app/(admin)/blog/page-client.tsx`
+  - `app/(admin)/media/media-page-client.tsx`
+- UI consistency updates:
+  - Unified page header typography/spacing via `AdminPageHeader`
+  - Unified panel surface density via `AdminPanel`
+  - Preserved route-specific layouts and all existing interactions
+  - Blog error alert made visually consistent with outlined error treatment used on other pages
+
+### ADMIN-7.3 — Shell spacing alignment polish
+- Status: DONE
+- File updated: `components/admin-shell.tsx`
+- Change:
+  - Main content padding adjusted to a consistent base rhythm (`xs: 1.25`, `sm: 1.5`) for tighter cross-route alignment.
+
+### ADMIN-7.4 — Validation
+- Status: DONE (PASS)
+- Commands:
+  - `npm run lint`
+  - `npm run build`
+- Evidence:
+  - `docs/evidence/phase2-2026-02-24/npm-lint.txt`
+  - `docs/evidence/phase2-2026-02-24/npm-build.txt`
+
+### ADMIN-7.5 — Risk & regression notes
+- Status: DONE
+- Risk profile: LOW
+- Notes:
+  - No API routes, RPCs, or Supabase query logic changed.
+  - No publish/state-transition business logic changed.
+  - Changes are presentational and wrapper-level only; behavior-preserving by design.

@@ -317,7 +317,7 @@ export function AdminShell({
             minWidth: 0,
             mt: `${HEADER_HEIGHT}px`,
             ml: 0,
-            p: { xs: 1, sm: 1 },
+            p: { xs: 1.25, sm: 1.5 },
           }}
         >
           <div className="admin-content">{children}</div>

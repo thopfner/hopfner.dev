@@ -26,6 +26,7 @@ import {
 } from "@mui/material"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 
+import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError, toEditorErrorMessage } from "@/lib/cms/editor-error-message"
 
@@ -323,16 +324,12 @@ export function PagesList() {
 
   return (
     <Stack spacing={2}>
-      <Box>
-        <Typography variant="h5" fontWeight={700}>
-          Pages
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Manage pages and their sections. Public site renders only published section versions.
-        </Typography>
-      </Box>
+      <AdminPageHeader
+        title="Pages"
+        description="Manage pages and their sections. Public site renders only published section versions."
+      />
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <AdminPanel>
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 1.5 }}>
             <TextField
@@ -358,9 +355,9 @@ export function PagesList() {
 
           {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
         </Stack>
-      </Paper>
+      </AdminPanel>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <AdminPanel>
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
@@ -525,7 +522,7 @@ export function PagesList() {
             )}
           </Stack>
         </Stack>
-      </Paper>
+      </AdminPanel>
 
       <Dialog
         open={publishAllOpen}

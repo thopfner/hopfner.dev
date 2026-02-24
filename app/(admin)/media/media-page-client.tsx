@@ -22,6 +22,7 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import UploadRoundedIcon from "@mui/icons-material/UploadRounded"
 
+import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
 import { MediaLibraryModal } from "@/components/media-library-modal"
 import { deleteMedia } from "@/lib/media/delete"
 import { listMedia } from "@/lib/media/list"
@@ -158,16 +159,12 @@ export function MediaPageClient() {
 
   return (
     <Stack spacing={2}>
-      <Box>
-        <Typography variant="h5" fontWeight={700}>
-          Media
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Upload images and manage your media library. Removing images from sections will not delete files here.
-        </Typography>
-      </Box>
+      <AdminPageHeader
+        title="Media"
+        description="Upload images and manage your media library. Removing images from sections will not delete files here."
+      />
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <AdminPanel>
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", alignItems: "flex-end", flexWrap: "wrap", gap: 1.25 }}>
             <TextField
@@ -228,9 +225,9 @@ export function MediaPageClient() {
             </Button>
           </Box>
         </Stack>
-      </Paper>
+      </AdminPanel>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <AdminPanel>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
             <CircularProgress size={20} />
@@ -321,7 +318,7 @@ export function MediaPageClient() {
             No media uploaded yet.
           </Typography>
         )}
-      </Paper>
+      </AdminPanel>
 
       <MediaLibraryModal opened={libraryOpen} onClose={() => setLibraryOpen(false)} allowDelete />
     </Stack>

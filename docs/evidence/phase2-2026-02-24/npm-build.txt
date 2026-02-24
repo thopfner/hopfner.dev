@@ -1,0 +1,50 @@
+
+> hopfner.dev-admin@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 16.2s
+  Running TypeScript ...
+  Collecting page data using 2 workers ...
+  Generating static pages using 2 workers (0/15) ...
+  Generating static pages using 2 workers (3/15) 
+  Generating static pages using 2 workers (7/15) 
+  Generating static pages using 2 workers (11/15) 
+✓ Generating static pages using 2 workers (15/15) in 231.5ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /api/blog/articles
+├ ƒ /api/blog/articles/[id]
+├ ƒ /api/blog/versions/[id]
+├ ƒ /api/blog/versions/[id]/approve
+├ ƒ /api/blog/versions/[id]/publish
+├ ƒ /api/blog/versions/[id]/reject
+├ ƒ /api/bootstrap
+├ ƒ /api/content/blueprint
+├ ƒ /api/content/blueprint/rollback
+├ ƒ /api/content/sections/duplicate-all
+├ ƒ /api/global-sections/attach
+├ ƒ /api/internal/blog/ingest
+├ ƒ /api/media
+├ ƒ /api/media/upload
+├ ƒ /api/pages/overview
+├ ƒ /api/pages/publish-all
+├ ƒ /auth/callback
+├ ƒ /blog
+├ ƒ /global-sections
+├ ƒ /login
+├ ƒ /media
+├ ƒ /pages/[pageId]
+├ ƒ /section-library
+└ ƒ /setup
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
