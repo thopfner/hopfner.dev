@@ -2090,19 +2090,26 @@ export function SectionEditorDrawer({
                 />
               </SimpleGrid>
 
-              <Slider
-                label={(v) => `Inner bevel/glow strength ${v.toFixed(2)}x`}
-                min={0}
-                max={1.8}
-                step={0.05}
-                value={formatting.innerShadowStrength}
-                onChange={(v: number) =>
-                  setFormatting((s) => ({
-                    ...s,
-                    innerShadowStrength: Math.min(1.8, Math.max(0, v)),
-                  }))
-                }
-              />            </Stack>
+              {formatting.innerShadowMode === "on" ? (
+                <Stack gap="xs">
+                  <Text size="sm" fw={500}>
+                    Inner bevel/glow scale ({formatting.innerShadowStrength.toFixed(2)}x)
+                  </Text>
+                  <Slider
+                    label={(v) => `${v.toFixed(2)}x`}
+                    min={0}
+                    max={1.8}
+                    step={0.05}
+                    value={formatting.innerShadowStrength}
+                    onChange={(v: number) =>
+                      setFormatting((s) => ({
+                        ...s,
+                        innerShadowStrength: Math.min(1.8, Math.max(0, v)),
+                      }))
+                    }
+                  />
+                </Stack>
+              ) : null}            </Stack>
           </Paper>
 
           <Paper withBorder p="md" radius="md">
