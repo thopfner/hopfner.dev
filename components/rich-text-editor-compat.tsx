@@ -1,8 +1,20 @@
 "use client"
 
-import { Button, ButtonGroup, Paper, Stack } from "@mui/material"
-import { createContext, useContext, type PropsWithChildren } from "react"
-import { EditorContent, type Editor } from "@tiptap/react"
+import { Paper, Stack, ToggleButtonGroup } from "@mui/material"
+import {
+  MenuButton,
+  MenuButtonBold,
+  MenuButtonBulletedList,
+  MenuButtonEditLink,
+  MenuButtonItalic,
+  MenuButtonOrderedList,
+  MenuButtonStrikethrough,
+  RichTextContent,
+  RichTextEditorProvider,
+  useRichTextEditorContext,
+} from "mui-tiptap"
+import { type PropsWithChildren } from "react"
+import type { Editor } from "@tiptap/react"
 
 type RichTextEditorProps = PropsWithChildren<{
   editor: Editor | null
@@ -13,23 +25,13 @@ type ToolbarProps = PropsWithChildren<{
   stickyOffset?: number
 }>
 
-type EditorCtxValue = {
-  editor: Editor | null
-}
-
-const EditorCtx = createContext<EditorCtxValue>({ editor: null })
-
-function useEditorCtx() {
-  return useContext(EditorCtx)
-}
-
 function Root({ editor, children }: RichTextEditorProps) {
   return (
-    <EditorCtx.Provider value={{ editor }}>
+    <RichTextEditorProvider editor={editor}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         {children}
       </Paper>
-    </EditorCtx.Provider>
+    </RichTextEditorProvider>
   )
 }
 
@@ -40,8 +42,18 @@ function Toolbar({ sticky, stickyOffset = 0, children }: ToolbarProps) {
       spacing={1}
       flexWrap="wrap"
       useFlexGap
-      sx={
-        sticky
+      sx={{
+        overflowX: "auto",
+        pb: 0.75,
+        mb: 0.75,
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        "&::-webkit-scrollbar": { height: 6 },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "rgba(148, 163, 184, 0.35)",
+          borderRadius: 999,
+        },
+        ...(sticky
           ? {
               position: "sticky",
               top: stickyOffset,
@@ -49,8 +61,8 @@ function Toolbar({ sticky, stickyOffset = 0, children }: ToolbarProps) {
               py: 0.5,
               backgroundColor: "background.paper",
             }
-          : undefined
-      }
+          : null),
+      }}
     >
       {children}
     </Stack>
@@ -58,121 +70,87 @@ function Toolbar({ sticky, stickyOffset = 0, children }: ToolbarProps) {
 }
 
 function ControlsGroup({ children }: PropsWithChildren) {
-  return <ButtonGroup size="small">{children}</ButtonGroup>
-}
-
-function ControlButton({
-  label,
-  onClick,
-  disabled,
-}: {
-  label: string
-  onClick: (editor: Editor) => void
-  disabled?: (editor: Editor) => boolean
-}) {
-  const { editor } = useEditorCtx()
-  const isDisabled = !editor || (disabled ? disabled(editor) : false)
   return (
-    <Button
-      variant="outlined"
-      disabled={isDisabled}
-      onClick={() => {
-        if (!editor) return
-        onClick(editor)
-      }}
-    >
-      {label}
-    </Button>
+    <ToggleButtonGroup size="small" exclusive={false}>
+      {children}
+    </ToggleButtonGroup>
   )
 }
 
-function Bold() {
-  return <ControlButton label="B" onClick={(e) => e.chain().focus().toggleBold().run()} />
-}
-
-function Italic() {
-  return <ControlButton label="I" onClick={(e) => e.chain().focus().toggleItalic().run()} />
-}
-
-function Strikethrough() {
-  return <ControlButton label="S" onClick={(e) => e.chain().focus().toggleStrike().run()} />
-}
-
 function H2() {
+  const editor = useRichTextEditorContext()
+  const active = !!editor?.isActive("heading", { level: 2 })
+
   return (
-    <ControlButton
-      label="H2"
-      onClick={(e) => e.chain().focus().toggleHeading({ level: 2 }).run()}
-    />
+    <MenuButton
+      tooltipLabel="Heading level 2"
+      selected={active}
+      onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+      disabled={!editor?.can().chain().focus().toggleHeading({ level: 2 }).run()}
+    >
+      H2
+    </MenuButton>
   )
 }
 
 function H3() {
-  return (
-    <ControlButton
-      label="H3"
-      onClick={(e) => e.chain().focus().toggleHeading({ level: 3 }).run()}
-    />
-  )
-}
+  const editor = useRichTextEditorContext()
+  const active = !!editor?.isActive("heading", { level: 3 })
 
-function BulletList() {
   return (
-    <ControlButton
-      label="• List"
-      onClick={(e) => e.chain().focus().toggleBulletList().run()}
-    />
-  )
-}
-
-function OrderedList() {
-  return (
-    <ControlButton
-      label="1. List"
-      onClick={(e) => e.chain().focus().toggleOrderedList().run()}
-    />
-  )
-}
-
-function Link() {
-  return (
-    <ControlButton
-      label="Link"
-      onClick={(e) => {
-        const previousUrl = e.getAttributes("link").href as string | undefined
-        const url = window.prompt("URL", previousUrl ?? "https://")
-        if (!url) return
-        e.chain().focus().extendMarkRange("link").setLink({ href: url }).run()
-      }}
-    />
+    <MenuButton
+      tooltipLabel="Heading level 3"
+      selected={active}
+      onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+      disabled={!editor?.can().chain().focus().toggleHeading({ level: 3 }).run()}
+    >
+      H3
+    </MenuButton>
   )
 }
 
 function Unlink() {
+  const editor = useRichTextEditorContext()
+
   return (
-    <ControlButton
-      label="Unlink"
-      onClick={(e) => e.chain().focus().unsetLink().run()}
-    />
+    <MenuButton
+      tooltipLabel="Remove link"
+      onClick={() => editor?.chain().focus().unsetLink().run()}
+      disabled={!editor?.isActive("link")}
+    >
+      Unlink
+    </MenuButton>
   )
 }
 
 function Content() {
-  const { editor } = useEditorCtx()
-  return <EditorContent editor={editor} />
+  return (
+    <RichTextContent
+      className="rte-content"
+      sx={{
+        minHeight: 140,
+        px: 1,
+        py: 0.5,
+        "& .ProseMirror": {
+          minHeight: 120,
+          outline: "none",
+        },
+      }}
+    />
+  )
 }
 
 export const RichTextEditor = Object.assign(Root, {
   Toolbar,
   ControlsGroup,
-  Bold,
-  Italic,
-  Strikethrough,
+  Bold: MenuButtonBold,
+  Italic: MenuButtonItalic,
+  Strikethrough: MenuButtonStrikethrough,
   H2,
   H3,
-  BulletList,
-  OrderedList,
-  Link,
+  BulletList: MenuButtonBulletedList,
+  OrderedList: MenuButtonOrderedList,
+  Link: MenuButtonEditLink,
   Unlink,
   Content,
 })
