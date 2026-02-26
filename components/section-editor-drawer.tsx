@@ -26,7 +26,7 @@ import {
   TextInput,
   Textarea,
   Title,
-} from "@mantine/core"
+} from "@/components/mui-compat"
 import {
   IconAdjustmentsHorizontal,
   IconChevronDown,
@@ -39,7 +39,7 @@ import {
   IconTrash,
   IconX,
 } from "@tabler/icons-react"
-import { RichTextEditor } from "@mantine/tiptap"
+import { RichTextEditor } from "@/components/rich-text-editor-compat"
 import Link from "@tiptap/extension-link"
 import Image from "@tiptap/extension-image"
 import StarterKit from "@tiptap/starter-kit"
@@ -530,7 +530,7 @@ function LinkMenuField({
       shadow="md"
       width={340}
       opened={opened}
-      onChange={(nextOpened) => {
+      onChange={(nextOpened: boolean) => {
         setOpened(nextOpened)
         if (nextOpened) {
           void ensurePagesLoaded()
@@ -1795,8 +1795,8 @@ export function SectionEditorDrawer({
 
           <Paper withBorder p="md" radius="md">
             <Stack gap={6}>
-              <Group justify="space-between" align="center">
-                <Group gap="xs">
+              <Group justify="space-between" align="center" gap="sm">
+                <Group gap="xs" wrap="wrap">
                   <Text fw={600} size="sm">
                     Current
                   </Text>
@@ -1933,7 +1933,7 @@ export function SectionEditorDrawer({
               </SimpleGrid>
 
               {showBackgroundMedia ? (
-                <Group align="end" gap="sm">
+                <Group align="end" gap="sm" wrap="wrap">
                   <TextInput
                     label="Background media URL"
                     value={backgroundMediaUrl}
@@ -1965,7 +1965,7 @@ export function SectionEditorDrawer({
                   comboboxProps={{ withinPortal: false }}
                   data={["", "py-4", "py-6", "py-8", "py-10", "py-12"]}
                   value={formatting.paddingY}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       paddingY: ((v ?? "") as FormattingState["paddingY"]) || "",
@@ -1977,7 +1977,7 @@ export function SectionEditorDrawer({
                   comboboxProps={{ withinPortal: false }}
                   data={["", "max-w-3xl", "max-w-4xl", "max-w-5xl", "max-w-6xl"]}
                   value={formatting.maxWidth}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       maxWidth: ((v ?? "") as FormattingState["maxWidth"]) || "",
@@ -1993,7 +1993,7 @@ export function SectionEditorDrawer({
                     { value: "center", label: "center" },
                   ]}
                   value={formatting.textAlign}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       textAlign: ((v ?? "") as FormattingState["textAlign"]) || "",
@@ -2010,7 +2010,7 @@ export function SectionEditorDrawer({
                         { value: "full", label: "Full-bleed" },
                       ]}
                       value={formatting.widthMode}
-                      onChange={(v) =>
+                      onChange={(v: string) =>
                         setFormatting((s) => ({
                           ...s,
                           widthMode: v === "full" ? "full" : "content",
@@ -2026,7 +2026,7 @@ export function SectionEditorDrawer({
                         { value: "100svh", label: "100% viewport" },
                       ]}
                       value={formatting.heroMinHeight}
-                      onChange={(v) =>
+                      onChange={(v: string) =>
                         setFormatting((s) => ({
                           ...s,
                           heroMinHeight: v === "70svh" || v === "100svh" ? v : "auto",
@@ -2044,7 +2044,7 @@ export function SectionEditorDrawer({
                     { value: "off", label: "Off" },
                   ]}
                   value={formatting.shadowMode}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       shadowMode:
@@ -2061,7 +2061,7 @@ export function SectionEditorDrawer({
                     { value: "off", label: "Off" },
                   ]}
                   value={formatting.innerShadowMode}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       innerShadowMode: v === "on" || v === "off" ? v : "inherit",
@@ -2081,7 +2081,7 @@ export function SectionEditorDrawer({
                     { value: "my-12", label: "my-12" },
                   ]}
                   value={formatting.outerSpacing}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       outerSpacing: ((v ?? "") as FormattingState["outerSpacing"]) || "",
@@ -2096,7 +2096,7 @@ export function SectionEditorDrawer({
                 max={1.8}
                 step={0.05}
                 value={formatting.innerShadowStrength}
-                onChange={(v) =>
+                onChange={(v: number) =>
                   setFormatting((s) => ({
                     ...s,
                     innerShadowStrength: Math.min(1.8, Math.max(0, v)),
@@ -2158,7 +2158,7 @@ export function SectionEditorDrawer({
                     comboboxProps={{ withinPortal: false }}
                     data={["", "py-4", "py-6", "py-8", "py-10", "py-12"]}
                     value={formatting.mobile.paddingY}
-                    onChange={(v) =>
+                    onChange={(v: string) =>
                       setFormatting((s) =>
                         s.mobile
                           ? {
@@ -2429,7 +2429,7 @@ export function SectionEditorDrawer({
                             ) : null}
                             {cardDisplay.showYouGet ? (
                               <Stack gap="xs">
-                                <Group justify="space-between" align="center" wrap="nowrap">
+                                <Group justify="space-between" align="center" wrap="wrap">
                                   <Text size="sm" fw={500}>
                                     You get
                                   </Text>
@@ -2461,7 +2461,7 @@ export function SectionEditorDrawer({
                             ) : null}
                             {cardDisplay.showBestFor ? (
                               <Stack gap="xs">
-                                <Group justify="space-between" align="center" wrap="nowrap">
+                                <Group justify="space-between" align="center" wrap="wrap">
                                   <Text size="sm" fw={500}>
                                     Best for
                                   </Text>

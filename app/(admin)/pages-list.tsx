@@ -323,13 +323,21 @@ export function PagesList() {
   }, [pages, search, sortMode])
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2.25}>
       <AdminPageHeader
         title="Pages"
         description="Manage pages and their sections. Public site renders only published section versions."
+        sx={{
+          p: { xs: 1.5, sm: 2 },
+          border: "1px solid",
+          borderColor: "rgba(140,157,255,0.22)",
+          borderRadius: 2,
+          background: "linear-gradient(140deg, rgba(16,24,39,0.78), rgba(10,15,27,0.68))",
+          backdropFilter: "blur(6px)",
+        }}
       />
 
-      <AdminPanel>
+      <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 1.5 }}>
             <TextField
@@ -348,7 +356,7 @@ export function PagesList() {
               size="small"
               sx={{ flex: "2 1 220px", minWidth: 0 }}
             />
-            <Button variant="contained" size="small" disabled={creating} onClick={onCreatePage}>
+            <Button variant="contained" size="small" color="primary" disabled={creating} onClick={onCreatePage}>
               {creating ? "Creating…" : "Create page"}
             </Button>
           </Box>
@@ -357,9 +365,9 @@ export function PagesList() {
         </Stack>
       </AdminPanel>
 
-      <AdminPanel>
+      <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
         <Stack spacing={1.5}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 1.25, pb: 0.25, borderBottom: "1px solid", borderColor: "rgba(140,157,255,0.14)" }}>
             <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
               <Typography fontWeight={700} variant="body2">
                 All pages
@@ -371,7 +379,7 @@ export function PagesList() {
             <Button
               size="small"
               variant="contained"
-              color="warning"
+              color="secondary"
               onClick={() => setPublishAllOpen(true)}
               disabled={loading || !pages.length}
             >
@@ -405,7 +413,8 @@ export function PagesList() {
             sx={{
               border: "1px solid",
               borderColor: "divider",
-              borderRadius: 1,
+              borderRadius: 1.5,
+              background: "rgba(10,15,27,0.56)",
               display: { xs: "none", sm: "block" },
             }}
           >
@@ -430,7 +439,7 @@ export function PagesList() {
                   </TableRow>
                 ) : filteredPages.length ? (
                   filteredPages.map((p) => (
-                    <TableRow key={p.id} hover>
+                    <TableRow key={p.id} hover sx={{ "& td": { borderColor: "rgba(140,157,255,0.12)" } }}>
                       <TableCell>
                         <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
                           {p.slug}
@@ -459,7 +468,7 @@ export function PagesList() {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Button size="small" variant="outlined" component={Link} href={`/pages/${p.id}`}>
+                        <Button size="small" variant="outlined" color="primary" component={Link} href={`/pages/${p.id}`}>
                           Edit
                         </Button>
                       </TableCell>
@@ -485,7 +494,7 @@ export function PagesList() {
               </Typography>
             ) : filteredPages.length ? (
               filteredPages.map((p) => (
-                <Paper key={p.id} variant="outlined" sx={{ p: 1.25 }}>
+                <Paper key={p.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2, background: "rgba(10,15,27,0.56)", borderColor: "rgba(140,157,255,0.24)" }}>
                   <Stack spacing={0.75}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "flex-start" }}>
                       <Box sx={{ minWidth: 0 }}>
@@ -496,7 +505,7 @@ export function PagesList() {
                           /{p.slug}
                         </Typography>
                       </Box>
-                      <Button size="small" variant="outlined" component={Link} href={`/pages/${p.id}`}>
+                      <Button size="small" variant="outlined" color="primary" component={Link} href={`/pages/${p.id}`}>
                         Edit
                       </Button>
                     </Box>
