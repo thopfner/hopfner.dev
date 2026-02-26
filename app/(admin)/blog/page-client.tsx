@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react"
 import {
   Alert,
-  Box,
   Button,
   Chip,
   Dialog,
@@ -28,6 +27,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert"
 import useMediaQuery from "@mui/material/useMediaQuery"
 import { useTheme } from "@mui/material/styles"
 
+import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
 import { BlogContentPreview } from "@/components/blog/blog-content-preview"
 
 type BlogListItem = {
@@ -377,18 +377,14 @@ export function BlogPageClient() {
 
   return (
     <Stack spacing={2}>
-      <Box>
-        <Typography variant="h5" fontWeight={700}>
-          Blog
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Review drafts, approve, publish, and reject with reason.
-        </Typography>
-      </Box>
+      <AdminPageHeader
+        title="Blog"
+        description="Review drafts, approve, publish, and reject with reason."
+      />
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <AdminPanel>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}>
           <TextField
             size="small"
@@ -415,9 +411,9 @@ export function BlogPageClient() {
             Refresh
           </Button>
         </Stack>
-      </Paper>
+      </AdminPanel>
 
-      <Paper variant="outlined">
+      <AdminPanel sx={{ p: 0 }}>
         {isMobile ? (
           <Stack spacing={1.25} sx={{ p: 1.25 }}>
             {rows.map((row) => (
@@ -511,7 +507,7 @@ export function BlogPageClient() {
             </Table>
           </TableContainer>
         )}
-      </Paper>
+      </AdminPanel>
 
       <Menu
         anchorEl={actionMenuAnchorEl}

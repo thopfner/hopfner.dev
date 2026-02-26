@@ -22,6 +22,7 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import UploadRoundedIcon from "@mui/icons-material/UploadRounded"
 
+import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
 import { MediaLibraryModal } from "@/components/media-library-modal"
 import { deleteMedia } from "@/lib/media/delete"
 import { listMedia } from "@/lib/media/list"
@@ -157,17 +158,21 @@ export function MediaPageClient() {
   }
 
   return (
-    <Stack spacing={2}>
-      <Box>
-        <Typography variant="h5" fontWeight={700}>
-          Media
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Upload images and manage your media library. Removing images from sections will not delete files here.
-        </Typography>
-      </Box>
+    <Stack spacing={2.25}>
+      <AdminPageHeader
+        title="Media"
+        description="Upload images and manage your media library. Removing images from sections will not delete files here."
+        sx={{
+          p: { xs: 1.5, sm: 2 },
+          border: "1px solid",
+          borderColor: "rgba(140,157,255,0.22)",
+          borderRadius: 2,
+          background: "linear-gradient(140deg, rgba(16,24,39,0.78), rgba(10,15,27,0.68))",
+          backdropFilter: "blur(6px)",
+        }}
+      />
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", alignItems: "flex-end", flexWrap: "wrap", gap: 1.25 }}>
             <TextField
@@ -200,6 +205,7 @@ export function MediaPageClient() {
 
             <Button
               size="small"
+              color="primary"
               variant="contained"
               startIcon={<UploadRoundedIcon fontSize="small" />}
               onClick={() => fileRef.current?.click()}
@@ -222,15 +228,15 @@ export function MediaPageClient() {
           {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
 
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
-            <Chip size="small" variant="outlined" label={`${items.length}`} />
-            <Button size="small" variant="text" onClick={() => setLibraryOpen(true)}>
+            <Chip size="small" variant="outlined" label={`Items: ${items.length}`} />
+            <Button size="small" variant="text" color="secondary" onClick={() => setLibraryOpen(true)}>
               Open full library modal
             </Button>
           </Box>
         </Stack>
-      </Paper>
+      </AdminPanel>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
             <CircularProgress size={20} />
@@ -251,9 +257,9 @@ export function MediaPageClient() {
             {items.map((item) => {
               const name = item.path.split("/").pop() || item.path
               return (
-                <Paper key={item.id} variant="outlined" sx={{ p: 1 }}>
+                <Paper key={item.id} variant="outlined" sx={{ p: 1.25, borderRadius: 2, background: "rgba(10,15,27,0.56)", borderColor: "rgba(140,157,255,0.24)" }}>
                   <Stack spacing={1}>
-                    <Paper variant="outlined" sx={{ borderRadius: 1, overflow: "hidden" }}>
+                    <Paper variant="outlined" sx={{ borderRadius: 1.5, overflow: "hidden", borderColor: "rgba(140,157,255,0.22)" }}>
                       {item.url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -287,6 +293,7 @@ export function MediaPageClient() {
                         <Tooltip title="Copy URL">
                           <span>
                             <IconButton
+                              sx={{ background: "rgba(124,140,255,0.15)", "&:hover": { background: "rgba(124,140,255,0.26)" } }}
                               size="small"
                               aria-label="Copy URL"
                               onClick={() => {
@@ -321,7 +328,7 @@ export function MediaPageClient() {
             No media uploaded yet.
           </Typography>
         )}
-      </Paper>
+      </AdminPanel>
 
       <MediaLibraryModal opened={libraryOpen} onClose={() => setLibraryOpen(false)} allowDelete />
     </Stack>

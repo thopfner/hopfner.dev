@@ -3,6 +3,7 @@
 import { createContext, forwardRef, useContext, useEffect, useId, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import {
+  Alert,
   Box,
   Button as MuiButton,
   Card as MuiCard,
@@ -11,15 +12,19 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Divider,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   MenuItem,
   Paper as MuiPaper,
   Select as MuiSelect,
   Stack as MuiStack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Switch as MuiSwitch,
   Tab as MuiTab,
   Tabs as MuiTabs,
@@ -31,7 +36,6 @@ import {
   type ButtonProps as MuiButtonProps,
   type CardProps as MuiCardProps,
   type ChipProps as MuiChipProps,
-  type IconButtonProps,
   type PaperProps as MuiPaperProps,
   type SelectChangeEvent,
   type StackProps as MuiStackProps,
@@ -44,6 +48,22 @@ import { CSS } from "@dnd-kit/utilities"
 import { IconArrowsMaximize, IconTrash } from "@tabler/icons-react"
 
 import { MediaLibraryModal } from "@/components/media-library-modal"
+import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
+import {
+  AdminActionIcon as ActionIcon,
+  normalizeSelectData,
+  toCssRadius,
+  toCssSpace,
+  toFlexAlign,
+  toFlexJustify,
+  toMuiButtonVariant,
+  toMuiControlSize,
+  type AdminUiAlign as MantineAlign,
+  type AdminUiJustify as MantineJustify,
+  type AdminUiRadius as MantineRadius,
+  type AdminUiSpace as MantineSpace,
+  type AdminSelectData as SelectData,
+} from "@/lib/admin/ui-primitives"
 import type { MediaItem } from "@/lib/media/types"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError } from "@/lib/cms/editor-error-message"
@@ -99,60 +119,7 @@ const BUILTIN_PREVIEWS = [
   { key: "footer_grid", label: "Footer Grid", desc: "Footer links/cards/legal" },
 ]
 
-type MantineSpace = "xs" | "sm" | "md" | "lg" | "xl" | number
-type MantineRadius = "xs" | "sm" | "md" | "lg" | "xl"
-type MantineAlign = "start" | "center" | "end" | "stretch"
-type MantineJustify = "start" | "center" | "end" | "space-between" | "space-around" | "space-evenly"
 type SegmentedItem = { label: string; value: string }
-type SelectDataItem = { value: string; label: string }
-type SelectData = string[] | SelectDataItem[]
-
-const SPACE_MAP: Record<Exclude<MantineSpace, number>, string> = {
-  xs: "8px",
-  sm: "12px",
-  md: "16px",
-  lg: "24px",
-  xl: "32px",
-}
-
-const RADIUS_MAP: Record<MantineRadius, string> = {
-  xs: "4px",
-  sm: "6px",
-  md: "10px",
-  lg: "14px",
-  xl: "999px",
-}
-
-function toCssSpace(value?: MantineSpace): string | undefined {
-  if (value === undefined) return undefined
-  return typeof value === "number" ? `${value}px` : SPACE_MAP[value]
-}
-
-function toCssRadius(value?: MantineRadius): string | undefined {
-  if (!value) return undefined
-  return RADIUS_MAP[value]
-}
-
-function toFlexAlign(value?: MantineAlign): BoxProps["alignItems"] {
-  if (value === "start") return "flex-start"
-  if (value === "end") return "flex-end"
-  if (value === "stretch") return "stretch"
-  return value ?? "center"
-}
-
-function toFlexJustify(value?: MantineJustify): BoxProps["justifyContent"] {
-  if (value === "start") return "flex-start"
-  if (value === "end") return "flex-end"
-  return value ?? "flex-start"
-}
-
-function normalizeSelectData(data: SelectData): SelectDataItem[] {
-  if (!data.length) return []
-  if (typeof data[0] === "string") {
-    return (data as string[]).map((item) => ({ value: item, label: item }))
-  }
-  return data as SelectDataItem[]
-}
 
 function gridTemplate(count: number): string {
   return `repeat(${Math.max(1, count)}, minmax(0, 1fr))`
@@ -169,9 +136,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant, size, mt, loading, disabled, startIcon, sx, ...props },
   ref
 ) {
-  const muiVariant: MuiButtonProps["variant"] =
-    variant === "light" || variant === "default" ? "outlined" : variant === "subtle" ? "text" : "contained"
-  const muiSize: MuiButtonProps["size"] = size === "xs" || size === "sm" ? "small" : "medium"
+  const muiVariant: MuiButtonProps["variant"] = toMuiButtonVariant(variant)
+  const muiSize: MuiButtonProps["size"] = toMuiControlSize(size)
   return (
     <MuiButton
       ref={ref}
@@ -189,33 +155,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   )
 })
 
-type ActionIconProps = Omit<IconButtonProps, "color" | "size"> & {
-  color?: "red" | "dark" | "gray"
-  size?: "xs" | "sm" | "md"
-  variant?: "subtle" | "default"
-}
 
-function ActionIcon({ color, size, variant, sx, ...props }: ActionIconProps) {
-  const muiSize: IconButtonProps["size"] = size === "xs" || size === "sm" ? "small" : "medium"
-  const muiColor: IconButtonProps["color"] = color === "red" ? "error" : "default"
-  return (
-    <IconButton
-      size={muiSize}
-      color={muiColor}
-      sx={{
-        ...(variant === "default"
-          ? {
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: "8px",
-            }
-          : null),
-        ...sx,
-      }}
-      {...props}
-    />
-  )
-}
 
 type BadgeProps = Omit<MuiChipProps, "label" | "variant" | "color" | "size" | "children"> & {
   size?: "sm" | "md"
@@ -489,8 +429,15 @@ type TextInputProps = Omit<TextFieldProps, "size"> & {
   size?: "xs" | "sm" | "md"
 }
 
-function TextInput({ size, fullWidth = true, ...props }: TextInputProps) {
-  return <TextField size={size === "xs" || size === "sm" ? "small" : "medium"} fullWidth={fullWidth} {...props} />
+function TextInput({ size, fullWidth = true, InputLabelProps, ...props }: TextInputProps) {
+  return (
+    <TextField
+      size={size === "xs" || size === "sm" ? "small" : "medium"}
+      fullWidth={fullWidth}
+      InputLabelProps={{ shrink: true, ...InputLabelProps }}
+      {...props}
+    />
+  )
 }
 
 type TextareaProps = Omit<TextFieldProps, "size" | "multiline"> & {
@@ -525,6 +472,7 @@ function Select({ label, placeholder, value, onChange, data, size, style }: Sele
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = useState("")
   const currentValue = isControlled ? (value ?? "") : internalValue
+  const showPlaceholder = Boolean(placeholder)
   const labelId = useId()
 
   function handleChange(event: SelectChangeEvent<string>) {
@@ -535,13 +483,13 @@ function Select({ label, placeholder, value, onChange, data, size, style }: Sele
 
   return (
     <FormControl fullWidth size={size === "xs" || size === "sm" ? "small" : "medium"} style={style}>
-      {label ? <InputLabel id={labelId}>{label}</InputLabel> : null}
+      {label ? <InputLabel id={labelId} shrink={showPlaceholder || Boolean(currentValue)}>{label}</InputLabel> : null}
       <MuiSelect
         labelId={label ? labelId : undefined}
         label={label}
         value={currentValue}
         onChange={handleChange}
-        displayEmpty={Boolean(placeholder)}
+        displayEmpty={showPlaceholder}
         renderValue={(selected) => {
           const selectedValue = String(selected ?? "")
           if (!selectedValue) {
@@ -919,7 +867,9 @@ export function SectionLibraryPage() {
   const [error, setError] = useState<string | null>(null)
   const [rows, setRows] = useState<RegistryRow[]>([])
   const searchParams = useSearchParams()
-  const [catalogView, setCatalogView] = useState<"grid" | "list">("grid")
+  const [catalogQuery, setCatalogQuery] = useState("")
+  const [catalogSource, setCatalogSource] = useState<"all" | "builtin" | "custom">("all")
+  const [catalogSort, setCatalogSort] = useState<"name_asc" | "source" | "type">("name_asc")
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
   const [fullscreenPreviewOpen, setFullscreenPreviewOpen] = useState(false)
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false)
@@ -935,6 +885,51 @@ export function SectionLibraryPage() {
   const [saving, setSaving] = useState(false)
 
   const customRows = rows.filter((r) => r.source === "custom")
+  const catalogQueryNormalized = catalogQuery.trim().toLowerCase()
+  const catalogRows = useMemo(() => {
+    const builtins = BUILTIN_PREVIEWS.map((item) => ({
+      key: item.key,
+      label: item.label,
+      description: item.desc,
+      source: "builtin" as const,
+      renderer: "legacy" as const,
+      isActive: true,
+    }))
+    const customs = customRows.map((item) => ({
+      key: item.key,
+      label: item.label,
+      description: `Custom section type (${item.key})`,
+      source: "custom" as const,
+      renderer: item.renderer,
+      isActive: item.is_active,
+    }))
+
+    const merged = [...builtins, ...customs].filter((item) => {
+      if (catalogSource !== "all" && item.source !== catalogSource) return false
+      if (!catalogQueryNormalized) return true
+      return (
+        item.label.toLowerCase().includes(catalogQueryNormalized) ||
+        item.key.toLowerCase().includes(catalogQueryNormalized) ||
+        item.description.toLowerCase().includes(catalogQueryNormalized)
+      )
+    })
+
+    if (catalogSort === "source") {
+      return merged.sort((a, b) => {
+        if (a.source === b.source) return a.label.localeCompare(b.label)
+        return a.source === "builtin" ? -1 : 1
+      })
+    }
+
+    if (catalogSort === "type") {
+      return merged.sort((a, b) => {
+        if (a.renderer === b.renderer) return a.label.localeCompare(b.label)
+        return a.renderer.localeCompare(b.renderer)
+      })
+    }
+
+    return merged.sort((a, b) => a.label.localeCompare(b.label))
+  }, [catalogQueryNormalized, catalogSource, catalogSort, customRows])
   const active = customRows.find((r) => r.key === activeKey) || null
   const baselineSchema = useMemo(() => normalizeSchema(active?.composer_schema), [active])
   const isDirty = useMemo(
@@ -1318,101 +1313,226 @@ export function SectionLibraryPage() {
 
   return (
     <Stack gap="md">
-      <Group justify="space-between" align="center">
-        <div>
-          <Title order={2} size="h3">Section Library</Title>
-          <Text c="dimmed" size="sm">Preview built-ins and compose brand-new section types.</Text>
-        </div>
-        <Group>
-          <SegmentedControl
-            value={catalogView}
-            onChange={(v) => setCatalogView(v as "grid" | "list")}
-            data={[{ label: "Grid", value: "grid" }, { label: "List", value: "list" }]}
-          />
-          <Button onClick={() => setCreateOpen(true)}>New custom section type</Button>
-        </Group>
-      </Group>
+      <AdminPageHeader
+        title="Section Library"
+        description="Preview built-in section types and compose custom reusable sections for pages and globals."
+      />
 
-      {error ? <Text c="red" size="sm">{error}</Text> : null}
+      <AdminPanel compact>
+        <Stack gap="sm">
+          <Group justify="space-between" align="center">
+            <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>
+              <Tabs.List>
+                <Tabs.Tab value="catalog">Catalog</Tabs.Tab>
+                <Tabs.Tab value="composer">Composer</Tabs.Tab>
+              </Tabs.List>
+            </Tabs>
+            <Button onClick={() => setCreateOpen(true)}>New custom section type</Button>
+          </Group>
 
-      <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>        <Tabs.List>
-          <Tabs.Tab value="catalog">Catalog</Tabs.Tab>
-          <Tabs.Tab value="composer">Composer</Tabs.Tab>
-        </Tabs.List>
+          {activeTab === "catalog" ? (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.25 }}>
+              <TextField
+                label="Search"
+                placeholder="Search section types…"
+                size="small"
+                value={catalogQuery}
+                onChange={(e) => setCatalogQuery(e.target.value)}
+                sx={{ flex: "1 1 280px", minWidth: 0 }}
+              />
+              <TextField
+                select
+                size="small"
+                value={catalogSource}
+                onChange={(e) => setCatalogSource(e.target.value as typeof catalogSource)}
+                sx={{ width: 180 }}
+              >
+                <MenuItem value="all">Source: All</MenuItem>
+                <MenuItem value="builtin">Source: Built-in</MenuItem>
+                <MenuItem value="custom">Source: Custom</MenuItem>
+              </TextField>
+              <TextField
+                select
+                size="small"
+                value={catalogSort}
+                onChange={(e) => setCatalogSort(e.target.value as typeof catalogSort)}
+                sx={{ width: 200 }}
+              >
+                <MenuItem value="name_asc">Sort: Name (A-Z)</MenuItem>
+                <MenuItem value="source">Sort: Source</MenuItem>
+                <MenuItem value="type">Sort: Renderer</MenuItem>
+              </TextField>
+            </Box>
+          ) : null}
 
-        <Tabs.Panel value="catalog" pt="md">
-          <Stack gap="md">
-            <Title order={4}>Built-in Sections</Title>
-            {catalogView === "grid" ? (
-              <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }}>
-                {BUILTIN_PREVIEWS.map((item) => (
-                  <Card key={item.key} withBorder radius="md" shadow="xs" style={{ borderColor: "color-mix(in srgb, var(--border) 70%, transparent)" }}>
-                    <Group justify="space-between" mb={6}>
-                      <Text fw={600}>{item.label}</Text>
-                      <Badge size="sm" variant="light">Built-in</Badge>
-                    </Group>
-                    <Text c="dimmed" size="sm">{item.desc}</Text>
-                  </Card>
-                ))}
-              </SimpleGrid>
-            ) : (
-              <Stack gap="xs">
-                {BUILTIN_PREVIEWS.map((item) => (
-                  <Paper key={item.key} withBorder p="sm">
-                    <Group justify="space-between">
-                      <Text fw={600}>{item.label}</Text>
-                      <Badge size="sm" variant="light">Built-in</Badge>
-                    </Group>
-                    <Text size="sm" c="dimmed">{item.desc}</Text>
-                  </Paper>
-                ))}
+          {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
+        </Stack>
+      </AdminPanel>
+
+      <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>
+        <Tabs.Panel value="catalog" pt="sm">
+          <AdminPanel>
+            <Stack spacing={1.5}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                  <Typography fontWeight={700} variant="body2">
+                    Section types
+                  </Typography>
+                  <MuiChip
+                    size="small"
+                    clickable
+                    onClick={() => setCatalogSource("all")}
+                    color={catalogSource === "all" ? "primary" : "default"}
+                    variant={catalogSource === "all" ? "filled" : "outlined"}
+                    label={`Total: ${catalogRows.length}`}
+                  />
+                  <MuiChip
+                    size="small"
+                    clickable
+                    onClick={() => setCatalogSource("builtin")}
+                    color={catalogSource === "builtin" ? "primary" : "default"}
+                    variant={catalogSource === "builtin" ? "filled" : "outlined"}
+                    label={`Built-in: ${BUILTIN_PREVIEWS.length}`}
+                  />
+                  <MuiChip
+                    size="small"
+                    clickable
+                    onClick={() => setCatalogSource("custom")}
+                    color={catalogSource === "custom" ? "secondary" : "default"}
+                    variant={catalogSource === "custom" ? "filled" : "outlined"}
+                    label={`Custom: ${customRows.length}`}
+                  />
+                </Box>
+                <Button size="sm" variant="default" onClick={() => setCreateOpen(true)}>
+                  New custom section type
+                </Button>
+              </Box>
+
+              <TableContainer
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  display: { xs: "none", md: "block" },
+                }}
+              >
+                <Table size="small" sx={{ tableLayout: "fixed" }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Description / Type</TableCell>
+                      <TableCell>Status / Source</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={4}>
+                          <Typography variant="body2" color="text.secondary">Loading…</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : catalogRows.length ? (
+                      catalogRows.map((item) => (
+                        <TableRow key={item.key} hover>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
+                              {item.label}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ wordBreak: "break-word" }}>
+                              {item.key}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
+                              {item.description}
+                            </Typography>
+                            <MuiChip size="small" sx={{ mt: 0.75 }} variant="outlined" label={item.renderer} />
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                              <MuiChip
+                                size="small"
+                                color={item.isActive ? "success" : "default"}
+                                label={item.isActive ? "Active" : "Inactive"}
+                              />
+                              <MuiChip
+                                size="small"
+                                color={item.source === "custom" ? "secondary" : "default"}
+                                variant="outlined"
+                                label={item.source === "custom" ? "Custom" : "Built-in"}
+                              />
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right">
+                            {item.source === "custom" ? (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => {
+                                  setActiveKey(item.key)
+                                  setActiveTab("composer")
+                                }}
+                              >
+                                Open
+                              </Button>
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">Read-only</Typography>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4}>
+                          <Typography variant="body2" color="text.secondary">No section types match current search.</Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+                {loading ? (
+                  <Typography variant="body2" color="text.secondary">Loading…</Typography>
+                ) : catalogRows.length ? (
+                  catalogRows.map((item) => (
+                    <MuiPaper key={item.key} variant="outlined" sx={{ p: 1.25 }}>
+                      <Stack spacing={0.75}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "flex-start" }}>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
+                              {item.label}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ wordBreak: "break-word" }}>
+                              {item.key}
+                            </Typography>
+                          </Box>
+                          {item.source === "custom" ? (
+                            <Button size="xs" variant="default" onClick={() => { setActiveKey(item.key); setActiveTab("composer") }}>
+                              Open
+                            </Button>
+                          ) : null}
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">{item.description}</Typography>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                          <MuiChip size="small" label={item.renderer} variant="outlined" />
+                          <MuiChip size="small" label={item.source === "custom" ? "Custom" : "Built-in"} />
+                        </Box>
+                      </Stack>
+                    </MuiPaper>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary">No section types match current search.</Typography>
+                )}
               </Stack>
-            )}
-
-            <Divider />
-
-            <Title order={4}>Custom Section Types</Title>
-            {loading ? <Text c="dimmed">Loading…</Text> : null}
-            {!loading && !customRows.length ? (
-              <Paper withBorder p="md" radius="md">
-                <Stack gap="xs" align="start">
-                  <Text c="dimmed">No custom section types yet.</Text>
-                  <Button size="xs" onClick={() => setCreateOpen(true)}>Create your first custom section</Button>
-                </Stack>
-              </Paper>
-            ) : null}
-            {catalogView === "grid" ? (
-              <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }}>
-                {customRows.map((item) => (
-                  <Card key={item.key} withBorder radius="md" shadow="xs" style={{ borderColor: "color-mix(in srgb, var(--accent) 28%, var(--border))" }}>
-                    <Group justify="space-between" mb={6}>
-                      <Text fw={600}>{item.label}</Text>
-                      <Badge color="violet" variant="light">Custom</Badge>
-                    </Group>
-                    <Text size="xs" c="dimmed">key: {item.key}</Text>
-                    <Button mt="sm" size="xs" variant="light" onClick={() => { setActiveKey(item.key); setActiveTab("composer") }}>Open in composer</Button>
-                  </Card>
-                ))}
-              </SimpleGrid>
-            ) : (
-              <Stack gap="xs">
-                {customRows.map((item) => (
-                  <Paper key={item.key} withBorder p="sm">
-                    <Group justify="space-between">
-                      <div>
-                        <Text fw={600}>{item.label}</Text>
-                        <Text size="xs" c="dimmed">{item.key}</Text>
-                      </div>
-                      <Button size="xs" variant="light" onClick={() => { setActiveKey(item.key); setActiveTab("composer") }}>Open</Button>
-                    </Group>
-                  </Paper>
-                ))}
-              </Stack>
-            )}
-          </Stack>
+            </Stack>
+          </AdminPanel>
         </Tabs.Panel>
 
-        <Tabs.Panel value="composer" pt="md">
+        <Tabs.Panel value="composer" pt="sm">
+          <AdminPanel>
           <Stack gap="xs" mb="sm">
             <Text size="sm" c="dimmed">Compose sections with rows and up to 3 columns, then reuse across any page.</Text>
           </Stack>
@@ -1694,6 +1814,7 @@ export function SectionLibraryPage() {
               </Paper>
             </Grid.Col>
           </Grid>
+          </AdminPanel>
         </Tabs.Panel>
       </Tabs>
 

@@ -26,7 +26,7 @@ import {
   TextInput,
   Textarea,
   Title,
-} from "@mantine/core"
+} from "@/components/mui-compat"
 import {
   IconAdjustmentsHorizontal,
   IconChevronDown,
@@ -39,7 +39,7 @@ import {
   IconTrash,
   IconX,
 } from "@tabler/icons-react"
-import { RichTextEditor } from "@mantine/tiptap"
+import { RichTextEditor } from "@/components/rich-text-editor-compat"
 import Link from "@tiptap/extension-link"
 import Image from "@tiptap/extension-image"
 import StarterKit from "@tiptap/starter-kit"
@@ -530,7 +530,7 @@ function LinkMenuField({
       shadow="md"
       width={340}
       opened={opened}
-      onChange={(nextOpened) => {
+      onChange={(nextOpened: boolean) => {
         setOpened(nextOpened)
         if (nextOpened) {
           void ensurePagesLoaded()
@@ -996,7 +996,7 @@ function TipTapJsonEditor({
     // Next.js renders Client Components on the server too; TipTap requires this to avoid hydration mismatches.
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       Link.configure({ openOnClick: false }),
       Image.configure({ allowBase64: false }),
     ],
@@ -1795,8 +1795,8 @@ export function SectionEditorDrawer({
 
           <Paper withBorder p="md" radius="md">
             <Stack gap={6}>
-              <Group justify="space-between" align="center">
-                <Group gap="xs">
+              <Group justify="space-between" align="center" gap="sm">
+                <Group gap="xs" wrap="wrap">
                   <Text fw={600} size="sm">
                     Current
                   </Text>
@@ -1933,7 +1933,7 @@ export function SectionEditorDrawer({
               </SimpleGrid>
 
               {showBackgroundMedia ? (
-                <Group align="end" gap="sm">
+                <Group align="end" gap="sm" wrap="wrap">
                   <TextInput
                     label="Background media URL"
                     value={backgroundMediaUrl}
@@ -1965,7 +1965,7 @@ export function SectionEditorDrawer({
                   comboboxProps={{ withinPortal: false }}
                   data={["", "py-4", "py-6", "py-8", "py-10", "py-12"]}
                   value={formatting.paddingY}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       paddingY: ((v ?? "") as FormattingState["paddingY"]) || "",
@@ -1977,7 +1977,7 @@ export function SectionEditorDrawer({
                   comboboxProps={{ withinPortal: false }}
                   data={["", "max-w-3xl", "max-w-4xl", "max-w-5xl", "max-w-6xl"]}
                   value={formatting.maxWidth}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       maxWidth: ((v ?? "") as FormattingState["maxWidth"]) || "",
@@ -1993,7 +1993,7 @@ export function SectionEditorDrawer({
                     { value: "center", label: "center" },
                   ]}
                   value={formatting.textAlign}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       textAlign: ((v ?? "") as FormattingState["textAlign"]) || "",
@@ -2010,7 +2010,7 @@ export function SectionEditorDrawer({
                         { value: "full", label: "Full-bleed" },
                       ]}
                       value={formatting.widthMode}
-                      onChange={(v) =>
+                      onChange={(v: string) =>
                         setFormatting((s) => ({
                           ...s,
                           widthMode: v === "full" ? "full" : "content",
@@ -2026,7 +2026,7 @@ export function SectionEditorDrawer({
                         { value: "100svh", label: "100% viewport" },
                       ]}
                       value={formatting.heroMinHeight}
-                      onChange={(v) =>
+                      onChange={(v: string) =>
                         setFormatting((s) => ({
                           ...s,
                           heroMinHeight: v === "70svh" || v === "100svh" ? v : "auto",
@@ -2044,7 +2044,7 @@ export function SectionEditorDrawer({
                     { value: "off", label: "Off" },
                   ]}
                   value={formatting.shadowMode}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       shadowMode:
@@ -2061,7 +2061,7 @@ export function SectionEditorDrawer({
                     { value: "off", label: "Off" },
                   ]}
                   value={formatting.innerShadowMode}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       innerShadowMode: v === "on" || v === "off" ? v : "inherit",
@@ -2081,7 +2081,7 @@ export function SectionEditorDrawer({
                     { value: "my-12", label: "my-12" },
                   ]}
                   value={formatting.outerSpacing}
-                  onChange={(v) =>
+                  onChange={(v: string) =>
                     setFormatting((s) => ({
                       ...s,
                       outerSpacing: ((v ?? "") as FormattingState["outerSpacing"]) || "",
@@ -2090,136 +2090,26 @@ export function SectionEditorDrawer({
                 />
               </SimpleGrid>
 
-              <Slider
-                label={(v) => `Inner bevel/glow strength ${v.toFixed(2)}x`}
-                min={0}
-                max={1.8}
-                step={0.05}
-                value={formatting.innerShadowStrength}
-                onChange={(v) =>
-                  setFormatting((s) => ({
-                    ...s,
-                    innerShadowStrength: Math.min(1.8, Math.max(0, v)),
-                  }))
-                }
-              />
-
-              <Textarea
-                label="containerClass (whitelisted Tailwind tokens)"
-                value={formatting.containerClass}
-                onChange={(e) => {
-                  const nextValue = inputValueFromEvent(e)
-                  setFormatting((s) => ({ ...s, containerClass: nextValue }))
-                }}
-                autosize
-                minRows={2}
-              />
-              <Textarea
-                label="sectionClass (whitelisted Tailwind tokens)"
-                value={formatting.sectionClass}
-                onChange={(e) => {
-                  const nextValue = inputValueFromEvent(e)
-                  setFormatting((s) => ({ ...s, sectionClass: nextValue }))
-                }}
-                autosize
-                minRows={2}
-              />
-
-              <Group justify="space-between" align="center">
-                <Text size="sm" fw={600}>
-                  Mobile overrides (optional)
-                </Text>
-                <Button
-                  size="xs"
-                  variant="default"
-                  onClick={() =>
-                    setFormatting((s) =>
-                      s.mobile
-                        ? { ...s, mobile: undefined }
-                        : {
-                            ...s,
-                            mobile: {
-                              containerClass: "",
-                              sectionClass: "",
-                              paddingY: "",
-                            },
-                          }
-                    )
-                  }
-                >
-                  {formatting.mobile ? "Disable" : "Enable"}
-                </Button>
-              </Group>
-
-              {formatting.mobile ? (
-                <Stack gap="sm">
-                  <Select
-                    label="Mobile padding Y"
-                    comboboxProps={{ withinPortal: false }}
-                    data={["", "py-4", "py-6", "py-8", "py-10", "py-12"]}
-                    value={formatting.mobile.paddingY}
-                    onChange={(v) =>
-                      setFormatting((s) =>
-                        s.mobile
-                          ? {
-                              ...s,
-                              mobile: {
-                                ...s.mobile,
-                                paddingY:
-                                  ((v ?? "") as FormattingState["paddingY"]) || "",
-                              },
-                            }
-                          : s
-                      )
+              {formatting.innerShadowMode === "on" ? (
+                <Stack gap="xs">
+                  <Text size="sm" fw={500}>
+                    Inner bevel/glow scale ({formatting.innerShadowStrength.toFixed(2)}x)
+                  </Text>
+                  <Slider
+                    label={(v) => `${v.toFixed(2)}x`}
+                    min={0}
+                    max={1.8}
+                    step={0.05}
+                    value={formatting.innerShadowStrength}
+                    onChange={(v: number) =>
+                      setFormatting((s) => ({
+                        ...s,
+                        innerShadowStrength: Math.min(1.8, Math.max(0, v)),
+                      }))
                     }
                   />
-                  <Textarea
-                    label="Mobile containerClass"
-                    value={formatting.mobile.containerClass}
-                    onChange={(e) => {
-                      const nextValue = inputValueFromEvent(e)
-                      setFormatting((s) =>
-                        s.mobile
-                          ? {
-                              ...s,
-                              mobile: {
-                                ...s.mobile,
-                                containerClass: nextValue,
-                              },
-                            }
-                          : s
-                      )
-                    }}
-                    autosize
-                    minRows={2}
-                  />
-                  <Textarea
-                    label="Mobile sectionClass"
-                    value={formatting.mobile.sectionClass}
-                    onChange={(e) => {
-                      const nextValue = inputValueFromEvent(e)
-                      setFormatting((s) =>
-                        s.mobile
-                          ? {
-                              ...s,
-                              mobile: {
-                                ...s.mobile,
-                                sectionClass: nextValue,
-                              },
-                            }
-                          : s
-                      )
-                    }}
-                    autosize
-                    minRows={2}
-                  />
                 </Stack>
-              ) : null}
-
-              <Text c="dimmed" size="xs">
-                Only a strict, safe list of Tailwind classes is allowed (validated in the app and DB).
-              </Text>
-            </Stack>
+              ) : null}            </Stack>
           </Paper>
 
           <Paper withBorder p="md" radius="md">
@@ -2429,7 +2319,7 @@ export function SectionEditorDrawer({
                             ) : null}
                             {cardDisplay.showYouGet ? (
                               <Stack gap="xs">
-                                <Group justify="space-between" align="center" wrap="nowrap">
+                                <Group justify="space-between" align="center" wrap="wrap">
                                   <Text size="sm" fw={500}>
                                     You get
                                   </Text>
@@ -2461,7 +2351,7 @@ export function SectionEditorDrawer({
                             ) : null}
                             {cardDisplay.showBestFor ? (
                               <Stack gap="xs">
-                                <Group justify="space-between" align="center" wrap="nowrap">
+                                <Group justify="space-between" align="center" wrap="wrap">
                                   <Text size="sm" fw={500}>
                                     Best for
                                   </Text>

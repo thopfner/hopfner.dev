@@ -1,0 +1,10 @@
+# Route inventory generated 2026-02-24T09:10:49Z
+
+app/(admin)/blog/page.tsx
+app/(admin)/global-sections/page.tsx
+app/(admin)/media/page.tsx
+app/(admin)/pages/[pageId]/page.tsx
+app/(admin)/page.tsx
+app/(admin)/section-library/page.tsx
+app/(auth)/login/page.tsx
+app/(auth)/setup/page.tsx

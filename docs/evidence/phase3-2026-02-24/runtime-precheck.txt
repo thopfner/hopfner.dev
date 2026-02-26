@@ -1,0 +1,7 @@
+[Pre-fix HTTP checks - 2026-02-24T09:39:05Z]
+== https://hopfner.dev/admin/_next/static/chunks/9bfd6948c5f0f648.js
+HTTP 500
+== https://hopfner.dev/admin/_next/static/chunks/b293a7f33e5cd254.js
+HTTP 500
+== https://hopfner.dev/admin/global-sections
+HTTP 307

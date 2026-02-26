@@ -6,7 +6,6 @@ import {
   AppBar,
   Box,
   Button,
-  CssBaseline,
   Divider,
   Drawer,
   IconButton,
@@ -17,7 +16,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material"
-import { createTheme, ThemeProvider } from "@mui/material/styles"
 import useMediaQuery from "@mui/material/useMediaQuery"
 import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded"
 import AutoStoriesRoundedIcon from "@mui/icons-material/AutoStoriesRounded"
@@ -27,12 +25,13 @@ import MenuRoundedIcon from "@mui/icons-material/MenuRounded"
 import FolderRoundedIcon from "@mui/icons-material/FolderRounded"
 import FeedRoundedIcon from "@mui/icons-material/FeedRounded"
 
+import { AppThemeProvider } from "@/components/app-theme-provider"
 import { createClient } from "@/lib/supabase/browser"
 
-const HEADER_HEIGHT = 52
-const DESKTOP_DRAWER_OPEN = 176
-const DESKTOP_DRAWER_CLOSED = 72
-const MOBILE_DRAWER_WIDTH = 216
+const HEADER_HEIGHT = 56
+const DESKTOP_DRAWER_OPEN = 196
+const DESKTOP_DRAWER_CLOSED = 74
+const MOBILE_DRAWER_WIDTH = 240
 
 type NavItem = {
   href: string
@@ -66,32 +65,7 @@ export function AdminShell({
   const router = useRouter()
   const pathname = usePathname()
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: "dark",
-          background: {
-            default: "#0f1115",
-            paper: "#11141b",
-          },
-        },
-        shape: {
-          borderRadius: 10,
-        },
-        typography: {
-          fontFamily:
-            "var(--font-inter), var(--font-geist-sans), Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          button: {
-            textTransform: "none",
-            fontWeight: 600,
-          },
-        },
-      }),
-    []
-  )
-
-  const isDesktop = useMediaQuery(theme.breakpoints.up("sm"))
+  const isDesktop = useMediaQuery("(min-width:600px)")
 
   const [desktopNavOpen, setDesktopNavOpen] = useState(true)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -136,11 +110,15 @@ export function AdminShell({
                 }}
                 aria-label={item.aria}
                 sx={{
-                  minHeight: 38,
+                  minHeight: 40,
                   px: showLabels ? 1.1 : 0.75,
                   py: 0.5,
-                  borderRadius: 1.25,
+                  borderRadius: 1.5,
                   justifyContent: showLabels ? "flex-start" : "center",
+                  border: "1px solid",
+                  borderColor: active ? "rgba(124,140,255,0.55)" : "transparent",
+                  background: active ? "linear-gradient(135deg, rgba(142,162,255,0.30), rgba(75,226,213,0.18))" : "transparent",
+                  "&:hover": { backgroundColor: active ? "rgba(142,162,255,0.33)" : "rgba(148,163,184,0.16)" },
                 }}
               >
                 <ListItemIcon
@@ -208,9 +186,8 @@ export function AdminShell({
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ display: "flex", minHeight: "100dvh", width: "100%" }}>
+    <AppThemeProvider>
+      <Box sx={{ display: "flex", minHeight: "100dvh", width: "100%", background: "radial-gradient(1200px 600px at 10% -10%, rgba(124,140,255,0.22), transparent 45%), radial-gradient(900px 480px at 90% -10%, rgba(75,226,213,0.18), transparent 45%), #090d16" }}>
         <AppBar
           position="fixed"
           color="transparent"
@@ -220,8 +197,8 @@ export function AdminShell({
             justifyContent: "center",
             borderBottom: "1px solid",
             borderColor: "divider",
-            bgcolor: "rgba(17,20,27,0.88)",
-            backdropFilter: "blur(10px)",
+            bgcolor: "rgba(10,16,30,0.88)",
+            backdropFilter: "blur(12px)",
             zIndex: (muiTheme) => muiTheme.zIndex.drawer + 2,
           }}
         >
@@ -244,7 +221,7 @@ export function AdminShell({
               >
                 <MenuRoundedIcon fontSize="small" />
               </IconButton>
-              <Typography variant="subtitle2" sx={{ whiteSpace: "nowrap", fontWeight: 700 }}>
+              <Typography variant="subtitle2" sx={{ whiteSpace: "nowrap", fontWeight: 800, letterSpacing: "0.012em", color: "#e9eeff" }}>
                 hopfner.dev CMS
               </Typography>
               <Typography
@@ -282,7 +259,8 @@ export function AdminShell({
               overflowX: "hidden",
               borderRight: "1px solid",
               borderColor: "divider",
-              bgcolor: "background.paper",
+              bgcolor: "rgba(17,24,39,0.92)",
+              backdropFilter: "blur(6px)",
             },
           }}
         >
@@ -303,7 +281,8 @@ export function AdminShell({
               boxSizing: "border-box",
               borderRight: "1px solid",
               borderColor: "divider",
-              bgcolor: "background.paper",
+              bgcolor: "rgba(17,24,39,0.92)",
+              backdropFilter: "blur(6px)",
             },
           }}
         >
@@ -316,13 +295,13 @@ export function AdminShell({
             flexGrow: 1,
             minWidth: 0,
             mt: `${HEADER_HEIGHT}px`,
-            ml: { xs: 0, sm: `${desktopDrawerWidth}px` },
-            p: { xs: 1, sm: 2 },
+            ml: 0,
+            p: { xs: 1.5, sm: 2.25 },
           }}
         >
           <div className="admin-content">{children}</div>
         </Box>
       </Box>
-    </ThemeProvider>
+    </AppThemeProvider>
   )
 }

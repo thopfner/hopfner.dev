@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Button, Paper, Stack, Text, Title } from "@mantine/core"
+import { Button, Paper, Stack, Typography } from "@mui/material"
 import { useRouter } from "next/navigation"
 
 type BootstrapResponse = {
@@ -42,26 +42,38 @@ export function SetupClient({ email }: { email: string }) {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md items-center px-4 py-10">
-      <Paper withBorder p="md" radius="md" w="100%">
-        <Stack gap="sm">
+      <Paper
+        variant="outlined"
+        sx={{
+          width: "100%",
+          p: 3,
+          borderRadius: 2,
+          background:
+            "linear-gradient(165deg, rgba(17,24,39,0.9), rgba(10,15,27,0.86))",
+          borderColor: "rgba(142,162,255,0.3)",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 22px 56px rgba(2,6,23,0.5)",
+        }}
+      >
+        <Stack spacing={2}>
           <div>
-            <Title order={2} size="h3">
+            <Typography variant="h5" color="primary.light" fontWeight={700}>
               One-time Setup
-            </Title>
-            <Text c="dimmed" size="sm">
+            </Typography>
+            <Typography color="text.secondary" variant="body2" lineHeight={1.55}>
               Signed in as {email}. If no admin exists yet, you can bootstrap
               yourself as the first admin.
-            </Text>
+            </Typography>
           </div>
 
           {message ? (
-            <Text size="sm" c="dimmed">
+            <Typography variant="body2" color="text.secondary">
               {message}
-            </Text>
+            </Typography>
           ) : null}
 
-          <Button size="sm" loading={loading} onClick={onBootstrap}>
-            Make me admin
+          <Button variant="contained" onClick={onBootstrap} disabled={loading}>
+            {loading ? "Setting up…" : "Make me admin"}
           </Button>
         </Stack>
       </Paper>
