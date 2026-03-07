@@ -68,7 +68,10 @@ import type { MediaItem } from "@/lib/media/types"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError } from "@/lib/cms/editor-error-message"
 
-type BlockType = "heading" | "subtitle" | "rich_text" | "cards" | "faq" | "image" | "list" | "cta"
+type BlockType =
+  | "heading" | "subtitle" | "rich_text" | "cards" | "faq" | "image" | "list" | "cta"
+  | "logo_strip" | "metrics_row" | "badge_group" | "proof_card" | "testimonial"
+  | "media_panel" | "workflow_diagram" | "comparison" | "stat_chip_row"
 
 type ComposerBlock = {
   id: string
@@ -84,6 +87,19 @@ type ComposerBlock = {
   ctaPrimaryHref?: string
   ctaSecondaryLabel?: string
   ctaSecondaryHref?: string
+  // New block fields
+  logos?: Array<{ label: string; imageUrl?: string }>
+  metrics?: Array<{ value: string; label: string; icon?: string }>
+  badges?: Array<{ text: string; icon?: string }>
+  author?: string
+  role?: string
+  quote?: string
+  beforeLabel?: string
+  afterLabel?: string
+  beforeItems?: string[]
+  afterItems?: string[]
+  flowSteps?: Array<{ label: string; description?: string }>
+  stats?: Array<{ value: string; label: string }>
 }
 
 type ComposerColumn = { id: string; blocks: ComposerBlock[] }
@@ -843,6 +859,73 @@ function SchemaPreview({ schema, mobile }: { schema: ComposerSchema; mobile: boo
                       ))}
                     </Stack>
                   )
+                  if (b.type === "logo_strip") return (
+                    <Stack key={b.id} gap={4}>
+                      {b.title ? <Text size="xs" c="dimmed">{b.title}</Text> : null}
+                      <Group gap="sm">{(b.logos || []).map((l, i) => <Badge key={`${b.id}-${i}`} variant="light">{l.label}</Badge>)}</Group>
+                    </Stack>
+                  )
+                  if (b.type === "metrics_row") return (
+                    <SimpleGrid key={b.id} cols={Math.min(4, (b.metrics || []).length || 1)}>
+                      {(b.metrics || []).map((m, i) => (
+                        <Paper key={`${b.id}-${i}`} withBorder p="xs" radius="md" style={{ textAlign: "center" }}>
+                          <Text fw={700} size="md">{m.value}</Text>
+                          <Text size="xs" c="dimmed">{m.label}</Text>
+                        </Paper>
+                      ))}
+                    </SimpleGrid>
+                  )
+                  if (b.type === "badge_group") return (
+                    <Group key={b.id} gap="xs">{(b.badges || []).map((bg, i) => <Badge key={`${b.id}-${i}`} variant="light">{bg.text}</Badge>)}</Group>
+                  )
+                  if (b.type === "proof_card") return (
+                    <Card key={b.id} withBorder>
+                      <Text fw={600}>{b.title || "Case study"}</Text>
+                      <Text size="sm" c="dimmed">{b.body || ""}</Text>
+                      {(b.stats || []).length > 0 ? (
+                        <Group gap="md" mt="xs">{(b.stats || []).map((s, i) => <Text key={`${b.id}-s-${i}`} size="xs"><strong>{s.value}</strong> {s.label}</Text>)}</Group>
+                      ) : null}
+                    </Card>
+                  )
+                  if (b.type === "testimonial") return (
+                    <Paper key={b.id} withBorder p="sm" radius="md">
+                      <Text size="sm" style={{ fontStyle: "italic" }}>&ldquo;{b.quote || "Quote"}&rdquo;</Text>
+                      <Text size="xs" fw={600}>{b.author || "Author"}</Text>
+                      {b.role ? <Text size="xs" c="dimmed">{b.role}</Text> : null}
+                    </Paper>
+                  )
+                  if (b.type === "media_panel") return (
+                    <Paper key={b.id} withBorder p="md">
+                      <Text size="sm" fw={600}>{b.title || "Media"}</Text>
+                      <Text size="xs" c="dimmed">Image: {b.imageUrl || "(not set)"}</Text>
+                    </Paper>
+                  )
+                  if (b.type === "workflow_diagram") return (
+                    <Stack key={b.id} gap={4}>
+                      {b.title ? <Text size="sm" fw={600}>{b.title}</Text> : null}
+                      <Group gap="xs">{(b.flowSteps || []).map((s, i) => (
+                        <Group key={`${b.id}-${i}`} gap={4}>
+                          {i > 0 ? <Text c="dimmed">&rarr;</Text> : null}
+                          <Badge variant="light">{s.label}</Badge>
+                        </Group>
+                      ))}</Group>
+                    </Stack>
+                  )
+                  if (b.type === "comparison") return (
+                    <SimpleGrid key={b.id} cols={2}>
+                      <Paper withBorder p="xs" radius="md">
+                        <Text size="xs" fw={600} c="red">{b.beforeLabel || "Before"}</Text>
+                        {(b.beforeItems || []).map((x, i) => <Text key={`${b.id}-b-${i}`} size="xs">{x}</Text>)}
+                      </Paper>
+                      <Paper withBorder p="xs" radius="md">
+                        <Text size="xs" fw={600} c="dimmed">{b.afterLabel || "After"}</Text>
+                        {(b.afterItems || []).map((x, i) => <Text key={`${b.id}-a-${i}`} size="xs">{x}</Text>)}
+                      </Paper>
+                    </SimpleGrid>
+                  )
+                  if (b.type === "stat_chip_row") return (
+                    <Group key={b.id} gap="xs">{(b.stats || []).map((s, i) => <Badge key={`${b.id}-${i}`} variant="filled">{s.value} {s.label}</Badge>)}</Group>
+                  )
                   return (
                     <Group key={b.id}>
                       <Button size="xs" variant="light">{b.ctaPrimaryLabel || "Primary"}</Button>
@@ -1056,29 +1139,26 @@ export function SectionLibraryPage() {
   }
 
   function addBlock(rowId: string, colId: string, type: BlockType) {
-    const block: ComposerBlock =
-      type === "heading"
-        ? { id: uid("blk"), type, title: "Heading" }
-        : type === "subtitle"
-          ? { id: uid("blk"), type, body: "Subtitle" }
-          : type === "rich_text"
-            ? { id: uid("blk"), type, body: "Text" }
-            : type === "image"
-              ? { id: uid("blk"), type, imageUrl: "" }
-              : type === "list"
-                ? { id: uid("blk"), type, listStyle: "steps", items: ["Step 1 | Describe step", "Step 2 | Describe step"] }
-                : type === "cards"
-                  ? { id: uid("blk"), type, cards: [{ title: "Card", body: "Body" }] }
-                  : type === "faq"
-                    ? { id: uid("blk"), type, faqs: [{ q: "Question", a: "Answer" }] }
-                    : {
-                        id: uid("blk"),
-                        type,
-                        ctaPrimaryLabel: "Primary",
-                        ctaPrimaryHref: "#",
-                        ctaSecondaryLabel: "Secondary",
-                        ctaSecondaryHref: "#",
-                      }
+    const blockDefaults: Record<string, Partial<ComposerBlock>> = {
+      heading: { title: "Heading" },
+      subtitle: { body: "Subtitle" },
+      rich_text: { body: "Text" },
+      image: { imageUrl: "" },
+      list: { listStyle: "steps", items: ["Step 1 | Describe step", "Step 2 | Describe step"] },
+      cards: { cards: [{ title: "Card", body: "Body" }] },
+      faq: { faqs: [{ q: "Question", a: "Answer" }] },
+      cta: { ctaPrimaryLabel: "Primary", ctaPrimaryHref: "#", ctaSecondaryLabel: "Secondary", ctaSecondaryHref: "#" },
+      logo_strip: { title: "Trusted by", logos: [{ label: "Company 1" }, { label: "Company 2" }] },
+      metrics_row: { metrics: [{ value: "50+", label: "Projects" }, { value: "10x", label: "Faster" }] },
+      badge_group: { badges: [{ text: "Badge 1" }, { text: "Badge 2" }] },
+      proof_card: { title: "Case study", body: "Description", stats: [{ value: "3x", label: "improvement" }] },
+      testimonial: { quote: "Quote text", author: "Name", role: "Role" },
+      media_panel: { title: "Visual", imageUrl: "" },
+      workflow_diagram: { title: "Process", flowSteps: [{ label: "Step 1" }, { label: "Step 2" }, { label: "Step 3" }] },
+      comparison: { beforeLabel: "Before", afterLabel: "After", beforeItems: ["Manual process"], afterItems: ["Automated flow"] },
+      stat_chip_row: { stats: [{ value: "99%", label: "Uptime" }, { value: "50+", label: "Integrations" }] },
+    }
+    const block: ComposerBlock = { id: uid("blk"), type, ...blockDefaults[type] }
 
     setSchema((prev) => ({
       ...prev,
@@ -1632,6 +1712,15 @@ export function SectionLibraryPage() {
                                               { value: "image", label: "Image" },
                                               { value: "list", label: "Steps list" },
                                               { value: "cta", label: "CTA" },
+                                              { value: "logo_strip", label: "Logo strip" },
+                                              { value: "metrics_row", label: "Metrics row" },
+                                              { value: "badge_group", label: "Badge group" },
+                                              { value: "proof_card", label: "Proof card" },
+                                              { value: "testimonial", label: "Testimonial" },
+                                              { value: "media_panel", label: "Media panel" },
+                                              { value: "workflow_diagram", label: "Workflow diagram" },
+                                              { value: "comparison", label: "Comparison" },
+                                              { value: "stat_chip_row", label: "Stat chips" },
                                             ]}
                                             onChange={(v) => v && addBlock(row.id, col.id, v as BlockType)}
                                           />
@@ -1771,6 +1860,158 @@ export function SectionLibraryPage() {
                                                     <TextInput size="xs" label="Secondary label" value={b.ctaSecondaryLabel ?? ""} onChange={(e) => updateBlock(b.id, { ctaSecondaryLabel: e.currentTarget.value })} />
                                                     <TextInput size="xs" label="Secondary href" value={b.ctaSecondaryHref ?? ""} onChange={(e) => updateBlock(b.id, { ctaSecondaryHref: e.currentTarget.value })} />
                                                   </SimpleGrid>
+                                                ) : null}
+
+                                                {b.type === "logo_strip" ? (
+                                                  <Stack gap={6}>
+                                                    <TextInput size="xs" label="Title" value={b.title ?? ""} onChange={(e) => updateBlock(b.id, { title: e.currentTarget.value })} />
+                                                    <Textarea
+                                                      size="xs"
+                                                      label="Logos (label | imageUrl per line)"
+                                                      minRows={3}
+                                                      value={(b.logos ?? []).map((l) => l.imageUrl ? `${l.label} | ${l.imageUrl}` : l.label).join("\n")}
+                                                      onChange={(e) => {
+                                                        const logos = e.currentTarget.value.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+                                                          const [label, ...rest] = line.split("|")
+                                                          return { label: label?.trim() || "Logo", imageUrl: rest.join("|").trim() || undefined }
+                                                        })
+                                                        updateBlock(b.id, { logos })
+                                                      }}
+                                                    />
+                                                    <Text size="xs" c="dimmed">Format: <code>Label</code> or <code>Label | image-url</code></Text>
+                                                  </Stack>
+                                                ) : null}
+
+                                                {b.type === "metrics_row" ? (
+                                                  <Stack gap={6}>
+                                                    <Textarea
+                                                      size="xs"
+                                                      label="Metrics (value | label per line)"
+                                                      minRows={3}
+                                                      value={(b.metrics ?? []).map((m) => `${m.value} | ${m.label}`).join("\n")}
+                                                      onChange={(e) => {
+                                                        const metrics = e.currentTarget.value.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+                                                          const [value, ...rest] = line.split("|")
+                                                          return { value: value?.trim() || "0", label: rest.join("|").trim() || "Metric" }
+                                                        })
+                                                        updateBlock(b.id, { metrics })
+                                                      }}
+                                                    />
+                                                    <Text size="xs" c="dimmed">Format: <code>Value | Label</code></Text>
+                                                  </Stack>
+                                                ) : null}
+
+                                                {b.type === "badge_group" ? (
+                                                  <Stack gap={6}>
+                                                    <Textarea
+                                                      size="xs"
+                                                      label="Badges (one per line)"
+                                                      minRows={2}
+                                                      value={(b.badges ?? []).map((bg) => bg.text).join("\n")}
+                                                      onChange={(e) => {
+                                                        const badges = e.currentTarget.value.split("\n").map((line) => line.trim()).filter(Boolean).map((text) => ({ text }))
+                                                        updateBlock(b.id, { badges })
+                                                      }}
+                                                    />
+                                                  </Stack>
+                                                ) : null}
+
+                                                {b.type === "proof_card" ? (
+                                                  <Stack gap={6}>
+                                                    <TextInput size="xs" label="Title" value={b.title ?? ""} onChange={(e) => updateBlock(b.id, { title: e.currentTarget.value })} />
+                                                    <Textarea size="xs" label="Body" minRows={2} value={b.body ?? ""} onChange={(e) => updateBlock(b.id, { body: e.currentTarget.value })} />
+                                                    <Textarea
+                                                      size="xs"
+                                                      label="Stats (value | label per line)"
+                                                      minRows={2}
+                                                      value={(b.stats ?? []).map((s) => `${s.value} | ${s.label}`).join("\n")}
+                                                      onChange={(e) => {
+                                                        const stats = e.currentTarget.value.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+                                                          const [value, ...rest] = line.split("|")
+                                                          return { value: value?.trim() || "0", label: rest.join("|").trim() || "" }
+                                                        })
+                                                        updateBlock(b.id, { stats })
+                                                      }}
+                                                    />
+                                                  </Stack>
+                                                ) : null}
+
+                                                {b.type === "testimonial" ? (
+                                                  <Stack gap={6}>
+                                                    <Textarea size="xs" label="Quote" minRows={2} value={b.quote ?? ""} onChange={(e) => updateBlock(b.id, { quote: e.currentTarget.value })} />
+                                                    <TextInput size="xs" label="Author" value={b.author ?? ""} onChange={(e) => updateBlock(b.id, { author: e.currentTarget.value })} />
+                                                    <TextInput size="xs" label="Role" value={b.role ?? ""} onChange={(e) => updateBlock(b.id, { role: e.currentTarget.value })} />
+                                                  </Stack>
+                                                ) : null}
+
+                                                {b.type === "media_panel" ? (
+                                                  <Stack gap={6}>
+                                                    <TextInput size="xs" label="Title" value={b.title ?? ""} onChange={(e) => updateBlock(b.id, { title: e.currentTarget.value })} />
+                                                    <TextInput size="xs" label="Image URL" value={b.imageUrl ?? ""} onChange={(e) => updateBlock(b.id, { imageUrl: e.currentTarget.value })} />
+                                                    <Button size="xs" variant="default" onClick={() => openMediaPicker(b.id)}>Choose from media library</Button>
+                                                  </Stack>
+                                                ) : null}
+
+                                                {b.type === "workflow_diagram" ? (
+                                                  <Stack gap={6}>
+                                                    <TextInput size="xs" label="Title" value={b.title ?? ""} onChange={(e) => updateBlock(b.id, { title: e.currentTarget.value })} />
+                                                    <Textarea
+                                                      size="xs"
+                                                      label="Steps (label | description per line)"
+                                                      minRows={3}
+                                                      value={(b.flowSteps ?? []).map((s) => s.description ? `${s.label} | ${s.description}` : s.label).join("\n")}
+                                                      onChange={(e) => {
+                                                        const flowSteps = e.currentTarget.value.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+                                                          const [label, ...rest] = line.split("|")
+                                                          return { label: label?.trim() || "Step", description: rest.join("|").trim() || undefined }
+                                                        })
+                                                        updateBlock(b.id, { flowSteps })
+                                                      }}
+                                                    />
+                                                    <Text size="xs" c="dimmed">Format: <code>Label</code> or <code>Label | Description</code></Text>
+                                                  </Stack>
+                                                ) : null}
+
+                                                {b.type === "comparison" ? (
+                                                  <Stack gap={6}>
+                                                    <SimpleGrid cols={2} spacing="xs">
+                                                      <TextInput size="xs" label="Before label" value={b.beforeLabel ?? "Before"} onChange={(e) => updateBlock(b.id, { beforeLabel: e.currentTarget.value })} />
+                                                      <TextInput size="xs" label="After label" value={b.afterLabel ?? "After"} onChange={(e) => updateBlock(b.id, { afterLabel: e.currentTarget.value })} />
+                                                    </SimpleGrid>
+                                                    <Textarea
+                                                      size="xs"
+                                                      label="Before items (one per line)"
+                                                      minRows={2}
+                                                      value={(b.beforeItems ?? []).join("\n")}
+                                                      onChange={(e) => updateBlock(b.id, { beforeItems: e.currentTarget.value.split("\n").map((x) => x.trim()).filter(Boolean) })}
+                                                    />
+                                                    <Textarea
+                                                      size="xs"
+                                                      label="After items (one per line)"
+                                                      minRows={2}
+                                                      value={(b.afterItems ?? []).join("\n")}
+                                                      onChange={(e) => updateBlock(b.id, { afterItems: e.currentTarget.value.split("\n").map((x) => x.trim()).filter(Boolean) })}
+                                                    />
+                                                  </Stack>
+                                                ) : null}
+
+                                                {b.type === "stat_chip_row" ? (
+                                                  <Stack gap={6}>
+                                                    <Textarea
+                                                      size="xs"
+                                                      label="Stats (value | label per line)"
+                                                      minRows={2}
+                                                      value={(b.stats ?? []).map((s) => `${s.value} | ${s.label}`).join("\n")}
+                                                      onChange={(e) => {
+                                                        const stats = e.currentTarget.value.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+                                                          const [value, ...rest] = line.split("|")
+                                                          return { value: value?.trim() || "0", label: rest.join("|").trim() || "" }
+                                                        })
+                                                        updateBlock(b.id, { stats })
+                                                      }}
+                                                    />
+                                                    <Text size="xs" c="dimmed">Format: <code>Value | Label</code></Text>
+                                                  </Stack>
                                                 ) : null}
                                               </Stack>
                                             </SortableBlock>

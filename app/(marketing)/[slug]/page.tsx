@@ -556,6 +556,27 @@ export default async function MarketingPage({
                 )
               }
 
+              const heroLayoutVariant = asString(content.layoutVariant)
+              const heroProofPanelRaw = asRecord(content.proofPanel)
+              const heroProofPanel = heroProofPanelRaw.type ? {
+                type: asString(heroProofPanelRaw.type) as "stats" | "mockup" | "image",
+                headline: asString(heroProofPanelRaw.headline),
+                items: asRecordArray(heroProofPanelRaw.items).map((it) => ({
+                  label: asString(it.label),
+                  value: asString(it.value),
+                })),
+                imageUrl: asString(heroProofPanelRaw.imageUrl),
+                mockupVariant: asString(heroProofPanelRaw.mockupVariant) as "dashboard" | "workflow" | "terminal" | undefined,
+              } : undefined
+              const heroTrustItems = asRecordArray(content.trustItems).map((it) => ({
+                text: asString(it.text),
+                icon: asString(it.icon),
+              }))
+              const heroStatsArr = asRecordArray(content.heroStats).map((it) => ({
+                value: asString(it.value),
+                label: asString(it.label),
+              }))
+
               return (
                 <HeroSection
                   key={section.id}
@@ -587,6 +608,15 @@ export default async function MarketingPage({
                   trustLineColor={asString(formatting.trustLineColor)}
                   heroBlendStrength={clampNumber(formatting.heroBlendStrength, 0, 1, 0.72)}
                   useSharedTopBackdrop={pageBackdropEnabled && (topBackdropScope === "full-page" || (topBackdropScope === "hero-only" && index === 0))}
+                  layoutVariant={
+                    heroLayoutVariant === "split" || heroLayoutVariant === "split_reversed"
+                      ? heroLayoutVariant
+                      : "centered"
+                  }
+                  eyebrow={asString(content.eyebrow)}
+                  proofPanel={heroProofPanel}
+                  trustItems={heroTrustItems.length > 0 ? heroTrustItems : undefined}
+                  heroStats={heroStatsArr.length > 0 ? heroStatsArr : undefined}
                 />
               )
             }
@@ -611,13 +641,29 @@ export default async function MarketingPage({
                   const fallback = asString(c.bestFor).trim()
                   return fallback ? [fallback] : []
                 })(),
+                icon: asString(c.icon),
+                stat: asString(c.stat),
+                tag: asString(c.tag),
               }))
+              const sectionVariantRaw = asString(content.sectionVariant)
+              const validVariants = ["default", "value_pillars", "services", "problem_cards", "proof_cards", "logo_tiles"]
+              const cardGridSectionVariant = validVariants.includes(sectionVariantRaw) ? sectionVariantRaw as "default" | "value_pillars" | "services" | "problem_cards" | "proof_cards" | "logo_tiles" : "default"
+              const columnsRaw = Number(content.columns)
+              const cardGridColumns = columnsRaw === 2 || columnsRaw === 3 || columnsRaw === 4 ? columnsRaw : undefined
+              const cardToneRaw = asString(content.cardTone)
+              const validTones = ["default", "elevated", "muted", "contrast"]
+              const cardGridTone = validTones.includes(cardToneRaw) ? cardToneRaw as "default" | "elevated" | "muted" | "contrast" : "default"
               return (
                 <WhatIDeliverSection
                   key={section.id}
                   {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
+                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  eyebrow={asString(content.eyebrow)}
                   cards={cards}
+                  sectionVariant={cardGridSectionVariant}
+                  columns={cardGridColumns}
+                  cardTone={cardGridTone}
                 />
               )
             }
@@ -627,12 +673,18 @@ export default async function MarketingPage({
                 body: asString(s.body),
                 bodyHtml: tiptapJsonToSanitizedHtml(s.bodyRichText),
               }))
+              const stepsLayoutRaw = asString(content.layoutVariant)
+              const validStepsLayouts = ["grid", "timeline", "connected_flow"]
+              const stepsLayout = validStepsLayouts.includes(stepsLayoutRaw) ? stepsLayoutRaw as "grid" | "timeline" | "connected_flow" : "grid"
               return (
                 <HowItWorksSection
                   key={section.id}
                   {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
+                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  eyebrow={asString(content.eyebrow)}
                   steps={steps}
+                  layoutVariant={stepsLayout}
                 />
               )
             }
@@ -642,12 +694,18 @@ export default async function MarketingPage({
                 body: asString(i.body),
                 bodyHtml: tiptapJsonToSanitizedHtml(i.bodyRichText),
               }))
+              const tbLayoutRaw = asString(content.layoutVariant)
+              const validTbLayouts = ["accordion", "stacked", "two_column", "cards"]
+              const tbLayout = validTbLayouts.includes(tbLayoutRaw) ? tbLayoutRaw as "accordion" | "stacked" | "two_column" | "cards" : "accordion"
               return (
                 <WorkflowsSection
                   key={section.id}
                   {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
+                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  eyebrow={asString(content.eyebrow)}
                   items={items}
+                  layoutVariant={tbLayout}
                 />
               )
             }
@@ -667,13 +725,22 @@ export default async function MarketingPage({
               const items = asRecordArray(content.items).map((i) => ({
                 label: asString(i.label),
                 value: asString(i.value),
+                icon: asString(i.icon),
+                imageUrl: asString(i.imageUrl),
               }))
+              const lvLayoutRaw = asString(content.layoutVariant)
+              const validLvLayouts = ["default", "metrics_grid", "trust_strip", "tool_badges", "logo_row"]
+              const lvLayout = validLvLayouts.includes(lvLayoutRaw) ? lvLayoutRaw as "default" | "metrics_grid" | "trust_strip" | "tool_badges" | "logo_row" : "default"
               return (
                 <TechStackSection
                   key={section.id}
                   {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
+                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  eyebrow={asString(content.eyebrow)}
                   items={items}
+                  layoutVariant={lvLayout}
+                  compact={content.compact === true}
                 />
               )
             }
@@ -694,6 +761,9 @@ export default async function MarketingPage({
             }
             case "cta_block": {
               const bodyHtml = tiptapJsonToSanitizedHtml(content.bodyRichText)
+              const ctaLayoutRaw = asString(content.layoutVariant)
+              const validCtaLayouts = ["centered", "split", "compact", "high_contrast"]
+              const ctaLayout = validCtaLayouts.includes(ctaLayoutRaw) ? ctaLayoutRaw as "centered" | "split" | "compact" | "high_contrast" : "centered"
               return (
                 <FinalCtaSection
                   key={section.id}
@@ -709,6 +779,8 @@ export default async function MarketingPage({
                     label: pickText(v.cta_secondary_label, defaults?.default_cta_secondary_label),
                     href: pickText(v.cta_secondary_href, defaults?.default_cta_secondary_href) || "#services",
                   }}
+                  layoutVariant={ctaLayout}
+                  eyebrow={asString(content.eyebrow)}
                 />
               )
             }

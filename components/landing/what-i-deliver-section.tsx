@@ -5,6 +5,16 @@ import { SectionHeading } from "@/components/landing/section-primitives"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
+type SectionVariant =
+  | "default"
+  | "value_pillars"
+  | "services"
+  | "problem_cards"
+  | "proof_cards"
+  | "logo_tiles"
+
+type CardTone = "default" | "elevated" | "muted" | "contrast"
+
 export function WhatIDeliverSection({
   sectionId,
   sectionClassName,
@@ -13,7 +23,12 @@ export function WhatIDeliverSection({
   containerStyle,
   panelStyle,
   title,
+  subtitle,
+  eyebrow,
   cards,
+  sectionVariant = "default",
+  columns,
+  cardTone = "default",
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -22,6 +37,8 @@ export function WhatIDeliverSection({
   containerStyle?: CSSProperties
   panelStyle?: CSSProperties
   title: string
+  subtitle?: string
+  eyebrow?: string
   cards: Array<{
     display: {
       showTitle: boolean
@@ -41,19 +58,68 @@ export function WhatIDeliverSection({
     youGet: string[]
     bestFor: string
     bestForList: string[]
+    icon?: string
+    stat?: string
+    tag?: string
   }>
+  sectionVariant?: SectionVariant
+  columns?: 2 | 3 | 4
+  cardTone?: CardTone
 }) {
+  const effectiveColumns = columns ?? (sectionVariant === "logo_tiles" ? 4 : 3)
+  const gridCols =
+    effectiveColumns === 2
+      ? "grid-cols-1 sm:grid-cols-2"
+      : effectiveColumns === 4
+        ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-4"
+        : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+
+  const toneClasses: Record<CardTone, string> = {
+    default: "surface-panel interactive-lift",
+    elevated: "surface-panel interactive-lift border-border/80 shadow-md",
+    muted: "border-border/40 bg-card/20",
+    contrast: "border-border/80 bg-foreground/[0.04] shadow-sm",
+  }
+
+  const variantCardClass = (variant: SectionVariant): string => {
+    switch (variant) {
+      case "value_pillars":
+        return "border-l-2 border-l-accent/60"
+      case "problem_cards":
+        return "border-t-2 border-t-accent/40"
+      case "proof_cards":
+        return "bg-card/30"
+      case "logo_tiles":
+        return "flex items-center justify-center p-6"
+      default:
+        return ""
+    }
+  }
+
+  const hasEyebrow = (eyebrow ?? "").trim().length > 0
+  const hasSubtitle = (subtitle ?? "").trim().length > 0
+
   return (
     <section
       id={sectionId}
       className={cn("scroll-mt-16 py-6", sectionClassName)}
       aria-labelledby="services-title"
-    style={sectionStyle}
+      style={sectionStyle}
     >
       <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
-        <SectionHeading id="services-title" title={title} />
+        <div className="space-y-1">
+          {hasEyebrow ? (
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+              {eyebrow}
+            </p>
+          ) : null}
+          <SectionHeading id="services-title" title={title} />
+          {hasSubtitle ? (
+            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+          ) : null}
+        </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className={cn("grid gap-4", gridCols)}>
           {cards.map((item, idx) => {
             const hasYouGetBlock =
               item.display.showYouGet &&
@@ -75,87 +141,134 @@ export function WhatIDeliverSection({
             const hasBestFor = hasBestForBlock || hasBestForList
             const hasDetails = hasYouGet || hasBestFor
             const imageWidth = Math.min(420, Math.max(80, Math.round(item.imageWidthPx ?? 240)))
+            const hasIcon = (item.icon ?? "").trim().length > 0
+            const hasStat = (item.stat ?? "").trim().length > 0
+            const hasTag = (item.tag ?? "").trim().length > 0
 
-            return (
-            <Card
-              key={`${item.title}-${idx}`}
-              className="surface-panel interactive-lift gap-3 py-4"
-              style={panelStyle}
-            >
-              {item.display.showImage && item.imageUrl ? (
-                <div className="flex justify-center px-4">
-                  <div
-                    className="overflow-hidden rounded-md border border-border/60 bg-card"
-                    style={{ backgroundColor: "color-mix(in srgb, var(--card) calc(var(--page-panel-opacity, 1) * 100%), transparent)" }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+            if (sectionVariant === "logo_tiles") {
+              return (
+                <div
+                  key={`${item.title}-${idx}`}
+                  className={cn(
+                    "rounded-xl border border-border/40 bg-card/20 p-4",
+                    "flex items-center justify-center",
+                    toneClasses[cardTone]
+                  )}
+                  style={panelStyle}
+                >
+                  {item.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.imageUrl}
-                      alt={item.imageAlt || item.title || "Card image"}
-                      className="mx-auto h-auto max-w-full object-contain"
-                      style={{ width: imageWidth }}
-                    />
-                  </div>
-                </div>
-              ) : null}
-              <CardHeader className="gap-1 px-4 pb-0">
-                {item.display.showTitle ? (
-                  <h3 className="text-sm font-semibold leading-none">
-                    {item.title}
-                  </h3>
-                ) : null}
-                {item.display.showText ? (
-                  item.textHtml?.trim() ? (
-                    <div
-                      className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                      dangerouslySetInnerHTML={{ __html: item.textHtml }}
+                      alt={item.imageAlt || item.title}
+                      className="h-8 max-w-[120px] object-contain opacity-70 grayscale"
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{item.text}</p>
-                  )
+                    <span className="text-sm font-medium text-muted-foreground">{item.title}</span>
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <Card
+                key={`${item.title}-${idx}`}
+                className={cn(
+                  "gap-3 py-4",
+                  toneClasses[cardTone],
+                  variantCardClass(sectionVariant)
+                )}
+                style={panelStyle}
+              >
+                {item.display.showImage && item.imageUrl ? (
+                  <div className="flex justify-center px-4">
+                    <div
+                      className="overflow-hidden rounded-md border border-border/60 bg-card"
+                      style={{ backgroundColor: "color-mix(in srgb, var(--card) calc(var(--page-panel-opacity, 1) * 100%), transparent)" }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.imageUrl}
+                        alt={item.imageAlt || item.title || "Card image"}
+                        className="mx-auto h-auto max-w-full object-contain"
+                        style={{ width: imageWidth }}
+                      />
+                    </div>
+                  </div>
                 ) : null}
-              </CardHeader>
-              {hasDetails ? (
-                <CardContent className="space-y-2 px-4">
-                  <Separator className="bg-border/60" />
-                  <dl className="space-y-1 text-sm">
-                    {hasYouGet ? (
-                      <div className="flex flex-col gap-0.5">
-                        <dt className="font-medium">You get:</dt>
-                        {hasYouGetList ? (
-                          <dd>
-                            <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
-                              {item.youGet.map((entry, entryIndex) => (
-                                <li key={`${entry}-${entryIndex}`}>{entry}</li>
-                              ))}
-                            </ul>
-                          </dd>
-                        ) : (
-                          <dd className="text-muted-foreground">{item.youGet.join(" · ")}</dd>
-                        )}
-                      </div>
-                    ) : null}
-                    {hasBestFor ? (
-                      <div className="flex flex-col gap-0.5">
-                        <dt className="font-medium">Best for:</dt>
-                        {hasBestForList ? (
-                          <dd>
-                            <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
-                              {item.bestForList.map((entry, entryIndex) => (
-                                <li key={`${entry}-${entryIndex}`}>{entry}</li>
-                              ))}
-                            </ul>
-                          </dd>
-                        ) : (
-                          <dd className="text-muted-foreground">{item.bestFor}</dd>
-                        )}
-                      </div>
-                    ) : null}
-                  </dl>
-                </CardContent>
-              ) : null}
-            </Card>
-          )})}
+                <CardHeader className="gap-1 px-4 pb-0">
+                  {hasTag ? (
+                    <span className="w-fit rounded-full border border-border/50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {item.tag}
+                    </span>
+                  ) : null}
+                  {hasIcon ? (
+                    <span className="text-lg">{item.icon}</span>
+                  ) : null}
+                  {hasStat ? (
+                    <p className="text-2xl font-bold tracking-tight">{item.stat}</p>
+                  ) : null}
+                  {item.display.showTitle ? (
+                    <h3 className={cn(
+                      "font-semibold leading-none",
+                      sectionVariant === "value_pillars" ? "text-base" : "text-sm"
+                    )}>
+                      {item.title}
+                    </h3>
+                  ) : null}
+                  {item.display.showText ? (
+                    item.textHtml?.trim() ? (
+                      <div
+                        className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                        dangerouslySetInnerHTML={{ __html: item.textHtml }}
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">{item.text}</p>
+                    )
+                  ) : null}
+                </CardHeader>
+                {hasDetails ? (
+                  <CardContent className="space-y-2 px-4">
+                    <Separator className="bg-border/60" />
+                    <dl className="space-y-1 text-sm">
+                      {hasYouGet ? (
+                        <div className="flex flex-col gap-0.5">
+                          <dt className="font-medium">You get:</dt>
+                          {hasYouGetList ? (
+                            <dd>
+                              <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                                {item.youGet.map((entry, entryIndex) => (
+                                  <li key={`${entry}-${entryIndex}`}>{entry}</li>
+                                ))}
+                              </ul>
+                            </dd>
+                          ) : (
+                            <dd className="text-muted-foreground">{item.youGet.join(" · ")}</dd>
+                          )}
+                        </div>
+                      ) : null}
+                      {hasBestFor ? (
+                        <div className="flex flex-col gap-0.5">
+                          <dt className="font-medium">Best for:</dt>
+                          {hasBestForList ? (
+                            <dd>
+                              <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                                {item.bestForList.map((entry, entryIndex) => (
+                                  <li key={`${entry}-${entryIndex}`}>{entry}</li>
+                                ))}
+                              </ul>
+                            </dd>
+                          ) : (
+                            <dd className="text-muted-foreground">{item.bestFor}</dd>
+                          )}
+                        </div>
+                      ) : null}
+                    </dl>
+                  </CardContent>
+                ) : null}
+              </Card>
+            )
+          })}
         </div>
       </div>
     </section>

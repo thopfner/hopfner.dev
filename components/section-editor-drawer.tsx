@@ -1590,6 +1590,11 @@ export function SectionEditorDrawer({
 
   const heroBullets = asArray<string>(content.bullets)
   const heroTrust = asString(content.trustLine)
+  const heroLayoutVariant = asString(content.layoutVariant, "centered")
+  const heroEyebrow = asString(content.eyebrow)
+  const heroProofPanel = asRecord(content.proofPanel)
+  const heroTrustItems = asArray<Record<string, unknown>>(content.trustItems)
+  const heroStats = asArray<Record<string, unknown>>(content.heroStats)
   const whatCards = asArray<Record<string, unknown>>(content.cards)
   const howSteps = asArray<Record<string, unknown>>(content.steps)
   const workflowItems = asArray<Record<string, unknown>>(content.items)
@@ -2120,6 +2125,25 @@ export function SectionEditorDrawer({
 
               {type === "hero_cta" ? (
                 <>
+                  <Select
+                    label="Hero layout"
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                      { value: "centered", label: "Centered" },
+                      { value: "split", label: "Split (text left, proof right)" },
+                      { value: "split_reversed", label: "Split reversed (proof left, text right)" },
+                    ]}
+                    value={heroLayoutVariant}
+                    onChange={(v: string) =>
+                      setContent((c) => ({ ...c, layoutVariant: v || "centered" }))
+                    }
+                  />
+                  <TextInput
+                    label="Eyebrow"
+                    placeholder="e.g. AI + Automation Consultancy"
+                    value={heroEyebrow}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                  />
                   <ListEditor
                     label="Bullets"
                     items={heroBullets}
@@ -2136,11 +2160,285 @@ export function SectionEditorDrawer({
                     autosize
                     minRows={2}
                   />
+
+                  <Divider />
+                  <Text size="xs" c="dimmed" fw={500}>Trust items (replaces trust line if set)</Text>
+                  <Stack gap="xs">
+                    {heroTrustItems.map((item, idx) => (
+                      <Group key={idx} gap="xs">
+                        <TextInput
+                          style={{ flex: 1 }}
+                          placeholder="Trust badge text"
+                          value={asString(item.text)}
+                          onChange={(e) => {
+                            const next = heroTrustItems.slice()
+                            next[idx] = { ...item, text: e.currentTarget.value }
+                            setContent((c) => ({ ...c, trustItems: next }))
+                          }}
+                        />
+                        <ActionIcon
+                          variant="default"
+                          aria-label="Remove trust item"
+                          onClick={() =>
+                            setContent((c) => ({
+                              ...c,
+                              trustItems: heroTrustItems.filter((_, i) => i !== idx),
+                            }))
+                          }
+                        >
+                          <IconX size={16} />
+                        </ActionIcon>
+                      </Group>
+                    ))}
+                    <Button
+                      size="xs"
+                      variant="default"
+                      leftSection={<IconPlus size={14} />}
+                      onClick={() =>
+                        setContent((c) => ({
+                          ...c,
+                          trustItems: [...heroTrustItems, { text: "" }],
+                        }))
+                      }
+                    >
+                      Add trust item
+                    </Button>
+                  </Stack>
+
+                  <Divider />
+                  <Text size="xs" c="dimmed" fw={500}>Hero stats</Text>
+                  <Stack gap="xs">
+                    {heroStats.map((stat, idx) => (
+                      <Group key={idx} gap="xs">
+                        <TextInput
+                          style={{ flex: 1 }}
+                          placeholder="Value (e.g. 50+)"
+                          value={asString(stat.value)}
+                          onChange={(e) => {
+                            const next = heroStats.slice()
+                            next[idx] = { ...stat, value: e.currentTarget.value }
+                            setContent((c) => ({ ...c, heroStats: next }))
+                          }}
+                        />
+                        <TextInput
+                          style={{ flex: 1 }}
+                          placeholder="Label (e.g. Workflows)"
+                          value={asString(stat.label)}
+                          onChange={(e) => {
+                            const next = heroStats.slice()
+                            next[idx] = { ...stat, label: e.currentTarget.value }
+                            setContent((c) => ({ ...c, heroStats: next }))
+                          }}
+                        />
+                        <ActionIcon
+                          variant="default"
+                          aria-label="Remove stat"
+                          onClick={() =>
+                            setContent((c) => ({
+                              ...c,
+                              heroStats: heroStats.filter((_, i) => i !== idx),
+                            }))
+                          }
+                        >
+                          <IconX size={16} />
+                        </ActionIcon>
+                      </Group>
+                    ))}
+                    <Button
+                      size="xs"
+                      variant="default"
+                      leftSection={<IconPlus size={14} />}
+                      onClick={() =>
+                        setContent((c) => ({
+                          ...c,
+                          heroStats: [...heroStats, { value: "", label: "" }],
+                        }))
+                      }
+                    >
+                      Add stat
+                    </Button>
+                  </Stack>
+
+                  {heroLayoutVariant === "split" || heroLayoutVariant === "split_reversed" ? (
+                    <>
+                      <Divider />
+                      <Text size="xs" c="dimmed" fw={500}>Proof panel (split layout)</Text>
+                      <Select
+                        label="Proof panel type"
+                        comboboxProps={{ withinPortal: false }}
+                        data={[
+                          { value: "", label: "None" },
+                          { value: "stats", label: "Stats grid" },
+                          { value: "mockup", label: "Mockup / screenshot" },
+                          { value: "image", label: "Image" },
+                        ]}
+                        value={asString(heroProofPanel.type)}
+                        onChange={(v: string) =>
+                          setContent((c) => ({
+                            ...c,
+                            proofPanel: { ...heroProofPanel, type: v || undefined },
+                          }))
+                        }
+                      />
+                      {asString(heroProofPanel.type) ? (
+                        <>
+                          <TextInput
+                            label="Proof headline"
+                            value={asString(heroProofPanel.headline)}
+                            onChange={(e) =>
+                              setContent((c) => ({
+                                ...c,
+                                proofPanel: { ...heroProofPanel, headline: e.currentTarget.value },
+                              }))
+                            }
+                          />
+                          {asString(heroProofPanel.type) === "stats" ? (
+                            <Stack gap="xs">
+                              <Text size="sm" fw={500}>Proof stats</Text>
+                              {asArray<Record<string, unknown>>(heroProofPanel.items).map((pi, idx) => (
+                                <Group key={idx} gap="xs">
+                                  <TextInput
+                                    style={{ flex: 1 }}
+                                    placeholder="Value"
+                                    value={asString(pi.value)}
+                                    onChange={(e) => {
+                                      const items = asArray<Record<string, unknown>>(heroProofPanel.items).slice()
+                                      items[idx] = { ...pi, value: e.currentTarget.value }
+                                      setContent((c) => ({
+                                        ...c,
+                                        proofPanel: { ...heroProofPanel, items },
+                                      }))
+                                    }}
+                                  />
+                                  <TextInput
+                                    style={{ flex: 1 }}
+                                    placeholder="Label"
+                                    value={asString(pi.label)}
+                                    onChange={(e) => {
+                                      const items = asArray<Record<string, unknown>>(heroProofPanel.items).slice()
+                                      items[idx] = { ...pi, label: e.currentTarget.value }
+                                      setContent((c) => ({
+                                        ...c,
+                                        proofPanel: { ...heroProofPanel, items },
+                                      }))
+                                    }}
+                                  />
+                                  <ActionIcon
+                                    variant="default"
+                                    aria-label="Remove proof stat"
+                                    onClick={() => {
+                                      const items = asArray<Record<string, unknown>>(heroProofPanel.items).filter((_, i) => i !== idx)
+                                      setContent((c) => ({
+                                        ...c,
+                                        proofPanel: { ...heroProofPanel, items },
+                                      }))
+                                    }}
+                                  >
+                                    <IconX size={16} />
+                                  </ActionIcon>
+                                </Group>
+                              ))}
+                              <Button
+                                size="xs"
+                                variant="default"
+                                leftSection={<IconPlus size={14} />}
+                                onClick={() => {
+                                  const items = [...asArray<Record<string, unknown>>(heroProofPanel.items), { value: "", label: "" }]
+                                  setContent((c) => ({
+                                    ...c,
+                                    proofPanel: { ...heroProofPanel, items },
+                                  }))
+                                }}
+                              >
+                                Add proof stat
+                              </Button>
+                            </Stack>
+                          ) : null}
+                          {asString(heroProofPanel.type) === "mockup" ? (
+                            <Select
+                              label="Mockup variant"
+                              comboboxProps={{ withinPortal: false }}
+                              data={[
+                                { value: "dashboard", label: "Dashboard" },
+                                { value: "workflow", label: "Workflow" },
+                                { value: "terminal", label: "Terminal" },
+                              ]}
+                              value={asString(heroProofPanel.mockupVariant, "dashboard")}
+                              onChange={(v: string) =>
+                                setContent((c) => ({
+                                  ...c,
+                                  proofPanel: { ...heroProofPanel, mockupVariant: v || "dashboard" },
+                                }))
+                              }
+                            />
+                          ) : null}
+                          {asString(heroProofPanel.type) !== "stats" ? (
+                            <TextInput
+                              label="Proof image URL"
+                              value={asString(heroProofPanel.imageUrl)}
+                              onChange={(e) =>
+                                setContent((c) => ({
+                                  ...c,
+                                  proofPanel: { ...heroProofPanel, imageUrl: e.currentTarget.value },
+                                }))
+                              }
+                            />
+                          ) : null}
+                        </>
+                      ) : null}
+                    </>
+                  ) : null}
                 </>
               ) : null}
 
               {type === "card_grid" ? (
                 <Stack gap="sm">
+                  <Select
+                    label="Section variant"
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                      { value: "default", label: "Default" },
+                      { value: "value_pillars", label: "Value pillars" },
+                      { value: "services", label: "Services" },
+                      { value: "problem_cards", label: "Problem cards" },
+                      { value: "proof_cards", label: "Proof cards" },
+                      { value: "logo_tiles", label: "Logo tiles" },
+                    ]}
+                    value={asString(content.sectionVariant, "default")}
+                    onChange={(v: string) => setContent((c) => ({ ...c, sectionVariant: v || "default" }))}
+                  />
+                  <SimpleGrid cols={2}>
+                    <Select
+                      label="Columns"
+                      comboboxProps={{ withinPortal: false }}
+                      data={[
+                        { value: "", label: "Auto" },
+                        { value: "2", label: "2" },
+                        { value: "3", label: "3" },
+                        { value: "4", label: "4" },
+                      ]}
+                      value={String(content.columns ?? "")}
+                      onChange={(v: string) => setContent((c) => ({ ...c, columns: v ? Number(v) : undefined }))}
+                    />
+                    <Select
+                      label="Card tone"
+                      comboboxProps={{ withinPortal: false }}
+                      data={[
+                        { value: "default", label: "Default" },
+                        { value: "elevated", label: "Elevated" },
+                        { value: "muted", label: "Muted" },
+                        { value: "contrast", label: "Contrast" },
+                      ]}
+                      value={asString(content.cardTone, "default")}
+                      onChange={(v: string) => setContent((c) => ({ ...c, cardTone: v || "default" }))}
+                    />
+                  </SimpleGrid>
+                  <TextInput
+                    label="Section eyebrow"
+                    placeholder="e.g. Our Services"
+                    value={asString(content.eyebrow)}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                  />
                   <Group justify="space-between">
                     <Text size="sm" fw={600}>
                       Cards
@@ -2393,6 +2691,38 @@ export function SectionEditorDrawer({
                                 )}
                               </Stack>
                             ) : null}
+                            <SimpleGrid cols={3}>
+                              <TextInput
+                                label="Icon"
+                                placeholder="e.g. emoji"
+                                value={asString(r.icon)}
+                                onChange={(e) => {
+                                  const next = whatCards.slice()
+                                  next[idx] = { ...r, icon: e.currentTarget.value }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                              />
+                              <TextInput
+                                label="Stat"
+                                placeholder="e.g. 50+"
+                                value={asString(r.stat)}
+                                onChange={(e) => {
+                                  const next = whatCards.slice()
+                                  next[idx] = { ...r, stat: e.currentTarget.value }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                              />
+                              <TextInput
+                                label="Tag"
+                                placeholder="e.g. NEW"
+                                value={asString(r.tag)}
+                                onChange={(e) => {
+                                  const next = whatCards.slice()
+                                  next[idx] = { ...r, tag: e.currentTarget.value }
+                                  setContent((c) => ({ ...c, cards: next }))
+                                }}
+                              />
+                            </SimpleGrid>
                           </Stack>
                         </Paper>
                       )
@@ -2408,6 +2738,23 @@ export function SectionEditorDrawer({
 
               {type === "steps_list" ? (
                 <Stack gap="sm">
+                  <Select
+                    label="Layout variant"
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                      { value: "grid", label: "Grid (default)" },
+                      { value: "timeline", label: "Timeline" },
+                      { value: "connected_flow", label: "Connected flow" },
+                    ]}
+                    value={asString(content.layoutVariant, "grid")}
+                    onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "grid" }))}
+                  />
+                  <TextInput
+                    label="Section eyebrow"
+                    placeholder="e.g. How It Works"
+                    value={asString(content.eyebrow)}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                  />
                   <Group justify="space-between">
                     <Text size="sm" fw={600}>
                       Steps
@@ -2478,6 +2825,24 @@ export function SectionEditorDrawer({
 
               {type === "title_body_list" ? (
                 <Stack gap="sm">
+                  <Select
+                    label="Layout variant"
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                      { value: "accordion", label: "Accordion (default)" },
+                      { value: "stacked", label: "Stacked list" },
+                      { value: "two_column", label: "Two-column grid" },
+                      { value: "cards", label: "Cards" },
+                    ]}
+                    value={asString(content.layoutVariant, "accordion")}
+                    onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "accordion" }))}
+                  />
+                  <TextInput
+                    label="Section eyebrow"
+                    placeholder="e.g. Who It's For"
+                    value={asString(content.eyebrow)}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                  />
                   <Group justify="space-between">
                     <Text size="sm" fw={600}>
                       Items
@@ -2557,6 +2922,30 @@ export function SectionEditorDrawer({
 
               {type === "label_value_list" ? (
                 <Stack gap="sm">
+                  <Select
+                    label="Layout variant"
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                      { value: "default", label: "Default (label/value tiles)" },
+                      { value: "metrics_grid", label: "Metrics grid" },
+                      { value: "trust_strip", label: "Trust strip (compact horizontal)" },
+                      { value: "tool_badges", label: "Tool badges" },
+                      { value: "logo_row", label: "Logo row" },
+                    ]}
+                    value={asString(content.layoutVariant, "default")}
+                    onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "default" }))}
+                  />
+                  <TextInput
+                    label="Section eyebrow"
+                    placeholder="e.g. Trusted By"
+                    value={asString(content.eyebrow)}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                  />
+                  <Checkbox
+                    label="Compact mode"
+                    checked={content.compact === true}
+                    onChange={(e) => setContent((c) => ({ ...c, compact: e.currentTarget.checked }))}
+                  />
                   <Group justify="space-between">
                     <Text size="sm" fw={600}>
                       Items
@@ -2598,24 +2987,48 @@ export function SectionEditorDrawer({
                                 <IconX size={16} />
                               </ActionIcon>
                             </Group>
-                            <TextInput
-                              label="Label"
-                              value={asString(r.label)}
-                              onChange={(e) => {
-                                const next = techItems.slice()
-                                next[idx] = { ...r, label: e.currentTarget.value }
-                                setContent((c) => ({ ...c, items: next }))
-                              }}
-                            />
-                            <TextInput
-                              label="Value"
-                              value={asString(r.value)}
-                              onChange={(e) => {
-                                const next = techItems.slice()
-                                next[idx] = { ...r, value: e.currentTarget.value }
-                                setContent((c) => ({ ...c, items: next }))
-                              }}
-                            />
+                            <SimpleGrid cols={2}>
+                              <TextInput
+                                label="Label"
+                                value={asString(r.label)}
+                                onChange={(e) => {
+                                  const next = techItems.slice()
+                                  next[idx] = { ...r, label: e.currentTarget.value }
+                                  setContent((c) => ({ ...c, items: next }))
+                                }}
+                              />
+                              <TextInput
+                                label="Value"
+                                value={asString(r.value)}
+                                onChange={(e) => {
+                                  const next = techItems.slice()
+                                  next[idx] = { ...r, value: e.currentTarget.value }
+                                  setContent((c) => ({ ...c, items: next }))
+                                }}
+                              />
+                            </SimpleGrid>
+                            <SimpleGrid cols={2}>
+                              <TextInput
+                                label="Icon"
+                                placeholder="emoji or symbol"
+                                value={asString(r.icon)}
+                                onChange={(e) => {
+                                  const next = techItems.slice()
+                                  next[idx] = { ...r, icon: e.currentTarget.value }
+                                  setContent((c) => ({ ...c, items: next }))
+                                }}
+                              />
+                              <TextInput
+                                label="Image URL"
+                                placeholder="logo or badge URL"
+                                value={asString(r.imageUrl)}
+                                onChange={(e) => {
+                                  const next = techItems.slice()
+                                  next[idx] = { ...r, imageUrl: e.currentTarget.value }
+                                  setContent((c) => ({ ...c, items: next }))
+                                }}
+                              />
+                            </SimpleGrid>
                           </Stack>
                         </Paper>
                       )
@@ -2695,12 +3108,32 @@ export function SectionEditorDrawer({
               ) : null}
 
               {type === "cta_block" ? (
-                <TipTapJsonEditor
-                  label="Body"
-                  value={richTextWithFallback(content.bodyRichText, content.body)}
-                  onChange={(next) => setContent((c) => ({ ...c, bodyRichText: next }))}
-                  onError={setError}
-                />
+                <Stack gap="sm">
+                  <Select
+                    label="Layout variant"
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                      { value: "centered", label: "Centered (default)" },
+                      { value: "split", label: "Split (text left, CTAs right)" },
+                      { value: "compact", label: "Compact inline" },
+                      { value: "high_contrast", label: "High contrast" },
+                    ]}
+                    value={asString(content.layoutVariant, "centered")}
+                    onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "centered" }))}
+                  />
+                  <TextInput
+                    label="Eyebrow"
+                    placeholder="e.g. Ready to start?"
+                    value={asString(content.eyebrow)}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                  />
+                  <TipTapJsonEditor
+                    label="Body"
+                    value={richTextWithFallback(content.bodyRichText, content.body)}
+                    onChange={(next) => setContent((c) => ({ ...c, bodyRichText: next }))}
+                    onError={setError}
+                  />
+                </Stack>
               ) : null}
 
               {type === "footer_grid" ? (
