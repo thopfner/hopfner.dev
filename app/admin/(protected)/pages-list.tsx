@@ -467,7 +467,7 @@ export function PagesList() {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Button size="small" variant="outlined" color="primary" component={Link} href={`/pages/${p.id}`}>
+                        <Button size="small" variant="outlined" color="primary" component={Link} href={`/admin/pages/${p.id}`}>
                           Edit
                         </Button>
                       </TableCell>
@@ -504,7 +504,7 @@ export function PagesList() {
                           /{p.slug}
                         </Typography>
                       </Box>
-                      <Button size="small" variant="outlined" color="primary" component={Link} href={`/pages/${p.id}`}>
+                      <Button size="small" variant="outlined" color="primary" component={Link} href={`/admin/pages/${p.id}`}>
                         Edit
                       </Button>
                     </Box>

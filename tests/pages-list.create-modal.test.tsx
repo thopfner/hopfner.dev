@@ -111,6 +111,20 @@ describe("PagesList create modal", () => {
     expect(insertMock).not.toHaveBeenCalled()
   })
 
+  it("uses admin edit links for page rows", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okJson(initialOverview)) as any)
+
+    render(<PagesList />)
+
+    await screen.findByText("All pages")
+
+    const editLinks = screen.getAllByRole("link", { name: /edit/i })
+    expect(editLinks.length).toBeGreaterThan(0)
+    for (const link of editLinks) {
+      expect(link).toHaveAttribute("href", "/admin/pages/p-1")
+    }
+  })
+
   it("submits with keyboard and refreshes list/count chips", async () => {
     const refreshedOverview: OverviewPayload = {
       pages: [

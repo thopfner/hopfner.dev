@@ -1731,7 +1731,7 @@ export function PageEditor({ pageId }: { pageId: string }) {
 
   function openSection(section: SectionRow) {
     if (section.global_section_id) {
-      router.push(`/global-sections?edit=${section.global_section_id}`)
+      router.push(`/admin/global-sections?edit=${section.global_section_id}`)
       return
     }
     setActiveSection(section)
