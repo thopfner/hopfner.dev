@@ -2,11 +2,13 @@ import type { CSSProperties } from "react"
 import Link from "next/link"
 
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { tiptapJsonToSanitizedHtml } from "@/lib/cms/rich-text"
 
 type BlockType =
   | "heading" | "subtitle" | "rich_text" | "cards" | "faq" | "image" | "list" | "cta"
@@ -18,12 +20,13 @@ type ComposerBlock = {
   type: BlockType
   title?: string
   body?: string
+  bodyRichText?: unknown
   imageUrl?: string
   listStyle?: "basic" | "steps"
   items?: string[]
   steps?: Array<{ title?: string; body?: string }>
   cards?: Array<{ title: string; body: string }>
-  faqs?: Array<{ q: string; a: string }>
+  faqs?: Array<{ q: string; a: string; aRichText?: unknown }>
   ctaPrimaryLabel?: string
   ctaPrimaryHref?: string
   ctaSecondaryLabel?: string
@@ -90,6 +93,16 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties) {
   }
 
   if (b.type === "rich_text") {
+    const html = tiptapJsonToSanitizedHtml(b.bodyRichText)
+    if (html) {
+      return (
+        <div
+          key={b.id}
+          className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      )
+    }
     return <p key={b.id} className="text-sm text-muted-foreground">{b.body || "Rich text"}</p>
   }
 
@@ -175,7 +188,20 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties) {
         {entries.map((faq, i) => (
           <AccordionItem key={`${b.id}-${i}`} value={`${b.id}-${i}`}>
             <AccordionTrigger>{faq.q}</AccordionTrigger>
-            <AccordionContent>{faq.a}</AccordionContent>
+            <AccordionContent>
+              {(() => {
+                const html = tiptapJsonToSanitizedHtml(faq.aRichText)
+                if (html) {
+                  return (
+                    <div
+                      className={cn("text-sm", RICH_TEXT_CLASS)}
+                      dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                  )
+                }
+                return faq.a
+              })()}
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>

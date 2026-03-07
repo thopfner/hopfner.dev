@@ -32,12 +32,6 @@ type GlobalSectionVersionRow = {
   version: number
 }
 
-type SectionTypeRegistryRow = {
-  key: string
-  renderer: "legacy" | "composed"
-  is_active: boolean
-}
-
 export async function GET() {
   const guard = await requireAdmin()
   if (!guard.ok) {
@@ -78,9 +72,7 @@ export async function GET() {
     const sections = (sectionsData ?? []) as SectionRow[]
     const sectionIds = sections.map((s) => s.id)
     const globalSectionIds = [...new Set(sections.map((s) => s.global_section_id).filter(Boolean) as string[])]
-    const sectionTypes = [...new Set(sections.map((s) => s.section_type).filter(Boolean))]
-
-    const [sectionVersionsRes, globalSectionVersionsRes, sectionTypeRegistryRes] = await Promise.all([
+    const [sectionVersionsRes, globalSectionVersionsRes] = await Promise.all([
       sectionIds.length
         ? supabase
             .from("section_versions")
@@ -95,12 +87,6 @@ export async function GET() {
             .in("global_section_id", globalSectionIds)
             .in("status", ["draft", "published"])
         : Promise.resolve({ data: [], error: null }),
-      sectionTypes.length
-        ? supabase
-            .from("section_type_registry")
-            .select("key, renderer, is_active")
-            .in("key", sectionTypes)
-        : Promise.resolve({ data: [], error: null }),
     ])
 
     if (sectionVersionsRes.error) {
@@ -109,16 +95,19 @@ export async function GET() {
     if (globalSectionVersionsRes.error) {
       return NextResponse.json({ error: globalSectionVersionsRes.error.message }, { status: 500 })
     }
-    if (sectionTypeRegistryRes.error) {
-      return NextResponse.json({ error: sectionTypeRegistryRes.error.message }, { status: 500 })
-    }
 
     const sectionVersions = (sectionVersionsRes.data ?? []) as SectionVersionRow[]
     const globalSectionVersions = (globalSectionVersionsRes.data ?? []) as GlobalSectionVersionRow[]
-    const sectionTypeRegistry = (sectionTypeRegistryRes.data ?? []) as SectionTypeRegistryRow[]
 
-    const composedSectionTypes = new Set(
-      sectionTypeRegistry.filter((row) => row.is_active && row.renderer === "composed").map((row) => row.key)
+    // Fetch active composed types from registry — these can render without version rows
+    const { data: registryData } = await supabase
+      .from("section_type_registry")
+      .select("key")
+      .eq("is_active", true)
+      .eq("renderer", "composed")
+
+    const composedTypeKeys = new Set(
+      ((registryData ?? []) as Array<{ key: string }>).map((r) => r.key)
     )
 
     const publishedBySection = new Map<string, number>()
@@ -158,14 +147,16 @@ export async function GET() {
       if (!section.enabled) return true
 
       if (section.global_section_id) {
-        return publishedByGlobalSection.has(section.global_section_id)
+        if (publishedByGlobalSection.has(section.global_section_id)) return true
+        // Composed sections with no version rows at all render via registry schema fallback
+        if (composedTypeKeys.has(section.section_type) && !draftByGlobalSection.has(section.global_section_id)) return true
+        return false
       }
 
-      if (composedSectionTypes.has(section.section_type)) {
-        return true
-      }
-
-      return publishedBySection.has(section.id)
+      if (publishedBySection.has(section.id)) return true
+      // Composed sections with no version rows at all render via registry schema fallback
+      if (composedTypeKeys.has(section.section_type) && !draftBySection.has(section.id)) return true
+      return false
     }
 
     const hasSectionDraftChanges = (section: SectionRow) => {
@@ -175,10 +166,6 @@ export async function GET() {
         const draftVersion = draftByGlobalSection.get(section.global_section_id)
         const publishedVersion = publishedByGlobalSection.get(section.global_section_id) ?? -1
         return draftVersion !== undefined && draftVersion > publishedVersion
-      }
-
-      if (composedSectionTypes.has(section.section_type)) {
-        return false
       }
 
       const draftVersion = draftBySection.get(section.id)

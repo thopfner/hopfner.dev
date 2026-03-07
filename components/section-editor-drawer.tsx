@@ -187,14 +187,14 @@ function asStringArray(v: unknown): string[] {
 }
 
 function inputValueFromEvent(e: unknown): string {
-  if (
-    e &&
-    typeof e === "object" &&
-    "currentTarget" in e &&
-    (e as { currentTarget?: { value?: unknown } }).currentTarget &&
-    typeof (e as { currentTarget?: { value?: unknown } }).currentTarget?.value === "string"
-  ) {
-    return (e as { currentTarget: { value: string } }).currentTarget.value
+  if (e && typeof e === "object") {
+    const ev = e as { currentTarget?: { value?: unknown }; target?: { value?: unknown } }
+    if (ev.currentTarget && typeof ev.currentTarget.value === "string") {
+      return ev.currentTarget.value
+    }
+    if (ev.target && typeof ev.target.value === "string") {
+      return ev.target.value
+    }
   }
   return ""
 }
@@ -262,6 +262,8 @@ function richTextDocToPlainText(input: unknown): string {
 }
 
 type ComposerBlockType = "heading" | "subtitle" | "rich_text" | "cards" | "faq" | "image" | "list" | "cta"
+  | "logo_strip" | "metrics_row" | "badge_group" | "proof_card" | "testimonial"
+  | "media_panel" | "workflow_diagram" | "comparison" | "stat_chip_row"
 
 type ComposerBlock = {
   id: string
@@ -272,6 +274,18 @@ type ComposerBlock = {
   listStyle?: "basic" | "steps"
   items?: string[]
   steps?: Array<{ title?: string; body?: string }>
+  logos?: Array<{ label: string; imageUrl?: string }>
+  metrics?: Array<{ value: string; label: string; icon?: string }>
+  badges?: Array<{ text: string; icon?: string }>
+  stats?: Array<{ value: string; label: string }>
+  quote?: string
+  author?: string
+  role?: string
+  beforeLabel?: string
+  afterLabel?: string
+  beforeItems?: string[]
+  afterItems?: string[]
+  flowSteps?: Array<{ label: string; description?: string }>
   cards?: Array<{ title: string; body: string }>
   faqs?: Array<{ q: string; a: string }>
   ctaPrimaryLabel?: string
@@ -714,7 +728,7 @@ function LinkMenuField({
             <TextInput
               label="Link"
               value={customDraft}
-              onChange={(e) => setCustomDraft(e.currentTarget.value)}
+              onChange={(e) => setCustomDraft(inputValueFromEvent(e))}
               placeholder="https://... or mailto:... or /about#pricing"
               mb="xs"
             />
@@ -1106,7 +1120,7 @@ function ListEditor({
               placeholder={placeholder}
               onChange={(e) => {
                 const next = items.slice()
-                next[idx] = e.currentTarget.value
+                next[idx] = inputValueFromEvent(e)
                 onChange(next)
               }}
               style={{ flex: 1 }}
@@ -1888,16 +1902,16 @@ export function SectionEditorDrawer({
 
               <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                 {showTitle ? (
-                  <TextInput label="Title" value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
+                  <TextInput label="Title" value={title} onChange={(e) => setTitle(inputValueFromEvent(e))} />
                 ) : null}
                 {showSubtitle ? (
-                  <TextInput label="Subtitle" value={subtitle} onChange={(e) => setSubtitle(e.currentTarget.value)} />
+                  <TextInput label="Subtitle" value={subtitle} onChange={(e) => setSubtitle(inputValueFromEvent(e))} />
                 ) : null}
                 {showCtaPrimary ? (
                   <TextInput
                     label="Primary CTA label"
                     value={ctaPrimaryLabel}
-                    onChange={(e) => setCtaPrimaryLabel(e.currentTarget.value)}
+                    onChange={(e) => setCtaPrimaryLabel(inputValueFromEvent(e))}
                   />
                 ) : null}
                 {showCtaPrimary ? (
@@ -1918,7 +1932,7 @@ export function SectionEditorDrawer({
                   <TextInput
                     label="Secondary CTA label"
                     value={ctaSecondaryLabel}
-                    onChange={(e) => setCtaSecondaryLabel(e.currentTarget.value)}
+                    onChange={(e) => setCtaSecondaryLabel(inputValueFromEvent(e))}
                   />
                 ) : null}
                 {showCtaSecondary ? (
@@ -1942,7 +1956,7 @@ export function SectionEditorDrawer({
                   <TextInput
                     label="Background media URL"
                     value={backgroundMediaUrl}
-                    onChange={(e) => setBackgroundMediaUrl(e.currentTarget.value)}
+                    onChange={(e) => setBackgroundMediaUrl(inputValueFromEvent(e))}
                     placeholder="https://..."
                     style={{ flex: 1 }}
                   />
@@ -2142,7 +2156,7 @@ export function SectionEditorDrawer({
                     label="Eyebrow"
                     placeholder="e.g. AI + Automation Consultancy"
                     value={heroEyebrow}
-                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
                   />
                   <ListEditor
                     label="Bullets"
@@ -2172,7 +2186,7 @@ export function SectionEditorDrawer({
                           value={asString(item.text)}
                           onChange={(e) => {
                             const next = heroTrustItems.slice()
-                            next[idx] = { ...item, text: e.currentTarget.value }
+                            next[idx] = { ...item, text: inputValueFromEvent(e) }
                             setContent((c) => ({ ...c, trustItems: next }))
                           }}
                         />
@@ -2216,7 +2230,7 @@ export function SectionEditorDrawer({
                           value={asString(stat.value)}
                           onChange={(e) => {
                             const next = heroStats.slice()
-                            next[idx] = { ...stat, value: e.currentTarget.value }
+                            next[idx] = { ...stat, value: inputValueFromEvent(e) }
                             setContent((c) => ({ ...c, heroStats: next }))
                           }}
                         />
@@ -2226,7 +2240,7 @@ export function SectionEditorDrawer({
                           value={asString(stat.label)}
                           onChange={(e) => {
                             const next = heroStats.slice()
-                            next[idx] = { ...stat, label: e.currentTarget.value }
+                            next[idx] = { ...stat, label: inputValueFromEvent(e) }
                             setContent((c) => ({ ...c, heroStats: next }))
                           }}
                         />
@@ -2288,7 +2302,7 @@ export function SectionEditorDrawer({
                             onChange={(e) =>
                               setContent((c) => ({
                                 ...c,
-                                proofPanel: { ...heroProofPanel, headline: e.currentTarget.value },
+                                proofPanel: { ...heroProofPanel, headline: inputValueFromEvent(e) },
                               }))
                             }
                           />
@@ -2303,7 +2317,7 @@ export function SectionEditorDrawer({
                                     value={asString(pi.value)}
                                     onChange={(e) => {
                                       const items = asArray<Record<string, unknown>>(heroProofPanel.items).slice()
-                                      items[idx] = { ...pi, value: e.currentTarget.value }
+                                      items[idx] = { ...pi, value: inputValueFromEvent(e) }
                                       setContent((c) => ({
                                         ...c,
                                         proofPanel: { ...heroProofPanel, items },
@@ -2316,7 +2330,7 @@ export function SectionEditorDrawer({
                                     value={asString(pi.label)}
                                     onChange={(e) => {
                                       const items = asArray<Record<string, unknown>>(heroProofPanel.items).slice()
-                                      items[idx] = { ...pi, label: e.currentTarget.value }
+                                      items[idx] = { ...pi, label: inputValueFromEvent(e) }
                                       setContent((c) => ({
                                         ...c,
                                         proofPanel: { ...heroProofPanel, items },
@@ -2379,7 +2393,7 @@ export function SectionEditorDrawer({
                               onChange={(e) =>
                                 setContent((c) => ({
                                   ...c,
-                                  proofPanel: { ...heroProofPanel, imageUrl: e.currentTarget.value },
+                                  proofPanel: { ...heroProofPanel, imageUrl: inputValueFromEvent(e) },
                                 }))
                               }
                             />
@@ -2437,7 +2451,7 @@ export function SectionEditorDrawer({
                     label="Section eyebrow"
                     placeholder="e.g. Our Services"
                     value={asString(content.eyebrow)}
-                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
                   />
                   <Group justify="space-between">
                     <Text size="sm" fw={600}>
@@ -2562,7 +2576,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.title)}
                                 onChange={(e) => {
                                   const next = whatCards.slice()
-                                  next[idx] = { ...r, title: e.currentTarget.value }
+                                  next[idx] = { ...r, title: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, cards: next }))
                                 }}
                               />
@@ -2684,7 +2698,7 @@ export function SectionEditorDrawer({
                                     value={bestFor}
                                     onChange={(e) => {
                                       const next = whatCards.slice()
-                                      next[idx] = { ...r, bestFor: e.currentTarget.value }
+                                      next[idx] = { ...r, bestFor: inputValueFromEvent(e) }
                                       setContent((c) => ({ ...c, cards: next }))
                                     }}
                                   />
@@ -2698,7 +2712,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.icon)}
                                 onChange={(e) => {
                                   const next = whatCards.slice()
-                                  next[idx] = { ...r, icon: e.currentTarget.value }
+                                  next[idx] = { ...r, icon: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, cards: next }))
                                 }}
                               />
@@ -2708,7 +2722,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.stat)}
                                 onChange={(e) => {
                                   const next = whatCards.slice()
-                                  next[idx] = { ...r, stat: e.currentTarget.value }
+                                  next[idx] = { ...r, stat: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, cards: next }))
                                 }}
                               />
@@ -2718,7 +2732,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.tag)}
                                 onChange={(e) => {
                                   const next = whatCards.slice()
-                                  next[idx] = { ...r, tag: e.currentTarget.value }
+                                  next[idx] = { ...r, tag: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, cards: next }))
                                 }}
                               />
@@ -2753,7 +2767,7 @@ export function SectionEditorDrawer({
                     label="Section eyebrow"
                     placeholder="e.g. How It Works"
                     value={asString(content.eyebrow)}
-                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
                   />
                   <Group justify="space-between">
                     <Text size="sm" fw={600}>
@@ -2801,7 +2815,7 @@ export function SectionEditorDrawer({
                               value={asString(r.title)}
                               onChange={(e) => {
                                 const next = howSteps.slice()
-                                next[idx] = { ...r, title: e.currentTarget.value }
+                                next[idx] = { ...r, title: inputValueFromEvent(e) }
                                 setContent((c) => ({ ...c, steps: next }))
                               }}
                             />
@@ -2841,7 +2855,7 @@ export function SectionEditorDrawer({
                     label="Section eyebrow"
                     placeholder="e.g. Who It's For"
                     value={asString(content.eyebrow)}
-                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
                   />
                   <Group justify="space-between">
                     <Text size="sm" fw={600}>
@@ -2889,7 +2903,7 @@ export function SectionEditorDrawer({
                               value={asString(r.title)}
                               onChange={(e) => {
                                 const next = workflowItems.slice()
-                                next[idx] = { ...r, title: e.currentTarget.value }
+                                next[idx] = { ...r, title: inputValueFromEvent(e) }
                                 setContent((c) => ({ ...c, items: next }))
                               }}
                             />
@@ -2939,7 +2953,7 @@ export function SectionEditorDrawer({
                     label="Section eyebrow"
                     placeholder="e.g. Trusted By"
                     value={asString(content.eyebrow)}
-                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
                   />
                   <Checkbox
                     label="Compact mode"
@@ -2993,7 +3007,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.label)}
                                 onChange={(e) => {
                                   const next = techItems.slice()
-                                  next[idx] = { ...r, label: e.currentTarget.value }
+                                  next[idx] = { ...r, label: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, items: next }))
                                 }}
                               />
@@ -3002,7 +3016,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.value)}
                                 onChange={(e) => {
                                   const next = techItems.slice()
-                                  next[idx] = { ...r, value: e.currentTarget.value }
+                                  next[idx] = { ...r, value: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, items: next }))
                                 }}
                               />
@@ -3014,7 +3028,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.icon)}
                                 onChange={(e) => {
                                   const next = techItems.slice()
-                                  next[idx] = { ...r, icon: e.currentTarget.value }
+                                  next[idx] = { ...r, icon: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, items: next }))
                                 }}
                               />
@@ -3024,7 +3038,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.imageUrl)}
                                 onChange={(e) => {
                                   const next = techItems.slice()
-                                  next[idx] = { ...r, imageUrl: e.currentTarget.value }
+                                  next[idx] = { ...r, imageUrl: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, items: next }))
                                 }}
                               />
@@ -3085,7 +3099,7 @@ export function SectionEditorDrawer({
                               value={asString(r.question)}
                               onChange={(e) => {
                                 const next = faqItems.slice()
-                                next[idx] = { ...r, question: e.currentTarget.value }
+                                next[idx] = { ...r, question: inputValueFromEvent(e) }
                                 setContent((c) => ({ ...c, items: next }))
                               }}
                             />
@@ -3125,7 +3139,7 @@ export function SectionEditorDrawer({
                     label="Eyebrow"
                     placeholder="e.g. Ready to start?"
                     value={asString(content.eyebrow)}
-                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: e.currentTarget.value }))}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
                   />
                   <TipTapJsonEditor
                     label="Body"
@@ -3208,7 +3222,7 @@ export function SectionEditorDrawer({
                               value={cardTitle}
                               onChange={(e) => {
                                 const next = footerCards.slice()
-                                next[idx] = { ...r, title: e.currentTarget.value }
+                                next[idx] = { ...r, title: inputValueFromEvent(e) }
                                 setContent((c) => ({ ...c, cards: next }))
                               }}
                             />
@@ -3218,7 +3232,7 @@ export function SectionEditorDrawer({
                               value={asString(r.body)}
                               onChange={(e) => {
                                 const next = footerCards.slice()
-                                next[idx] = { ...r, body: e.currentTarget.value }
+                                next[idx] = { ...r, body: inputValueFromEvent(e) }
                                 setContent((c) => ({ ...c, cards: next }))
                               }}
                               autosize
@@ -3266,7 +3280,7 @@ export function SectionEditorDrawer({
                                           value={asString(link.label)}
                                           onChange={(e) => {
                                             const nextLinks = flatLinks.slice()
-                                            nextLinks[linkIdx] = { ...link, label: e.currentTarget.value }
+                                            nextLinks[linkIdx] = { ...link, label: inputValueFromEvent(e) }
                                             const nextCards = footerCards.slice()
                                             nextCards[idx] = { ...r, links: nextLinks }
                                             setContent((c) => ({ ...c, cards: nextCards }))
@@ -3337,7 +3351,7 @@ export function SectionEditorDrawer({
                                             value={asString(group.title)}
                                             onChange={(e) => {
                                               const nextGroups = groups.slice()
-                                              nextGroups[groupIdx] = { ...group, title: e.currentTarget.value }
+                                              nextGroups[groupIdx] = { ...group, title: inputValueFromEvent(e) }
                                               const nextCards = footerCards.slice()
                                               nextCards[idx] = { ...r, groups: nextGroups }
                                               setContent((c) => ({ ...c, cards: nextCards }))
@@ -3382,7 +3396,7 @@ export function SectionEditorDrawer({
                                                 value={asString(link.label)}
                                                 onChange={(e) => {
                                                   const nextLinks = groupLinks.slice()
-                                                  nextLinks[linkIdx] = { ...link, label: e.currentTarget.value }
+                                                  nextLinks[linkIdx] = { ...link, label: inputValueFromEvent(e) }
                                                   const nextGroups = groups.slice()
                                                   nextGroups[groupIdx] = { ...group, links: nextLinks }
                                                   const nextCards = footerCards.slice()
@@ -3461,7 +3475,7 @@ export function SectionEditorDrawer({
                                   value={asString(subscribe.placeholder)}
                                   onChange={(e) => {
                                     const next = footerCards.slice()
-                                    next[idx] = { ...r, subscribe: { ...subscribe, placeholder: e.currentTarget.value } }
+                                    next[idx] = { ...r, subscribe: { ...subscribe, placeholder: inputValueFromEvent(e) } }
                                     setContent((c) => ({ ...c, cards: next }))
                                   }}
                                 />
@@ -3470,7 +3484,7 @@ export function SectionEditorDrawer({
                                   value={asString(subscribe.buttonLabel)}
                                   onChange={(e) => {
                                     const next = footerCards.slice()
-                                    next[idx] = { ...r, subscribe: { ...subscribe, buttonLabel: e.currentTarget.value } }
+                                    next[idx] = { ...r, subscribe: { ...subscribe, buttonLabel: inputValueFromEvent(e) } }
                                     setContent((c) => ({ ...c, cards: next }))
                                   }}
                                 />
@@ -3483,7 +3497,7 @@ export function SectionEditorDrawer({
                                 value={asString(ctaPrimary.label)}
                                 onChange={(e) => {
                                   const next = footerCards.slice()
-                                  next[idx] = { ...r, ctaPrimary: { ...ctaPrimary, label: e.currentTarget.value } }
+                                  next[idx] = { ...r, ctaPrimary: { ...ctaPrimary, label: inputValueFromEvent(e) } }
                                   setContent((c) => ({ ...c, cards: next }))
                                 }}
                               />
@@ -3508,7 +3522,7 @@ export function SectionEditorDrawer({
                                 value={asString(ctaSecondary.label)}
                                 onChange={(e) => {
                                   const next = footerCards.slice()
-                                  next[idx] = { ...r, ctaSecondary: { ...ctaSecondary, label: e.currentTarget.value } }
+                                  next[idx] = { ...r, ctaSecondary: { ...ctaSecondary, label: inputValueFromEvent(e) } }
                                   setContent((c) => ({ ...c, cards: next }))
                                 }}
                               />
@@ -3551,7 +3565,7 @@ export function SectionEditorDrawer({
                     label="Copyright"
                     value={asString(footerLegal.copyright)}
                     onChange={(e) => {
-                      const nextLegal = { ...footerLegal, copyright: e.currentTarget.value }
+                      const nextLegal = { ...footerLegal, copyright: inputValueFromEvent(e) }
                       setContent((c) => ({ ...c, legal: nextLegal }))
                     }}
                     placeholder="© 2026 Your Company"
@@ -3582,7 +3596,7 @@ export function SectionEditorDrawer({
                             value={asString(r.label)}
                             onChange={(e) => {
                               const nextLinks = footerLegalLinks.slice()
-                              nextLinks[idx] = { ...r, label: e.currentTarget.value }
+                              nextLinks[idx] = { ...r, label: inputValueFromEvent(e) }
                               const nextLegal = { ...footerLegal, links: nextLinks }
                               setContent((c) => ({ ...c, legal: nextLegal }))
                             }}
@@ -3745,7 +3759,7 @@ export function SectionEditorDrawer({
                                 value={asString(r.label)}
                                 onChange={(e) => {
                                   const next = navLinks.slice()
-                                  next[idx] = { ...r, label: e.currentTarget.value }
+                                  next[idx] = { ...r, label: inputValueFromEvent(e) }
                                   setContent((c) => ({ ...c, links: next }))
                                 }}
                               />
@@ -3803,7 +3817,7 @@ export function SectionEditorDrawer({
                               <TextInput
                                 label="Heading"
                                 value={asString(merged.title)}
-                                onChange={(e) => setCustomBlockPatch(block.id, { title: e.currentTarget.value })}
+                                onChange={(e) => setCustomBlockPatch(block.id, { title: inputValueFromEvent(e) })}
                               />
                             ) : null}
 
@@ -3852,7 +3866,7 @@ export function SectionEditorDrawer({
                                 <TextInput
                                   label="Alt text"
                                   value={asString(merged.title)}
-                                  onChange={(e) => setCustomBlockPatch(block.id, { title: e.currentTarget.value })}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { title: inputValueFromEvent(e) })}
                                 />
                               </ImageFieldPicker>
                             ) : null}
@@ -3898,7 +3912,7 @@ export function SectionEditorDrawer({
                                           value={asString(cardRecord.title)}
                                           onChange={(e) => {
                                             const next = cards.slice()
-                                            next[cardIndex] = { ...cardRecord, title: e.currentTarget.value }
+                                            next[cardIndex] = { ...cardRecord, title: inputValueFromEvent(e) }
                                             setCustomBlockPatch(block.id, { cards: next })
                                           }}
                                         />
@@ -3962,7 +3976,7 @@ export function SectionEditorDrawer({
                                           value={asString(faqRecord.q)}
                                           onChange={(e) => {
                                             const next = faqs.slice()
-                                            next[faqIndex] = { ...faqRecord, q: e.currentTarget.value }
+                                            next[faqIndex] = { ...faqRecord, q: inputValueFromEvent(e) }
                                             setCustomBlockPatch(block.id, { faqs: next })
                                           }}
                                         />
@@ -4048,7 +4062,7 @@ export function SectionEditorDrawer({
                                               value={asString(stepRecord.title)}
                                               onChange={(e) => {
                                                 const next = listSteps.slice()
-                                                next[stepIndex] = { ...stepRecord, title: e.currentTarget.value }
+                                                next[stepIndex] = { ...stepRecord, title: inputValueFromEvent(e) }
                                                 setCustomBlockPatch(block.id, { steps: next })
                                               }}
                                             />
@@ -4078,7 +4092,7 @@ export function SectionEditorDrawer({
                                 <TextInput
                                   label="Primary CTA label"
                                   value={asString(merged.ctaPrimaryLabel)}
-                                  onChange={(e) => setCustomBlockPatch(block.id, { ctaPrimaryLabel: e.currentTarget.value })}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { ctaPrimaryLabel: inputValueFromEvent(e) })}
                                 />
                                 <LinkMenuField
                                   label="Primary CTA link"
@@ -4095,7 +4109,7 @@ export function SectionEditorDrawer({
                                 <TextInput
                                   label="Secondary CTA label"
                                   value={asString(merged.ctaSecondaryLabel)}
-                                  onChange={(e) => setCustomBlockPatch(block.id, { ctaSecondaryLabel: e.currentTarget.value })}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { ctaSecondaryLabel: inputValueFromEvent(e) })}
                                 />
                                 <LinkMenuField
                                   label="Secondary CTA link"
@@ -4111,6 +4125,537 @@ export function SectionEditorDrawer({
                                 />
                               </SimpleGrid>
                             ) : null}
+
+                            {block.type === "logo_strip" ? (() => {
+                              const logos = asArray<Record<string, unknown>>(merged.logos)
+                              return (
+                                <Stack gap="xs">
+                                  <TextInput
+                                    label="Title"
+                                    value={asString(merged.title)}
+                                    onChange={(e) => setCustomBlockPatch(block.id, { title: inputValueFromEvent(e) })}
+                                    placeholder="Optional title"
+                                  />
+                                  <Group justify="space-between">
+                                    <Text size="sm" fw={600}>Logos</Text>
+                                    <Button
+                                      size="xs"
+                                      variant="default"
+                                      leftSection={<IconPlus size={14} />}
+                                      onClick={() =>
+                                        setCustomBlockPatch(block.id, {
+                                          logos: [...logos, { label: "", imageUrl: "" }],
+                                        })
+                                      }
+                                    >
+                                      Add logo
+                                    </Button>
+                                  </Group>
+                                  {logos.map((logo, logoIndex) => {
+                                    const logoRecord = asRecord(logo)
+                                    return (
+                                      <Paper key={`${block.id}-logo-${logoIndex}`} withBorder p="sm" radius="md">
+                                        <Stack gap="xs">
+                                          <Group justify="space-between">
+                                            <Badge size="sm" variant="default">Logo {logoIndex + 1}</Badge>
+                                            <ActionIcon
+                                              variant="default"
+                                              aria-label="Remove logo"
+                                              onClick={() =>
+                                                setCustomBlockPatch(block.id, {
+                                                  logos: logos.filter((_, i) => i !== logoIndex),
+                                                })
+                                              }
+                                            >
+                                              <IconX size={16} />
+                                            </ActionIcon>
+                                          </Group>
+                                          <TextInput
+                                            label="Label"
+                                            value={asString(logoRecord.label)}
+                                            onChange={(e) => {
+                                              const next = logos.slice()
+                                              next[logoIndex] = { ...logoRecord, label: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { logos: next })
+                                            }}
+                                          />
+                                          <TextInput
+                                            label="Image URL"
+                                            value={asString(logoRecord.imageUrl)}
+                                            onChange={(e) => {
+                                              const next = logos.slice()
+                                              next[logoIndex] = { ...logoRecord, imageUrl: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { logos: next })
+                                            }}
+                                          />
+                                        </Stack>
+                                      </Paper>
+                                    )
+                                  })}
+                                  {!logos.length ? <Text c="dimmed" size="sm">No logos.</Text> : null}
+                                </Stack>
+                              )
+                            })() : null}
+
+                            {block.type === "metrics_row" ? (() => {
+                              const metrics = asArray<Record<string, unknown>>(merged.metrics)
+                              return (
+                                <Stack gap="xs">
+                                  <Group justify="space-between">
+                                    <Text size="sm" fw={600}>Metrics</Text>
+                                    <Button
+                                      size="xs"
+                                      variant="default"
+                                      leftSection={<IconPlus size={14} />}
+                                      onClick={() =>
+                                        setCustomBlockPatch(block.id, {
+                                          metrics: [...metrics, { value: "", label: "" }],
+                                        })
+                                      }
+                                    >
+                                      Add metric
+                                    </Button>
+                                  </Group>
+                                  {metrics.map((metric, metricIndex) => {
+                                    const metricRecord = asRecord(metric)
+                                    return (
+                                      <Paper key={`${block.id}-metric-${metricIndex}`} withBorder p="sm" radius="md">
+                                        <Stack gap="xs">
+                                          <Group justify="space-between">
+                                            <Badge size="sm" variant="default">Metric {metricIndex + 1}</Badge>
+                                            <ActionIcon
+                                              variant="default"
+                                              aria-label="Remove metric"
+                                              onClick={() =>
+                                                setCustomBlockPatch(block.id, {
+                                                  metrics: metrics.filter((_, i) => i !== metricIndex),
+                                                })
+                                              }
+                                            >
+                                              <IconX size={16} />
+                                            </ActionIcon>
+                                          </Group>
+                                          <TextInput
+                                            label="Value"
+                                            value={asString(metricRecord.value)}
+                                            onChange={(e) => {
+                                              const next = metrics.slice()
+                                              next[metricIndex] = { ...metricRecord, value: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { metrics: next })
+                                            }}
+                                          />
+                                          <TextInput
+                                            label="Label"
+                                            value={asString(metricRecord.label)}
+                                            onChange={(e) => {
+                                              const next = metrics.slice()
+                                              next[metricIndex] = { ...metricRecord, label: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { metrics: next })
+                                            }}
+                                          />
+                                          <TextInput
+                                            label="Icon"
+                                            value={asString(metricRecord.icon)}
+                                            onChange={(e) => {
+                                              const next = metrics.slice()
+                                              next[metricIndex] = { ...metricRecord, icon: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { metrics: next })
+                                            }}
+                                            placeholder="Optional icon name"
+                                          />
+                                        </Stack>
+                                      </Paper>
+                                    )
+                                  })}
+                                  {!metrics.length ? <Text c="dimmed" size="sm">No metrics.</Text> : null}
+                                </Stack>
+                              )
+                            })() : null}
+
+                            {block.type === "badge_group" ? (() => {
+                              const badges = asArray<Record<string, unknown>>(merged.badges)
+                              return (
+                                <Stack gap="xs">
+                                  <Group justify="space-between">
+                                    <Text size="sm" fw={600}>Badges</Text>
+                                    <Button
+                                      size="xs"
+                                      variant="default"
+                                      leftSection={<IconPlus size={14} />}
+                                      onClick={() =>
+                                        setCustomBlockPatch(block.id, {
+                                          badges: [...badges, { text: "" }],
+                                        })
+                                      }
+                                    >
+                                      Add badge
+                                    </Button>
+                                  </Group>
+                                  {badges.map((badge, badgeIndex) => {
+                                    const badgeRecord = asRecord(badge)
+                                    return (
+                                      <Paper key={`${block.id}-badge-${badgeIndex}`} withBorder p="sm" radius="md">
+                                        <Stack gap="xs">
+                                          <Group justify="space-between">
+                                            <Badge size="sm" variant="default">Badge {badgeIndex + 1}</Badge>
+                                            <ActionIcon
+                                              variant="default"
+                                              aria-label="Remove badge"
+                                              onClick={() =>
+                                                setCustomBlockPatch(block.id, {
+                                                  badges: badges.filter((_, i) => i !== badgeIndex),
+                                                })
+                                              }
+                                            >
+                                              <IconX size={16} />
+                                            </ActionIcon>
+                                          </Group>
+                                          <TextInput
+                                            label="Text"
+                                            value={asString(badgeRecord.text)}
+                                            onChange={(e) => {
+                                              const next = badges.slice()
+                                              next[badgeIndex] = { ...badgeRecord, text: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { badges: next })
+                                            }}
+                                          />
+                                          <TextInput
+                                            label="Icon"
+                                            value={asString(badgeRecord.icon)}
+                                            onChange={(e) => {
+                                              const next = badges.slice()
+                                              next[badgeIndex] = { ...badgeRecord, icon: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { badges: next })
+                                            }}
+                                            placeholder="Optional icon name"
+                                          />
+                                        </Stack>
+                                      </Paper>
+                                    )
+                                  })}
+                                  {!badges.length ? <Text c="dimmed" size="sm">No badges.</Text> : null}
+                                </Stack>
+                              )
+                            })() : null}
+
+                            {block.type === "proof_card" ? (() => {
+                              const stats = asArray<Record<string, unknown>>(merged.stats)
+                              return (
+                                <Stack gap="xs">
+                                  <TextInput
+                                    label="Title"
+                                    value={asString(merged.title)}
+                                    onChange={(e) => setCustomBlockPatch(block.id, { title: inputValueFromEvent(e) })}
+                                  />
+                                  <Textarea
+                                    label="Body"
+                                    value={asString(merged.body)}
+                                    onChange={(e) => setCustomBlockPatch(block.id, { body: inputValueFromEvent(e) })}
+                                    autosize
+                                    minRows={2}
+                                  />
+                                  <Group justify="space-between">
+                                    <Text size="sm" fw={600}>Stats</Text>
+                                    <Button
+                                      size="xs"
+                                      variant="default"
+                                      leftSection={<IconPlus size={14} />}
+                                      onClick={() =>
+                                        setCustomBlockPatch(block.id, {
+                                          stats: [...stats, { value: "", label: "" }],
+                                        })
+                                      }
+                                    >
+                                      Add stat
+                                    </Button>
+                                  </Group>
+                                  {stats.map((stat, statIndex) => {
+                                    const statRecord = asRecord(stat)
+                                    return (
+                                      <Paper key={`${block.id}-stat-${statIndex}`} withBorder p="sm" radius="md">
+                                        <Stack gap="xs">
+                                          <Group justify="space-between">
+                                            <Badge size="sm" variant="default">Stat {statIndex + 1}</Badge>
+                                            <ActionIcon
+                                              variant="default"
+                                              aria-label="Remove stat"
+                                              onClick={() =>
+                                                setCustomBlockPatch(block.id, {
+                                                  stats: stats.filter((_, i) => i !== statIndex),
+                                                })
+                                              }
+                                            >
+                                              <IconX size={16} />
+                                            </ActionIcon>
+                                          </Group>
+                                          <TextInput
+                                            label="Value"
+                                            value={asString(statRecord.value)}
+                                            onChange={(e) => {
+                                              const next = stats.slice()
+                                              next[statIndex] = { ...statRecord, value: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { stats: next })
+                                            }}
+                                          />
+                                          <TextInput
+                                            label="Label"
+                                            value={asString(statRecord.label)}
+                                            onChange={(e) => {
+                                              const next = stats.slice()
+                                              next[statIndex] = { ...statRecord, label: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { stats: next })
+                                            }}
+                                          />
+                                        </Stack>
+                                      </Paper>
+                                    )
+                                  })}
+                                  {!stats.length ? <Text c="dimmed" size="sm">No stats.</Text> : null}
+                                </Stack>
+                              )
+                            })() : null}
+
+                            {block.type === "testimonial" ? (
+                              <ImageFieldPicker
+                                title="Avatar"
+                                value={imageUrl}
+                                urlLabel="Image URL"
+                                onChange={(nextUrl) => applyCustomBlockImageUrl(block.id, nextUrl)}
+                                onRemove={() => applyCustomBlockImageUrl(block.id, "")}
+                                onUploadFile={async (file) => {
+                                  const { publicUrl } = await uploadToCmsMedia(file)
+                                  applyCustomBlockImageUrl(block.id, publicUrl)
+                                }}
+                                onChooseFromLibrary={() => setCustomImageLibraryTargetId(block.id)}
+                                disabled={loading}
+                                onError={setError}
+                                withinPortal={false}
+                                compact
+                                advancedUrl
+                              >
+                                <Textarea
+                                  label="Quote"
+                                  value={asString(merged.quote)}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { quote: inputValueFromEvent(e) })}
+                                  autosize
+                                  minRows={2}
+                                />
+                                <TextInput
+                                  label="Author"
+                                  value={asString(merged.author)}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { author: inputValueFromEvent(e) })}
+                                />
+                                <TextInput
+                                  label="Role"
+                                  value={asString(merged.role)}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { role: inputValueFromEvent(e) })}
+                                />
+                              </ImageFieldPicker>
+                            ) : null}
+
+                            {block.type === "media_panel" ? (
+                              <ImageFieldPicker
+                                title="Media"
+                                value={imageUrl}
+                                urlLabel="Image URL"
+                                onChange={(nextUrl) => applyCustomBlockImageUrl(block.id, nextUrl)}
+                                onRemove={() => applyCustomBlockImageUrl(block.id, "")}
+                                onUploadFile={async (file) => {
+                                  const { publicUrl } = await uploadToCmsMedia(file)
+                                  applyCustomBlockImageUrl(block.id, publicUrl)
+                                }}
+                                onChooseFromLibrary={() => setCustomImageLibraryTargetId(block.id)}
+                                disabled={loading}
+                                onError={setError}
+                                withinPortal={false}
+                                compact
+                                advancedUrl
+                              >
+                                <TextInput
+                                  label="Title"
+                                  value={asString(merged.title)}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { title: inputValueFromEvent(e) })}
+                                />
+                                <Textarea
+                                  label="Body"
+                                  value={asString(merged.body)}
+                                  onChange={(e) => setCustomBlockPatch(block.id, { body: inputValueFromEvent(e) })}
+                                  autosize
+                                  minRows={2}
+                                />
+                              </ImageFieldPicker>
+                            ) : null}
+
+                            {block.type === "workflow_diagram" ? (() => {
+                              const flowSteps = asArray<Record<string, unknown>>(merged.flowSteps)
+                              return (
+                                <Stack gap="xs">
+                                  <TextInput
+                                    label="Title"
+                                    value={asString(merged.title)}
+                                    onChange={(e) => setCustomBlockPatch(block.id, { title: inputValueFromEvent(e) })}
+                                    placeholder="Optional title"
+                                  />
+                                  <Group justify="space-between">
+                                    <Text size="sm" fw={600}>Flow Steps</Text>
+                                    <Button
+                                      size="xs"
+                                      variant="default"
+                                      leftSection={<IconPlus size={14} />}
+                                      onClick={() =>
+                                        setCustomBlockPatch(block.id, {
+                                          flowSteps: [...flowSteps, { label: "", description: "" }],
+                                        })
+                                      }
+                                    >
+                                      Add step
+                                    </Button>
+                                  </Group>
+                                  {flowSteps.map((step, stepIndex) => {
+                                    const stepRecord = asRecord(step)
+                                    return (
+                                      <Paper key={`${block.id}-flowstep-${stepIndex}`} withBorder p="sm" radius="md">
+                                        <Stack gap="xs">
+                                          <Group justify="space-between">
+                                            <Badge size="sm" variant="default">Step {stepIndex + 1}</Badge>
+                                            <ActionIcon
+                                              variant="default"
+                                              aria-label="Remove step"
+                                              onClick={() =>
+                                                setCustomBlockPatch(block.id, {
+                                                  flowSteps: flowSteps.filter((_, i) => i !== stepIndex),
+                                                })
+                                              }
+                                            >
+                                              <IconX size={16} />
+                                            </ActionIcon>
+                                          </Group>
+                                          <TextInput
+                                            label="Label"
+                                            value={asString(stepRecord.label)}
+                                            onChange={(e) => {
+                                              const next = flowSteps.slice()
+                                              next[stepIndex] = { ...stepRecord, label: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { flowSteps: next })
+                                            }}
+                                          />
+                                          <Textarea
+                                            label="Description"
+                                            value={asString(stepRecord.description)}
+                                            onChange={(e) => {
+                                              const next = flowSteps.slice()
+                                              next[stepIndex] = { ...stepRecord, description: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { flowSteps: next })
+                                            }}
+                                            autosize
+                                            minRows={2}
+                                            placeholder="Optional description"
+                                          />
+                                        </Stack>
+                                      </Paper>
+                                    )
+                                  })}
+                                  {!flowSteps.length ? <Text c="dimmed" size="sm">No flow steps.</Text> : null}
+                                </Stack>
+                              )
+                            })() : null}
+
+                            {block.type === "comparison" ? (() => {
+                              const beforeItems = asStringArray(merged.beforeItems)
+                              const afterItems = asStringArray(merged.afterItems)
+                              return (
+                                <Stack gap="xs">
+                                  <TextInput
+                                    label="Before label"
+                                    value={asString(merged.beforeLabel)}
+                                    onChange={(e) => setCustomBlockPatch(block.id, { beforeLabel: inputValueFromEvent(e) })}
+                                  />
+                                  <TextInput
+                                    label="After label"
+                                    value={asString(merged.afterLabel)}
+                                    onChange={(e) => setCustomBlockPatch(block.id, { afterLabel: inputValueFromEvent(e) })}
+                                  />
+                                  <ListEditor
+                                    label="Before items"
+                                    items={beforeItems}
+                                    onChange={(next) => setCustomBlockPatch(block.id, { beforeItems: next })}
+                                    placeholder="Before item"
+                                  />
+                                  <ListEditor
+                                    label="After items"
+                                    items={afterItems}
+                                    onChange={(next) => setCustomBlockPatch(block.id, { afterItems: next })}
+                                    placeholder="After item"
+                                  />
+                                </Stack>
+                              )
+                            })() : null}
+
+                            {block.type === "stat_chip_row" ? (() => {
+                              const statChips = asArray<Record<string, unknown>>(merged.stats)
+                              return (
+                                <Stack gap="xs">
+                                  <Group justify="space-between">
+                                    <Text size="sm" fw={600}>Stats</Text>
+                                    <Button
+                                      size="xs"
+                                      variant="default"
+                                      leftSection={<IconPlus size={14} />}
+                                      onClick={() =>
+                                        setCustomBlockPatch(block.id, {
+                                          stats: [...statChips, { value: "", label: "" }],
+                                        })
+                                      }
+                                    >
+                                      Add stat
+                                    </Button>
+                                  </Group>
+                                  {statChips.map((stat, statIndex) => {
+                                    const statRecord = asRecord(stat)
+                                    return (
+                                      <Paper key={`${block.id}-statchip-${statIndex}`} withBorder p="sm" radius="md">
+                                        <Stack gap="xs">
+                                          <Group justify="space-between">
+                                            <Badge size="sm" variant="default">Stat {statIndex + 1}</Badge>
+                                            <ActionIcon
+                                              variant="default"
+                                              aria-label="Remove stat"
+                                              onClick={() =>
+                                                setCustomBlockPatch(block.id, {
+                                                  stats: statChips.filter((_, i) => i !== statIndex),
+                                                })
+                                              }
+                                            >
+                                              <IconX size={16} />
+                                            </ActionIcon>
+                                          </Group>
+                                          <TextInput
+                                            label="Value"
+                                            value={asString(statRecord.value)}
+                                            onChange={(e) => {
+                                              const next = statChips.slice()
+                                              next[statIndex] = { ...statRecord, value: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { stats: next })
+                                            }}
+                                          />
+                                          <TextInput
+                                            label="Label"
+                                            value={asString(statRecord.label)}
+                                            onChange={(e) => {
+                                              const next = statChips.slice()
+                                              next[statIndex] = { ...statRecord, label: inputValueFromEvent(e) }
+                                              setCustomBlockPatch(block.id, { stats: next })
+                                            }}
+                                          />
+                                        </Stack>
+                                      </Paper>
+                                    )
+                                  })}
+                                  {!statChips.length ? <Text c="dimmed" size="sm">No stats.</Text> : null}
+                                </Stack>
+                              )
+                            })() : null}
+
                           </Stack>
                         </Paper>
                       )
