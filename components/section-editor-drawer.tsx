@@ -46,7 +46,9 @@ import StarterKit from "@tiptap/starter-kit"
 import { useEditor } from "@tiptap/react"
 
 import { isControlSupported, type SemanticControl } from "@/lib/design-system/capabilities"
-import { SECTION_PRESETS } from "@/lib/design-system/presets"
+import { SECTION_PRESETS, type SectionPreset } from "@/lib/design-system/presets"
+import { loadSectionPresetsFromClient, loadCapabilitiesFromClient } from "@/lib/design-system/loaders"
+import type { SectionCapability } from "@/lib/design-system/capabilities"
 import { uploadMedia } from "@/lib/media/upload"
 import type { MediaItem } from "@/lib/media/types"
 import { ImageFieldPicker } from "@/components/image-field-picker"
@@ -1241,6 +1243,36 @@ export function SectionEditorDrawer({
   const pagesLoadedRef = useRef(false)
   const pagesPromiseRef = useRef<Promise<void> | null>(null)
 
+  // DB-backed design system registries (loaded dynamically, falls back to code constants)
+  const [dbPresets, setDbPresets] = useState<Record<string, SectionPreset> | null>(null)
+  const [dbCapabilities, setDbCapabilities] = useState<Record<string, SectionCapability> | null>(null)
+  const dbPresetsRef = useRef(false)
+
+  useEffect(() => {
+    if (dbPresetsRef.current) return
+    dbPresetsRef.current = true
+    Promise.all([
+      loadSectionPresetsFromClient(supabase),
+      loadCapabilitiesFromClient(supabase),
+    ]).then(([presets, caps]) => {
+      setDbPresets(presets)
+      setDbCapabilities(caps)
+    })
+  }, [supabase])
+
+  // Unified preset/capability lookup that prefers DB data
+  const activePresets = dbPresets ?? SECTION_PRESETS
+  const isControlSupportedActive = useCallback(
+    (sectionType: string, control: SemanticControl): boolean => {
+      if (dbCapabilities) {
+        const cap = dbCapabilities[sectionType] ?? dbCapabilities["composed"]
+        return cap?.supported.includes(control) ?? false
+      }
+      return isControlSupported(sectionType, control)
+    },
+    [dbCapabilities]
+  )
+
   const normalizedType = section ? normalizeSectionType(section.section_type) : null
   const defaults = normalizedType && isBuiltinSectionType(normalizedType) ? typeDefaults?.[normalizedType] : undefined
   const isCustomComposedType = Boolean(normalizedType && !isBuiltinSectionType(normalizedType))
@@ -2023,7 +2055,7 @@ export function SectionEditorDrawer({
               </Text>
               <Text fw={600} size="sm">Section preset</Text>
               {(() => {
-                const presetOptions = Object.values(SECTION_PRESETS)
+                const presetOptions = Object.values(activePresets)
                   .filter((p) => !normalizedType || p.sectionType === normalizedType || normalizedType === "composed")
                   .map((p) => ({ value: p.key, label: p.name }))
                 if (presetOptions.length === 0) return <Text size="xs" c="dimmed">No presets for this section type.</Text>
@@ -2034,7 +2066,7 @@ export function SectionEditorDrawer({
                     comboboxProps={{ withinPortal: false }}
                     value={formatting.sectionPresetKey || ""}
                     onChange={(val: string) => {
-                      const preset = val ? SECTION_PRESETS[val] : undefined
+                      const preset = val ? activePresets[val] : undefined
                       if (preset) {
                         setFormatting((f) => ({
                           ...f,
@@ -2064,7 +2096,7 @@ export function SectionEditorDrawer({
 
               <Text fw={600} size="sm">Presentation</Text>
               {(() => {
-                const has = (c: SemanticControl) => isControlSupported(normalizedType ?? "", c)
+                const has = (c: SemanticControl) => isControlSupportedActive(normalizedType ?? "", c)
                 const hasPresentationControls = has("sectionRhythm") || has("sectionSurface") || has("contentDensity") || has("gridGap") || has("headingTreatment") || has("labelStyle") || has("dividerMode")
                 const hasComponentControls = has("cardFamily") || has("cardChrome") || has("accentRule")
                 const anySupported = hasPresentationControls || hasComponentControls

@@ -140,7 +140,7 @@ INSERT INTO public.section_presentation_presets (key, name, description, tokens)
   ('services_snapshot', 'Services Snapshot', 'Premium service offering cards', '{
     "rhythm": "standard", "surface": "spotlight_stage", "density": "airy",
     "gridGap": "wide", "headingTreatment": "default",
-    "labelStyle": "default", "dividerMode": "strong"
+    "labelStyle": "pill", "dividerMode": "strong"
   }'::jsonb),
   ('proof_grid', 'Proof Grid', 'Evidence and metrics display', '{
     "rhythm": "proof", "surface": "soft_band", "density": "standard",
@@ -171,7 +171,7 @@ ON CONFLICT (key) DO UPDATE SET
 -- Seed: Component family presets
 INSERT INTO public.component_family_presets (key, name, description, tokens) VALUES
   ('service', 'Service', 'Premium service card with gradient depth', '{
-    "chrome": "elevated", "accentRule": "none"
+    "chrome": "elevated", "accentRule": "left"
   }'::jsonb),
   ('proof', 'Proof', 'Evidence/testimonial card', '{
     "chrome": "outlined", "accentRule": "none"
@@ -215,7 +215,7 @@ INSERT INTO public.section_control_capabilities
    supports_heading_treatment, supports_label_style)
 VALUES
   ('hero_cta',        true, true, false, false, false, false, false, false, true,  false),
-  ('card_grid',       true, true, true,  true,  true,  true,  false, true,  false, false),
+  ('card_grid',       true, true, true,  true,  true,  true,  true,  true,  false,  true),
   ('steps_list',      true, true, false, false, true,  false, true,  true,  false, true),
   ('title_body_list', true, true, true,  false, false, false, false, true,  true,  false),
   ('rich_text_block', true, true, false, false, false, false, false, false, true,  false),

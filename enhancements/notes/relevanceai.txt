@@ -1,0 +1,6 @@
+### Result
+"{\"title\":\"Relevance AI | AI Agents for Sales & GTM Teams\",\"url\":\"https://relevanceai.com/\",\"h1\":[\"Scale GTM results,\\nwithout scaling headcount\"],\"h2\":[\"Our self-driving GTM roadmap\",\"Your team is buried in tasks humans shouldn't do anymore\"],\"nav\":[\"Product\",\"Function\",\"Agents\",\"Resources\",\"Pricing\",\"Sign in\",\"Contact sales\",\"Talk to sales\",\"Try for free\",\"Copilot\",\"Autopilot\",\"Copilot\",\"Autopilot\",\"Read more\",\"Case study\",\"Case study\",\"Case study\",\"Agents@Work\",\"Case study\",\"Case study\",\"Read more\",\"View template\",\"View template\",\"View template\",\"View template\",\"Read article →\",\"Read article →\",\"Read article →\",\"Read article →\",\"Sales\",\"Marketing\",\"Operations\",\"Research\",\"Support\",\"AI Agents\",\"AI Workforce\",\"Multi-Agent Systems\",\"AI Tools\",\"AI BDR Agent\",\"Integrations\"]}"
+### Ran Playwright code
+```js
+await page.evaluate('() => JSON.stringify({title: document.title, url: location.href, h1: Array.from(document.querySelectorAll("h1")).map(el => el.innerText.trim()).filter(Boolean).slice(0, 4), h2: Array.from(document.querySelectorAll("h2")).map(el => el.innerText.trim()).filter(Boolean).slice(0, 12), nav: Array.from(document.querySelectorAll("a,button")).map(el => el.innerText.trim()).filter(Boolean).slice(0, 40)})');
+```

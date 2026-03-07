@@ -19,7 +19,7 @@ import {
   type CardChrome,
   type AccentRule,
 } from "./tokens"
-import { lookupSectionPreset } from "./presets"
+import { lookupSectionPreset, type SectionPreset } from "./presets"
 
 type RawSectionFormatting = {
   sectionRhythm?: string
@@ -39,6 +39,11 @@ function asString(v: unknown): string {
   return typeof v === "string" ? v : ""
 }
 
+type ResolveOptions = {
+  /** DB-loaded presets — when provided, these are used instead of code constants. */
+  presets?: Record<string, SectionPreset>
+}
+
 /**
  * Resolves raw CMS formatting into a validated ResolvedSectionUi.
  *
@@ -50,7 +55,8 @@ function asString(v: unknown): string {
  */
 export function resolveSectionUi(
   raw: Record<string, unknown>,
-  sectionType?: string
+  sectionType?: string,
+  options?: ResolveOptions
 ): ResolvedSectionUi {
   const f: RawSectionFormatting = {
     sectionRhythm: asString(raw.sectionRhythm),
@@ -66,10 +72,11 @@ export function resolveSectionUi(
     sectionPresetKey: asString(raw.sectionPresetKey),
   }
 
-  // Step 1: Resolve preset defaults
-  const preset = f.sectionPresetKey
-    ? lookupSectionPreset(f.sectionPresetKey)
-    : undefined
+  // Step 1: Resolve preset defaults — DB-loaded presets take priority over code constants
+  let preset: SectionPreset | undefined
+  if (f.sectionPresetKey) {
+    preset = options?.presets?.[f.sectionPresetKey] ?? lookupSectionPreset(f.sectionPresetKey)
+  }
 
   // Step 2: Merge — explicit values take priority over preset
   const rhythm = f.sectionRhythm || preset?.presentation.rhythm || ""

@@ -47,13 +47,13 @@ export const SECTION_PRESETS: Record<string, SectionPreset> = {
       density: "airy",
       gridGap: "wide",
       headingTreatment: "default",
-      labelStyle: "default",
+      labelStyle: "pill",
       dividerMode: "strong",
     },
     component: {
       family: "service",
       chrome: "elevated",
-      accentRule: "none",
+      accentRule: "left",
     },
   },
   proof_grid: {
@@ -155,7 +155,7 @@ export const COMPONENT_FAMILY_DEFAULTS: Record<
   string,
   { chrome: CardChrome; accentRule?: AccentRule }
 > = {
-  service: { chrome: "elevated" },
+  service: { chrome: "elevated", accentRule: "left" },
   proof: { chrome: "outlined" },
   metric: { chrome: "flat" },
   process: { chrome: "outlined", accentRule: "left" },

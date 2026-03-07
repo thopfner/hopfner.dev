@@ -19,6 +19,8 @@ import type {
   CmsSectionTypeDefaultsMap,
 } from "@/lib/cms/types"
 import { resolveSectionUi } from "@/lib/design-system/resolve"
+import { loadSectionPresetsFromClient } from "@/lib/design-system/loaders"
+import { createClient as createServerSupabase } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import type { CSSProperties } from "react"
@@ -361,6 +363,10 @@ export default async function MarketingPage({
     notFound()
   }
 
+  // Load DB-backed design-system presets (falls back to code constants on failure)
+  const serverSupabase = await createServerSupabase()
+  const dbPresets = await loadSectionPresetsFromClient(serverSupabase)
+
   const header = sections.find((s) => s.section_type === "nav_links") ?? null
   const bodySections = sections.filter((s) => s.section_type !== "nav_links")
   const orderedBodySections = [
@@ -558,7 +564,7 @@ export default async function MarketingPage({
             deepMerge(asRecord(section.formatting_override), asRecord(v.formatting))
           )
           const props = sectionContainerProps(formatting, tailwindWhitelist, section.key)
-          const ui = resolveSectionUi(formatting, section.section_type)
+          const ui = resolveSectionUi(formatting, section.section_type, { presets: dbPresets })
           const fullPageBackdropMode = pageBackdropEnabled && topBackdropScope === "full-page"
           const propsWithFullPageBackdrop =
             fullPageBackdropMode && section.section_type !== "hero_cta"

@@ -39,7 +39,7 @@ export function WhyThisApproachSection({
       rhythm={ui?.rhythm}
       surface={ui?.surface}
     >
-        <SectionHeading id="why-title" title={title} />
+        <SectionHeading id="why-title" title={title} headingTreatment={ui?.headingTreatment} />
 
         <Card className="surface-panel gap-3 py-4" style={panelStyle}>
           <CardContent className="space-y-2 px-4">

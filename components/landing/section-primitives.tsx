@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react"
 
-import { RHYTHM_CLASSES, SURFACE_CLASSES } from "@/lib/design-system/presentation"
-import type { Rhythm, Surface } from "@/lib/design-system/tokens"
+import { RHYTHM_CLASSES, SURFACE_CLASSES, HEADING_TREATMENT_CLASSES } from "@/lib/design-system/presentation"
+import type { Rhythm, Surface, HeadingTreatment } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 
 export function SectionShell({
@@ -53,11 +53,14 @@ export function SectionShell({
   )
 }
 
-export function SectionHeading({ id, title }: { id: string; title: string }) {
+export function SectionHeading({ id, title, headingTreatment }: { id: string; title: string; headingTreatment?: HeadingTreatment }) {
   return (
     <h2
       id={id}
-      className="text-heading text-balance text-xl sm:text-2xl"
+      className={cn(
+        "text-heading text-balance text-xl sm:text-2xl",
+        headingTreatment ? HEADING_TREATMENT_CLASSES[headingTreatment] : ""
+      )}
       style={{ color: "var(--foreground)" }}
     >
       {title}

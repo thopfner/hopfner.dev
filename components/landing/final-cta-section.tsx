@@ -6,6 +6,7 @@ import { SectionHeading, SectionShell } from "@/components/landing/section-primi
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
+import { HEADING_TREATMENT_CLASSES } from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
 
 type LayoutVariant = "centered" | "split" | "compact" | "high_contrast"
@@ -66,7 +67,7 @@ export function FinalCtaSection({
               {hasEyebrow ? (
                 <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
               ) : null}
-              <p className="text-sm font-semibold sm:text-base">{headline}</p>
+              <p className={cn("text-sm font-semibold sm:text-base", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</p>
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
               <Button size="sm" variant="secondary" asChild>
@@ -106,7 +107,7 @@ export function FinalCtaSection({
                   {hasEyebrow ? (
                     <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
                   ) : null}
-                  <SectionHeading id="final-cta-title" title={headline} />
+                  <SectionHeading id="final-cta-title" title={headline} headingTreatment={ui?.headingTreatment} />
                   {bodyHtml?.trim() ? (
                     <div
                       className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
@@ -203,7 +204,7 @@ export function FinalCtaSection({
             {hasEyebrow ? (
               <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
             ) : null}
-            <SectionHeading id="final-cta-title" title={headline} />
+            <SectionHeading id="final-cta-title" title={headline} headingTreatment={ui?.headingTreatment} />
             {bodyHtml?.trim() ? (
               <div
                 className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}

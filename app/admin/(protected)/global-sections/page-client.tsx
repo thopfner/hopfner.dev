@@ -527,6 +527,7 @@ type SectionTypeDefaultsMap = Record<string, SectionTypeDefault>
 
 type FormattingTemplateRow = {
   id: string
+  key: string
   name: string
   description: string | null
   settings: Record<string, unknown>
@@ -833,19 +834,32 @@ export function GlobalSectionsPage() {
     applySettingsToForm(settings)
 
     const { data: templateRows, error: templatesError } = await supabase
-      .from("formatting_templates")
-      .select("id, name, description, settings, is_system, created_at, updated_at")
+      .from("design_theme_presets")
+      .select("id, key, name, description, is_system, tokens, created_at, updated_at")
       .order("is_system", { ascending: false })
       .order("name", { ascending: true })
 
     if (templatesError) {
       applyEditorError({
         error: templatesError,
-        fallback: "Failed to load formatting templates.",
+        fallback: "Failed to load design theme presets.",
         setError,
       })
     } else {
-      const rows = (templateRows ?? []) as FormattingTemplateRow[]
+      // Normalize design_theme_presets rows to FormattingTemplateRow shape
+      const rows = ((templateRows ?? []) as Array<{
+        id: string; key: string; name: string; description: string | null;
+        is_system: boolean; tokens: Record<string, unknown>; created_at: string; updated_at: string
+      }>).map((row): FormattingTemplateRow => ({
+        id: row.id,
+        key: row.key,
+        name: row.name,
+        description: row.description,
+        is_system: row.is_system,
+        settings: { tokens: row.tokens },
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      }))
       setTemplates(rows)
 
       const activeFp = settingsFingerprint(settings)
@@ -882,12 +896,14 @@ export function GlobalSectionsPage() {
     setError(null)
     try {
       const payload = buildCurrentSettingsPayload()
+      const themeKey = newTemplateName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
       const { data, error } = await supabase
-        .from("formatting_templates")
+        .from("design_theme_presets")
         .insert({
+          key: themeKey,
           name: newTemplateName.trim(),
           description: newTemplateDescription.trim() || null,
-          settings: payload,
+          tokens: payload.tokens ?? payload,
           is_system: false,
         })
         .select("id")
@@ -899,9 +915,9 @@ export function GlobalSectionsPage() {
       setNewTemplateName("")
       setNewTemplateDescription("")
     } catch (e) {
-      const msg = toEditorErrorMessage(e, "Failed to save template.")
-      if (msg.includes("formatting_templates_name_unique")) {
-        setError("Template name already exists. Choose a different name.")
+      const msg = toEditorErrorMessage(e, "Failed to save theme preset.")
+      if (msg.includes("design_theme_presets_key_key") || msg.includes("unique")) {
+        setError("Theme preset name already exists. Choose a different name.")
       } else {
         setError(msg)
       }
@@ -917,18 +933,18 @@ export function GlobalSectionsPage() {
     try {
       const payload = buildCurrentSettingsPayload()
       const { error } = await supabase
-        .from("formatting_templates")
+        .from("design_theme_presets")
         .update({
           name: templateName.trim() || selectedTemplate.name,
           description: templateDescription.trim() || null,
-          settings: payload,
+          tokens: payload.tokens ?? payload,
         })
         .eq("id", selectedTemplate.id)
       if (error) throw new Error(error.message)
       setCustomizeBaselineFingerprint(settingsFingerprint(payload))
       await load()
     } catch (e) {
-      setError(toEditorErrorMessage(e, "Failed to update template."))
+      setError(toEditorErrorMessage(e, "Failed to update theme preset."))
     } finally {
       setTemplateBusy(false)
     }
@@ -936,17 +952,17 @@ export function GlobalSectionsPage() {
 
   async function deleteSelectedTemplate() {
     if (!selectedTemplate || selectedTemplate.is_system) return
-    const ok = window.confirm(`Delete template "${selectedTemplate.name}"?`)
+    const ok = window.confirm(`Delete theme preset "${selectedTemplate.name}"?`)
     if (!ok) return
     setTemplateBusy(true)
     setError(null)
     try {
-      const { error } = await supabase.from("formatting_templates").delete().eq("id", selectedTemplate.id)
+      const { error } = await supabase.from("design_theme_presets").delete().eq("id", selectedTemplate.id)
       if (error) throw new Error(error.message)
       setSelectedTemplateId(null)
       await load()
     } catch (e) {
-      setError(toEditorErrorMessage(e, "Failed to delete template."))
+      setError(toEditorErrorMessage(e, "Failed to delete theme preset."))
     } finally {
       setTemplateBusy(false)
     }

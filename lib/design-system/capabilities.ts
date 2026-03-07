@@ -1,6 +1,6 @@
 // Section control capability matrix.
 // Single source of truth shared by admin UI and renderer validation.
-// Replaces the previous lib/cms/section-capabilities.ts.
+// Code constants serve as fallback — DB table is the primary source.
 
 export type SemanticControl =
   | "sectionRhythm"
@@ -32,11 +32,10 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "cardChrome",
       "contentDensity",
       "gridGap",
+      "accentRule",
       "dividerMode",
+      "labelStyle",
     ],
-    notes: {
-      cardChrome: "Modifies the card family base style",
-    },
   },
   steps_list: {
     supported: [
@@ -46,9 +45,6 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "labelStyle",
       "dividerMode",
     ],
-    notes: {
-      cardFamily: "process family recommended",
-    },
   },
   title_body_list: {
     supported: [...COMMON, "contentDensity", "dividerMode", "headingTreatment"],

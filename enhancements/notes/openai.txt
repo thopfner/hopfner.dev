@@ -1,0 +1,6 @@
+### Result
+"{\"title\":\"Just a moment...\",\"url\":\"https://openai.com/\",\"h1\":[],\"h2\":[],\"nav\":[]}"
+### Ran Playwright code
+```js
+await page.evaluate('() => JSON.stringify({title: document.title, url: location.href, h1: Array.from(document.querySelectorAll("h1")).map(el => el.innerText.trim()).filter(Boolean).slice(0, 4), h2: Array.from(document.querySelectorAll("h2")).map(el => el.innerText.trim()).filter(Boolean).slice(0, 12), nav: Array.from(document.querySelectorAll("a,button")).map(el => el.innerText.trim()).filter(Boolean).slice(0, 40)})');
+```

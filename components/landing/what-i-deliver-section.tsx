@@ -5,8 +5,15 @@ import { SectionHeading, SectionShell } from "@/components/landing/section-primi
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
-import { DENSITY_PADDING, GRID_GAP_CLASSES } from "@/lib/design-system/presentation"
-import { resolveCardClasses, DEFAULT_CARD_CLASS } from "@/lib/design-system/component-families"
+import {
+  DENSITY_PADDING,
+  DENSITY_GAP,
+  DENSITY_HEADER_PADDING,
+  DENSITY_BODY_PADDING,
+  GRID_GAP_CLASSES,
+  LABEL_STYLE_CLASSES,
+} from "@/lib/design-system/presentation"
+import { resolveCardClasses, DEFAULT_CARD_CLASS, SERVICE_CARD_INNER } from "@/lib/design-system/component-families"
 
 type SectionVariant =
   | "default"
@@ -79,6 +86,11 @@ export function WhatIDeliverSection({
         ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-4"
         : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
 
+  const density = ui?.density ?? "standard"
+  const isServiceFamily = ui?.componentFamily === "service"
+  const dividerMode = ui?.dividerMode ?? "none"
+  const labelStyle = ui?.labelStyle ?? "default"
+
   // Legacy tone fallback — used only when ui?.componentFamily is not set
   const toneClasses: Record<CardTone, string> = {
     default: DEFAULT_CARD_CLASS,
@@ -109,6 +121,17 @@ export function WhatIDeliverSection({
 
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
+
+  // Internal card divider strength based on dividerMode
+  const cardSeparatorClass =
+    dividerMode === "strong"
+      ? "bg-border/70"
+      : dividerMode === "subtle"
+        ? "bg-border/30"
+        : "bg-border/50"
+
+  // Inline accent indicator
+  const showInlineAccent = resolved?.isInlineAccent ?? false
 
   return (
     <SectionShell
@@ -184,18 +207,134 @@ export function WhatIDeliverSection({
               )
             }
 
+            // Service family: enhanced internal structure
+            if (isServiceFamily) {
+              return (
+                <Card
+                  key={`${item.title}-${idx}`}
+                  className={cn(
+                    "gap-0 overflow-hidden",
+                    DENSITY_PADDING[density],
+                    resolved?.cardClass
+                  )}
+                  style={panelStyle}
+                >
+                  <CardHeader className={cn(
+                    DENSITY_HEADER_PADDING[density],
+                    SERVICE_CARD_INNER.headerClass,
+                    DENSITY_GAP[density]
+                  )}>
+                    {showInlineAccent ? (
+                      <div className="h-0.5 w-8 rounded-full bg-accent/50" />
+                    ) : null}
+                    {hasTag ? (
+                      <span className={cn("w-fit", LABEL_STYLE_CLASSES[labelStyle])}>
+                        {item.tag}
+                      </span>
+                    ) : null}
+                    {hasIcon ? (
+                      <span className="text-xl">{item.icon}</span>
+                    ) : null}
+                    {hasStat ? (
+                      <p className="text-metric text-2xl">{item.stat}</p>
+                    ) : null}
+                    {item.display.showTitle ? (
+                      <h3 className={SERVICE_CARD_INNER.titleClass}>
+                        {item.title}
+                      </h3>
+                    ) : null}
+                  </CardHeader>
+
+                  <CardContent className={cn(
+                    DENSITY_BODY_PADDING[density],
+                    density === "airy" ? "space-y-4" : density === "tight" ? "space-y-1.5" : "space-y-3"
+                  )}>
+                    {item.display.showImage && item.imageUrl ? (
+                      <div className="flex justify-center">
+                        <div
+                          className="overflow-hidden rounded-md border border-border/60 bg-card"
+                          style={{ backgroundColor: "color-mix(in srgb, var(--card) calc(var(--page-panel-opacity, 1) * 100%), transparent)" }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.imageUrl}
+                            alt={item.imageAlt || item.title || "Card image"}
+                            className="mx-auto h-auto max-w-full object-contain"
+                            style={{ width: imageWidth }}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                    {item.display.showText ? (
+                      item.textHtml?.trim() ? (
+                        <div
+                          className={cn(SERVICE_CARD_INNER.bodyClass, RICH_TEXT_CLASS)}
+                          dangerouslySetInnerHTML={{ __html: item.textHtml }}
+                        />
+                      ) : (
+                        <p className={SERVICE_CARD_INNER.bodyClass}>{item.text}</p>
+                      )
+                    ) : null}
+                    {hasDetails ? (
+                      <>
+                        <Separator className={cardSeparatorClass} />
+                        <dl className={cn("text-sm", density === "airy" ? "space-y-2" : "space-y-1")}>
+                          {hasYouGet ? (
+                            <div className="flex flex-col gap-0.5">
+                              <dt className="text-xs font-semibold uppercase tracking-wider text-foreground/80">You get:</dt>
+                              {hasYouGetList ? (
+                                <dd>
+                                  <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                                    {item.youGet.map((entry, entryIndex) => (
+                                      <li key={`${entry}-${entryIndex}`}>{entry}</li>
+                                    ))}
+                                  </ul>
+                                </dd>
+                              ) : (
+                                <dd className="text-muted-foreground">{item.youGet.join(" · ")}</dd>
+                              )}
+                            </div>
+                          ) : null}
+                          {hasBestFor ? (
+                            <div className="flex flex-col gap-0.5">
+                              <dt className="text-xs font-semibold uppercase tracking-wider text-foreground/80">Best for:</dt>
+                              {hasBestForList ? (
+                                <dd>
+                                  <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                                    {item.bestForList.map((entry, entryIndex) => (
+                                      <li key={`${entry}-${entryIndex}`}>{entry}</li>
+                                    ))}
+                                  </ul>
+                                </dd>
+                              ) : (
+                                <dd className="text-muted-foreground">{item.bestFor}</dd>
+                              )}
+                            </div>
+                          ) : null}
+                        </dl>
+                      </>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              )
+            }
+
+            // Default / other families
             return (
               <Card
                 key={`${item.title}-${idx}`}
                 className={cn(
-                  "gap-3",
-                  DENSITY_PADDING[ui?.density ?? "standard"],
+                  DENSITY_GAP[density],
+                  DENSITY_PADDING[density],
                   resolved
                     ? resolved.cardClass
                     : cn(toneClasses[cardTone], variantCardClass(sectionVariant))
                 )}
                 style={panelStyle}
               >
+                {showInlineAccent ? (
+                  <div className="mx-4 h-0.5 w-8 rounded-full bg-accent/50" />
+                ) : null}
                 {item.display.showImage && item.imageUrl ? (
                   <div className="flex justify-center px-4">
                     <div
@@ -212,9 +351,9 @@ export function WhatIDeliverSection({
                     </div>
                   </div>
                 ) : null}
-                <CardHeader className="gap-1 px-4 pb-0">
+                <CardHeader className={cn(DENSITY_HEADER_PADDING[density], DENSITY_GAP[density])}>
                   {hasTag ? (
-                    <span className="text-label-mono w-fit rounded-full border border-border/50 px-2 py-0.5 text-muted-foreground">
+                    <span className={cn("w-fit", LABEL_STYLE_CLASSES[labelStyle])}>
                       {item.tag}
                     </span>
                   ) : null}
@@ -244,9 +383,9 @@ export function WhatIDeliverSection({
                   ) : null}
                 </CardHeader>
                 {hasDetails ? (
-                  <CardContent className="space-y-2 px-4">
-                    <Separator className="bg-border/60" />
-                    <dl className="space-y-1 text-sm">
+                  <CardContent className={cn(DENSITY_BODY_PADDING[density], density === "airy" ? "space-y-2.5" : "space-y-2")}>
+                    <Separator className={cardSeparatorClass} />
+                    <dl className={cn("text-sm", density === "airy" ? "space-y-1.5" : "space-y-1")}>
                       {hasYouGet ? (
                         <div className="flex flex-col gap-0.5">
                           <dt className="font-medium">You get:</dt>
