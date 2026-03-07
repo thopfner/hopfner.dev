@@ -3,37 +3,37 @@
   "source": "/var/www/html/claw.hopfner.dev/data/openclaw-config/media/inbound/file_74---3f7fdf03-7fab-4119-aa01-ea119c1c3682.jpg",
   "files": [
     {
-      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-variant-01.jpg",
+      "file": "/var/www/html/hopfner.dev-frontend/public/hero-backgrounds/page-bg-variant-01.jpg",
       "url": "https://hopfner.dev/hero-backgrounds/page-bg-variant-01.jpg",
       "prompt": "Use the provided image as strong style reference and create a high-resolution full-page website backdrop variant. Keep the same dark navy-charcoal premium aesthetic with flowing luminous contour lines and subtle cyan glow. Minimal composition, lots of negative space for text, no text/logos/icons/objects, elegant enterprise AI look, 16:9 landscape. Variant 01: softer lines, extra clean and minimal.",
       "mime": "image/jpeg"
     },
     {
-      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-variant-02.jpg",
+      "file": "/var/www/html/hopfner.dev-frontend/public/hero-backgrounds/page-bg-variant-02.jpg",
       "url": "https://hopfner.dev/hero-backgrounds/page-bg-variant-02.jpg",
       "prompt": "Use the provided image as strong style reference and create a high-resolution full-page website backdrop variant. Keep the same dark navy-charcoal premium aesthetic with flowing luminous contour lines and subtle cyan glow. Minimal composition, lots of negative space for text, no text/logos/icons/objects, elegant enterprise AI look, 16:9 landscape. Variant 02: slightly brighter cyan accents on the right side.",
       "mime": "image/jpeg"
     },
     {
-      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-variant-03.jpg",
+      "file": "/var/www/html/hopfner.dev-frontend/public/hero-backgrounds/page-bg-variant-03.jpg",
       "url": "https://hopfner.dev/hero-backgrounds/page-bg-variant-03.jpg",
       "prompt": "Use the provided image as strong style reference and create a high-resolution full-page website backdrop variant. Keep the same dark navy-charcoal premium aesthetic with flowing luminous contour lines and subtle cyan glow. Minimal composition, lots of negative space for text, no text/logos/icons/objects, elegant enterprise AI look, 16:9 landscape. Variant 03: deeper blacks and stronger depth in the wave forms.",
       "mime": "image/jpeg"
     },
     {
-      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-variant-04.jpg",
+      "file": "/var/www/html/hopfner.dev-frontend/public/hero-backgrounds/page-bg-variant-04.jpg",
       "url": "https://hopfner.dev/hero-backgrounds/page-bg-variant-04.jpg",
       "prompt": "Use the provided image as strong style reference and create a high-resolution full-page website backdrop variant. Keep the same dark navy-charcoal premium aesthetic with flowing luminous contour lines and subtle cyan glow. Minimal composition, lots of negative space for text, no text/logos/icons/objects, elegant enterprise AI look, 16:9 landscape. Variant 04: smoother gradient transition and subtle atmospheric haze.",
       "mime": "image/jpeg"
     },
     {
-      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-variant-05.jpg",
+      "file": "/var/www/html/hopfner.dev-frontend/public/hero-backgrounds/page-bg-variant-05.jpg",
       "url": "https://hopfner.dev/hero-backgrounds/page-bg-variant-05.jpg",
       "prompt": "Use the provided image as strong style reference and create a high-resolution full-page website backdrop variant. Keep the same dark navy-charcoal premium aesthetic with flowing luminous contour lines and subtle cyan glow. Minimal composition, lots of negative space for text, no text/logos/icons/objects, elegant enterprise AI look, 16:9 landscape. Variant 05: thinner contour lines and more open negative space.",
       "mime": "image/jpeg"
     },
     {
-      "file": "/var/www/html/hopfner.dev/public/hero-backgrounds/page-bg-variant-06.jpg",
+      "file": "/var/www/html/hopfner.dev-frontend/public/hero-backgrounds/page-bg-variant-06.jpg",
       "url": "https://hopfner.dev/hero-backgrounds/page-bg-variant-06.jpg",
       "prompt": "Use the provided image as strong style reference and create a high-resolution full-page website backdrop variant. Keep the same dark navy-charcoal premium aesthetic with flowing luminous contour lines and subtle cyan glow. Minimal composition, lots of negative space for text, no text/logos/icons/objects, elegant enterprise AI look, 16:9 landscape. Variant 06: layered wave ridges with restrained glow, still minimal.",
       "mime": "image/jpeg"
