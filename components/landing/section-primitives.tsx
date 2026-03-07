@@ -10,6 +10,7 @@ export function SectionShell({
   sectionStyle,
   containerClassName,
   containerStyle,
+  widthMode,
   children,
 }: {
   id?: string
@@ -19,8 +20,11 @@ export function SectionShell({
   sectionStyle?: CSSProperties
   containerClassName?: string
   containerStyle?: CSSProperties
+  widthMode?: "content" | "full"
   children: ReactNode
 }) {
+  const maxW = widthMode === "full" ? "max-w-7xl" : "max-w-5xl"
+
   return (
     <section
       id={id}
@@ -28,7 +32,7 @@ export function SectionShell({
       className={cn("scroll-mt-20 py-8 sm:py-10", sectionClassName, className)}
       style={sectionStyle}
     >
-      <div className={cn("mx-auto max-w-5xl space-y-5 px-4 sm:space-y-6", containerClassName)} style={containerStyle}>
+      <div className={cn("mx-auto space-y-5 px-4 sm:space-y-6", maxW, containerClassName)} style={containerStyle}>
         {children}
       </div>
     </section>

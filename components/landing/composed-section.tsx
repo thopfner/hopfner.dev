@@ -488,6 +488,7 @@ export function ComposedSection({
       sectionStyle={sectionStyle}
       containerClassName={cn(textAlignClass, containerClassName)}
       containerStyle={containerStyle}
+      widthMode={s.tokens?.widthMode}
     >
       {title?.trim() ? <SectionHeading id={`${sectionId ?? "composed"}-title`} title={title.trim()} /> : null}
       {subtitle?.trim() ? <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">{subtitle.trim()}</p> : null}
