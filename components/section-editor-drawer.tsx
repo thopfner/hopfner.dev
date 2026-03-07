@@ -45,7 +45,8 @@ import Image from "@tiptap/extension-image"
 import StarterKit from "@tiptap/starter-kit"
 import { useEditor } from "@tiptap/react"
 
-import { isControlSupported, type SemanticControl } from "@/lib/cms/section-capabilities"
+import { isControlSupported, type SemanticControl } from "@/lib/design-system/capabilities"
+import { SECTION_PRESETS } from "@/lib/design-system/presets"
 import { uploadMedia } from "@/lib/media/upload"
 import type { MediaItem } from "@/lib/media/types"
 import { ImageFieldPicker } from "@/components/image-field-picker"
@@ -136,6 +137,7 @@ type FormattingState = {
   dividerMode?: "" | "none" | "subtle" | "strong"
   headingTreatment?: "" | "default" | "display" | "mono"
   labelStyle?: "" | "default" | "mono" | "pill" | "micro"
+  sectionPresetKey?: string
   mobile?: {
     containerClass: string
     sectionClass: string
@@ -858,6 +860,7 @@ function normalizeFormatting(raw: Record<string, unknown>): FormattingState {
     dividerMode: (asString(raw.dividerMode) as FormattingState["dividerMode"]) || "",
     headingTreatment: (asString(raw.headingTreatment) as FormattingState["headingTreatment"]) || "",
     labelStyle: (asString(raw.labelStyle) as FormattingState["labelStyle"]) || "",
+    sectionPresetKey: asString(raw.sectionPresetKey) || "",
   }
   const hasMobile =
     typeof mobile.containerClass === "string" ||
@@ -898,6 +901,7 @@ function formattingToJsonb(state: FormattingState) {
     dividerMode: state.dividerMode || "",
     headingTreatment: state.headingTreatment || "",
     labelStyle: state.labelStyle || "",
+    sectionPresetKey: state.sectionPresetKey || "",
   }
   if (state.mobile) {
     base.mobile = {
@@ -2017,12 +2021,57 @@ export function SectionEditorDrawer({
               <Text fw={600} size="sm">
                 Formatting
               </Text>
-              <Text fw={600} size="sm">Section style</Text>
+              <Text fw={600} size="sm">Section preset</Text>
+              {(() => {
+                const presetOptions = Object.values(SECTION_PRESETS)
+                  .filter((p) => !normalizedType || p.sectionType === normalizedType || normalizedType === "composed")
+                  .map((p) => ({ value: p.key, label: p.name }))
+                if (presetOptions.length === 0) return <Text size="xs" c="dimmed">No presets for this section type.</Text>
+                return (
+                  <Select
+                    label="Apply preset"
+                    description="Prefills presentation and component tokens"
+                    comboboxProps={{ withinPortal: false }}
+                    value={formatting.sectionPresetKey || ""}
+                    onChange={(val: string) => {
+                      const preset = val ? SECTION_PRESETS[val] : undefined
+                      if (preset) {
+                        setFormatting((f) => ({
+                          ...f,
+                          sectionPresetKey: val,
+                          sectionRhythm: (preset.presentation.rhythm || f.sectionRhythm || "") as FormattingState["sectionRhythm"],
+                          sectionSurface: (preset.presentation.surface || f.sectionSurface || "") as FormattingState["sectionSurface"],
+                          contentDensity: (preset.presentation.density || f.contentDensity || "") as FormattingState["contentDensity"],
+                          gridGap: (preset.presentation.gridGap || f.gridGap || "") as FormattingState["gridGap"],
+                          headingTreatment: (preset.presentation.headingTreatment || f.headingTreatment || "") as FormattingState["headingTreatment"],
+                          labelStyle: (preset.presentation.labelStyle || f.labelStyle || "") as FormattingState["labelStyle"],
+                          dividerMode: (preset.presentation.dividerMode || f.dividerMode || "") as FormattingState["dividerMode"],
+                          cardFamily: (preset.component?.family || f.cardFamily || "") as FormattingState["cardFamily"],
+                          cardChrome: (preset.component?.chrome || f.cardChrome || "") as FormattingState["cardChrome"],
+                          accentRule: (preset.component?.accentRule || f.accentRule || "") as FormattingState["accentRule"],
+                        }))
+                      } else {
+                        setFormatting((f) => ({ ...f, sectionPresetKey: "" }))
+                      }
+                    }}
+                    data={[{ value: "", label: "None (manual)" }, ...presetOptions]}
+                    clearable
+                  />
+                )
+              })()}
+
+              <Divider style={{ marginTop: 4, marginBottom: 4 }} />
+
+              <Text fw={600} size="sm">Presentation</Text>
               {(() => {
                 const has = (c: SemanticControl) => isControlSupported(normalizedType ?? "", c)
-                const anySupported = has("sectionRhythm") || has("sectionSurface") || has("cardFamily") || has("contentDensity") || has("gridGap") || has("headingTreatment") || has("labelStyle") || has("accentRule") || has("dividerMode") || has("cardChrome")
+                const hasPresentationControls = has("sectionRhythm") || has("sectionSurface") || has("contentDensity") || has("gridGap") || has("headingTreatment") || has("labelStyle") || has("dividerMode")
+                const hasComponentControls = has("cardFamily") || has("cardChrome") || has("accentRule")
+                const anySupported = hasPresentationControls || hasComponentControls
                 if (!anySupported) return <Text size="xs" c="dimmed">No semantic controls for this section type.</Text>
                 return (
+                  <Stack gap="sm">
+                  {hasPresentationControls ? (
                   <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                     {has("sectionRhythm") ? (
                       <Select
@@ -2060,44 +2109,6 @@ export function SectionEditorDrawer({
                           { value: "contrast_band", label: "Contrast band" },
                           { value: "spotlight_stage", label: "Spotlight stage" },
                           { value: "grid_stage", label: "Grid stage" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("cardFamily") ? (
-                      <Select
-                        label="Card family"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.cardFamily || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, cardFamily: (val || "") as FormattingState["cardFamily"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "quiet", label: "Quiet" },
-                          { value: "service", label: "Service" },
-                          { value: "metric", label: "Metric" },
-                          { value: "process", label: "Process" },
-                          { value: "proof", label: "Proof" },
-                          { value: "logo_tile", label: "Logo tile" },
-                          { value: "cta", label: "CTA" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("cardChrome") ? (
-                      <Select
-                        label="Card chrome"
-                        description="Modifies the card family base style"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.cardChrome || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, cardChrome: (val || "") as FormattingState["cardChrome"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "flat", label: "Flat" },
-                          { value: "outlined", label: "Outlined" },
-                          { value: "elevated", label: "Elevated" },
-                          { value: "inset", label: "Inset" },
                         ]}
                       />
                     ) : null}
@@ -2166,23 +2177,6 @@ export function SectionEditorDrawer({
                         ]}
                       />
                     ) : null}
-                    {has("accentRule") ? (
-                      <Select
-                        label="Accent rule"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.accentRule || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, accentRule: (val || "") as FormattingState["accentRule"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "none", label: "None" },
-                          { value: "top", label: "Top" },
-                          { value: "left", label: "Left" },
-                          { value: "inline", label: "Inline" },
-                        ]}
-                      />
-                    ) : null}
                     {has("dividerMode") ? (
                       <Select
                         label="Divider mode"
@@ -2200,6 +2194,70 @@ export function SectionEditorDrawer({
                       />
                     ) : null}
                   </SimpleGrid>
+                  ) : null}
+                  {hasComponentControls ? (
+                  <>
+                  <Text fw={500} size="xs" mt="sm">Component family</Text>
+                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                    {has("cardFamily") ? (
+                      <Select
+                        label="Card family"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.cardFamily || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, cardFamily: (val || "") as FormattingState["cardFamily"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "quiet", label: "Quiet" },
+                          { value: "service", label: "Service" },
+                          { value: "metric", label: "Metric" },
+                          { value: "process", label: "Process" },
+                          { value: "proof", label: "Proof" },
+                          { value: "logo_tile", label: "Logo tile" },
+                          { value: "cta", label: "CTA" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("cardChrome") ? (
+                      <Select
+                        label="Card chrome"
+                        description="Modifies the card family base style"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.cardChrome || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, cardChrome: (val || "") as FormattingState["cardChrome"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "flat", label: "Flat" },
+                          { value: "outlined", label: "Outlined" },
+                          { value: "elevated", label: "Elevated" },
+                          { value: "inset", label: "Inset" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("accentRule") ? (
+                      <Select
+                        label="Accent rule"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.accentRule || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, accentRule: (val || "") as FormattingState["accentRule"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "none", label: "None" },
+                          { value: "top", label: "Top" },
+                          { value: "left", label: "Left" },
+                          { value: "inline", label: "Inline" },
+                        ]}
+                      />
+                    ) : null}
+                  </SimpleGrid>
+                  </>
+                  ) : null}
+                  </Stack>
                 )
               })()}
 

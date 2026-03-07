@@ -7,6 +7,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -24,11 +25,7 @@ export function WorkflowsSection({
   eyebrow,
   items,
   layoutVariant = "accordion",
-  rhythm,
-  surface,
-  contentDensity,
-  dividerMode,
-  headingTreatment,
+  ui,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -41,11 +38,7 @@ export function WorkflowsSection({
   eyebrow?: string
   items: Array<{ title: string; body: string; bodyHtml?: string }>
   layoutVariant?: LayoutVariant
-  rhythm?: string
-  surface?: string
-  contentDensity?: string
-  dividerMode?: string
-  headingTreatment?: string
+  ui?: ResolvedSectionUi
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
@@ -73,6 +66,8 @@ export function WorkflowsSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
+        rhythm={ui?.rhythm}
+        surface={ui?.surface}
       >
         {headerBlock}
         <div className="space-y-3">
@@ -107,6 +102,8 @@ export function WorkflowsSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
+        rhythm={ui?.rhythm}
+        surface={ui?.surface}
       >
         {headerBlock}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -141,6 +138,8 @@ export function WorkflowsSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
+        rhythm={ui?.rhythm}
+        surface={ui?.surface}
       >
         {headerBlock}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -177,8 +176,8 @@ export function WorkflowsSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
-      rhythm={rhythm as any}
-      surface={surface as any}
+      rhythm={ui?.rhythm}
+      surface={ui?.surface}
     >
       {headerBlock}
 

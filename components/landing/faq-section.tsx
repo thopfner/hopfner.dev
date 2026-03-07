@@ -6,6 +6,8 @@ import {
 } from "@/components/ui/accordion"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import { DIVIDER_CLASSES } from "@/lib/design-system/presentation"
+import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -18,9 +20,7 @@ export function FaqSection({
   panelStyle,
   title,
   items,
-  rhythm,
-  surface,
-  dividerMode,
+  ui,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -30,11 +30,9 @@ export function FaqSection({
   panelStyle?: CSSProperties
   title: string
   items: Array<{ question: string; answerHtml: string; answer?: string }>
-  rhythm?: string
-  surface?: string
-  dividerMode?: string
+  ui?: ResolvedSectionUi
 }) {
-  const dividerClass = dividerMode === "strong" ? "divide-border/70" : dividerMode === "subtle" ? "divide-border/30" : ""
+  const dividerClass = ui?.dividerMode ? DIVIDER_CLASSES[ui.dividerMode] : ""
   return (
     <SectionShell
       id={sectionId}
@@ -43,8 +41,8 @@ export function FaqSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
-      rhythm={rhythm as any}
-      surface={surface as any}
+      rhythm={ui?.rhythm}
+      surface={ui?.surface}
     >
       <SectionHeading id="faq-title" title={title} />
 

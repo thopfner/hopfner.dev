@@ -18,6 +18,7 @@ import type {
   CmsSectionTypeDefault,
   CmsSectionTypeDefaultsMap,
 } from "@/lib/cms/types"
+import { resolveSectionUi } from "@/lib/design-system/resolve"
 import { cn } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import type { CSSProperties } from "react"
@@ -296,16 +297,6 @@ function sectionContainerProps(
   const spacingTop = asString(formatting.spacingTop)
   const spacingBottom = asString(formatting.spacingBottom)
   const outerSpacing = asString(formatting.outerSpacing)
-  const sectionRhythm = asString(formatting.sectionRhythm)
-  const contentDensity = asString(formatting.contentDensity)
-  const gridGap = asString(formatting.gridGap)
-  const sectionSurface = asString(formatting.sectionSurface)
-  const cardFamily = asString(formatting.cardFamily)
-  const cardChrome = asString(formatting.cardChrome)
-  const accentRule = asString(formatting.accentRule)
-  const headingTreatment = asString(formatting.headingTreatment)
-  const labelStyle = asString(formatting.labelStyle)
-  const dividerMode = asString(formatting.dividerMode)
 
   Object.assign(sectionStyle, spacingTokenToMarginStyle(spacingTop, spacingBottom, outerSpacing))
 
@@ -321,16 +312,6 @@ function sectionContainerProps(
     sectionStyle,
     containerStyle,
     panelStyle,
-    rhythm: sectionRhythm || undefined,
-    surface: sectionSurface || undefined,
-    contentDensity: contentDensity || undefined,
-    gridGap: gridGap || undefined,
-    cardFamily: cardFamily || undefined,
-    cardChrome: cardChrome || undefined,
-    accentRule: accentRule || undefined,
-    headingTreatment: headingTreatment || undefined,
-    labelStyle: labelStyle || undefined,
-    dividerMode: dividerMode || undefined,
   }
 }
 
@@ -577,6 +558,7 @@ export default async function MarketingPage({
             deepMerge(asRecord(section.formatting_override), asRecord(v.formatting))
           )
           const props = sectionContainerProps(formatting, tailwindWhitelist, section.key)
+          const ui = resolveSectionUi(formatting, section.section_type)
           const fullPageBackdropMode = pageBackdropEnabled && topBackdropScope === "full-page"
           const propsWithFullPageBackdrop =
             fullPageBackdropMode && section.section_type !== "hero_cta"
@@ -728,6 +710,7 @@ export default async function MarketingPage({
                 <WhatIDeliverSection
                   key={section.id}
                   {...adjustedProps}
+                  ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
                   subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
@@ -735,11 +718,6 @@ export default async function MarketingPage({
                   sectionVariant={cardGridSectionVariant}
                   columns={cardGridColumns}
                   cardTone={cardGridTone}
-                  cardFamily={adjustedProps.cardFamily as any}
-                  cardChrome={adjustedProps.cardChrome as any}
-                  contentDensity={adjustedProps.contentDensity as any}
-                  gridGap={adjustedProps.gridGap as any}
-                  dividerMode={adjustedProps.dividerMode as any}
                 />
               )
             }
@@ -756,15 +734,12 @@ export default async function MarketingPage({
                 <HowItWorksSection
                   key={section.id}
                   {...adjustedProps}
+                  ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
                   subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   steps={steps}
                   layoutVariant={stepsLayout}
-                  cardFamily={adjustedProps.cardFamily as any}
-                  accentRule={adjustedProps.accentRule as any}
-                  labelStyle={adjustedProps.labelStyle as any}
-                  dividerMode={adjustedProps.dividerMode as any}
                 />
               )
             }
@@ -781,16 +756,12 @@ export default async function MarketingPage({
                 <WorkflowsSection
                   key={section.id}
                   {...adjustedProps}
+                  ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
                   subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   items={items}
                   layoutVariant={tbLayout}
-                  rhythm={adjustedProps.rhythm}
-                  surface={adjustedProps.surface}
-                  contentDensity={adjustedProps.contentDensity}
-                  dividerMode={adjustedProps.dividerMode}
-                  headingTreatment={adjustedProps.headingTreatment}
                 />
               )
             }
@@ -800,12 +771,10 @@ export default async function MarketingPage({
                 <WhyThisApproachSection
                   key={section.id}
                   {...adjustedProps}
+                  ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
                   heading={pickText(v.subtitle, defaults?.default_subtitle)}
                   bodyHtml={bodyHtml}
-                  rhythm={adjustedProps.rhythm}
-                  surface={adjustedProps.surface}
-                  headingTreatment={adjustedProps.headingTreatment}
                 />
               )
             }
@@ -823,16 +792,13 @@ export default async function MarketingPage({
                 <TechStackSection
                   key={section.id}
                   {...adjustedProps}
+                  ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
                   subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   items={items}
                   layoutVariant={lvLayout}
                   compact={content.compact === true}
-                  contentDensity={adjustedProps.contentDensity as any}
-                  labelStyle={adjustedProps.labelStyle as any}
-                  rhythm={adjustedProps.rhythm}
-                  surface={adjustedProps.surface}
                 />
               )
             }
@@ -846,11 +812,9 @@ export default async function MarketingPage({
                 <FaqSection
                   key={section.id}
                   {...adjustedProps}
+                  ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
                   items={items}
-                  rhythm={adjustedProps.rhythm}
-                  surface={adjustedProps.surface}
-                  dividerMode={adjustedProps.dividerMode}
                 />
               )
             }
@@ -863,6 +827,7 @@ export default async function MarketingPage({
                 <FinalCtaSection
                   key={section.id}
                   {...adjustedProps}
+                  ui={ui}
                   headline={pickText(v.title, defaults?.default_title)}
                   body={asString(content.body)}
                   bodyHtml={bodyHtml}
@@ -876,9 +841,6 @@ export default async function MarketingPage({
                   }}
                   layoutVariant={ctaLayout}
                   eyebrow={asString(content.eyebrow)}
-                  rhythm={adjustedProps.rhythm}
-                  surface={adjustedProps.surface}
-                  headingTreatment={adjustedProps.headingTreatment}
                 />
               )
             }
@@ -960,17 +922,11 @@ export default async function MarketingPage({
                 <ComposedSection
                   key={section.id}
                   {...adjustedProps}
+                  ui={ui}
                   schema={schema}
                   content={asRecord(v.content)}
                   title={asString(v.title)}
                   subtitle={asString(v.subtitle)}
-                  rhythm={adjustedProps.rhythm}
-                  surface={adjustedProps.surface}
-                  contentDensity={adjustedProps.contentDensity}
-                  gridGap={adjustedProps.gridGap}
-                  headingTreatment={adjustedProps.headingTreatment}
-                  labelStyle={adjustedProps.labelStyle}
-                  dividerMode={adjustedProps.dividerMode}
                 />
               )
             }

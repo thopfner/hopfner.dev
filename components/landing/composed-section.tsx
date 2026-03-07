@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { GRID_GAP_CLASSES } from "@/lib/design-system/presentation"
+import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 import { tiptapJsonToSanitizedHtml } from "@/lib/cms/rich-text"
 
@@ -488,13 +490,7 @@ export function ComposedSection({
   content,
   title,
   subtitle,
-  rhythm,
-  surface,
-  contentDensity,
-  gridGap,
-  headingTreatment,
-  labelStyle,
-  dividerMode,
+  ui,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -506,13 +502,7 @@ export function ComposedSection({
   content?: Record<string, unknown>
   title?: string
   subtitle?: string
-  rhythm?: string
-  surface?: string
-  contentDensity?: string
-  gridGap?: string
-  headingTreatment?: string
-  labelStyle?: string
-  dividerMode?: string
+  ui?: ResolvedSectionUi
 }) {
   const s = asSchema(schema)
   const customBlocks = asRecord(content?.customBlocks)
@@ -526,13 +516,13 @@ export function ComposedSection({
     : sectionClassName
 
   // Grid gap between row columns
-  const gapClass = gridGap === "tight" ? "gap-2" : gridGap === "wide" ? "gap-6" : "gap-4"
+  const gapClass = ui?.gridGap ? GRID_GAP_CLASSES[ui.gridGap] : GRID_GAP_CLASSES.standard
 
   // Column block spacing (content density)
-  const densityClass = contentDensity === "tight" ? "space-y-2" : contentDensity === "airy" ? "space-y-5" : "space-y-3"
+  const densityClass = ui?.density === "tight" ? "space-y-2" : ui?.density === "airy" ? "space-y-5" : "space-y-3"
 
   // Semantic context passed to renderBlock
-  const semantics: SemanticContext = { headingTreatment, labelStyle, contentDensity }
+  const semantics: SemanticContext = { headingTreatment: ui?.headingTreatment, labelStyle: ui?.labelStyle, contentDensity: ui?.density }
 
   return (
     <SectionShell
@@ -542,8 +532,8 @@ export function ComposedSection({
       containerClassName={cn(textAlignClass, containerClassName)}
       containerStyle={containerStyle}
       widthMode={s.tokens?.widthMode}
-      rhythm={rhythm as Parameters<typeof SectionShell>[0]["rhythm"]}
-      surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+      rhythm={ui?.rhythm}
+      surface={ui?.surface}
     >
       {title?.trim() ? <SectionHeading id={`${sectionId ?? "composed"}-title`} title={title.trim()} /> : null}
       {subtitle?.trim() ? <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">{subtitle.trim()}</p> : null}
@@ -554,11 +544,11 @@ export function ComposedSection({
 
         return (
           <div key={row.id}>
-            {dividerMode && dividerMode !== "none" && rowIdx > 0 ? (
+            {ui?.dividerMode && ui.dividerMode !== "none" && rowIdx > 0 ? (
               <hr
                 className={cn(
                   "mb-4",
-                  dividerMode === "strong"
+                  ui.dividerMode === "strong"
                     ? "border-border/60"
                     : "border-border/20"
                 )}

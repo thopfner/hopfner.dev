@@ -4,6 +4,8 @@ import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
+import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
+import { ACCENT_CLASSES } from "@/lib/design-system/component-families"
 
 type LayoutVariant = "grid" | "timeline" | "connected_flow"
 
@@ -19,10 +21,7 @@ export function HowItWorksSection({
   eyebrow,
   steps,
   layoutVariant = "grid",
-  cardFamily,
-  accentRule,
-  labelStyle,
-  dividerMode,
+  ui,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -35,10 +34,7 @@ export function HowItWorksSection({
   eyebrow?: string
   steps: Array<{ title: string; body?: string; bodyHtml?: string }>
   layoutVariant?: LayoutVariant
-  cardFamily?: string
-  accentRule?: string
-  labelStyle?: string
-  dividerMode?: string
+  ui?: ResolvedSectionUi
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
@@ -46,11 +42,11 @@ export function HowItWorksSection({
   if (layoutVariant === "timeline") {
     // Timeline line color intensity: accentRule controls emphasis
     const timelineLineClass =
-      accentRule === "left" || accentRule === "inline"
+      ui?.accentRule === "left" || ui?.accentRule === "inline"
         ? "bg-accent/40"
-        : accentRule === "top"
+        : ui?.accentRule === "top"
           ? "bg-accent/25"
-          : accentRule === "none"
+          : ui?.accentRule === "none"
             ? "bg-border/30"
             : "bg-border/60" // default (unset)
 
@@ -62,6 +58,8 @@ export function HowItWorksSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
+        rhythm={ui?.rhythm}
+        surface={ui?.surface}
       >
         <div className="space-y-1">
           {hasEyebrow ? (
@@ -93,15 +91,15 @@ export function HowItWorksSection({
                 <Card className="surface-panel gap-2 py-3" style={panelStyle}>
                   <CardContent className="space-y-1.5 px-4">
                     <div className="flex items-center gap-2">
-                      {labelStyle === "pill" ? (
+                      {ui?.labelStyle === "pill" ? (
                         <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-accent/20 px-1.5 text-xs font-medium text-accent">
                           {idx + 1}
                         </span>
-                      ) : labelStyle === "mono" ? (
+                      ) : ui?.labelStyle === "mono" ? (
                         <span className="text-label-mono flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-accent">
                           {idx + 1}
                         </span>
-                      ) : labelStyle === "micro" ? (
+                      ) : ui?.labelStyle === "micro" ? (
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
                           {idx + 1}
                         </span>
@@ -140,6 +138,8 @@ export function HowItWorksSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
+        rhythm={ui?.rhythm}
+        surface={ui?.surface}
       >
         <div className="space-y-1">
           {hasEyebrow ? (
@@ -160,15 +160,15 @@ export function HowItWorksSection({
                 className="flex w-full flex-1 flex-col rounded-xl border border-border/50 bg-card/30 p-4 text-center"
                 style={panelStyle}
               >
-                {labelStyle === "pill" ? (
+                {ui?.labelStyle === "pill" ? (
                   <span className="mx-auto mb-2 flex h-8 min-w-8 items-center justify-center rounded-full bg-accent/20 px-2 text-sm font-medium text-accent">
                     {idx + 1}
                   </span>
-                ) : labelStyle === "mono" ? (
+                ) : ui?.labelStyle === "mono" ? (
                   <span className="text-label-mono mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent">
                     {idx + 1}
                   </span>
-                ) : labelStyle === "micro" ? (
+                ) : ui?.labelStyle === "micro" ? (
                   <span className="mx-auto mb-2 flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
                     {idx + 1}
                   </span>
@@ -205,15 +205,8 @@ export function HowItWorksSection({
 
   // Default grid layout
 
-  // Resolve accentRule: explicit prop wins; fall back to "left" when cardFamily="process" for backward compat
-  const resolvedAccentRule = accentRule ?? (cardFamily === "process" ? "left" : "none")
-
-  const accentClasses: Record<string, string> = {
-    left: "border-l-2 border-l-accent/50",
-    top: "border-t-2 border-t-accent/50",
-    inline: "", // inline accent is rendered inside the card, not via class
-    none: "",
-  }
+  // Resolve accentRule: explicit ui prop wins; fall back to "left" when componentFamily="process" for backward compat
+  const resolvedAccentRule = ui?.accentRule ?? (ui?.componentFamily === "process" ? "left" : "none")
 
   return (
     <SectionShell
@@ -223,6 +216,8 @@ export function HowItWorksSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
+      rhythm={ui?.rhythm}
+      surface={ui?.surface}
     >
       <div className="space-y-1">
         {hasEyebrow ? (
@@ -241,8 +236,8 @@ export function HowItWorksSection({
           <li key={`${idx}-${step.title}`} className="relative">
             <Card className={cn(
               "gap-3 py-4",
-              cardFamily === "process" ? "border border-border/30 bg-card/15" : "surface-panel interactive-lift",
-              accentClasses[resolvedAccentRule] ?? ""
+              ui?.componentFamily === "process" ? "border border-border/30 bg-card/15" : "surface-panel interactive-lift",
+              ACCENT_CLASSES[resolvedAccentRule] ?? ""
             )} style={panelStyle}>
               <CardContent className="space-y-2 px-4">
                 {/* Inline accent: small accent bar before the step header */}
@@ -250,18 +245,18 @@ export function HowItWorksSection({
                   <div aria-hidden className="mb-1 h-0.5 w-6 rounded-full bg-accent/50" />
                 ) : null}
                 <div className="flex items-center gap-2">
-                  {labelStyle === "pill" ? (
+                  {ui?.labelStyle === "pill" ? (
                     <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-accent/20 px-2 text-xs font-medium text-accent">
                       {idx + 1}
                     </span>
-                  ) : labelStyle === "mono" ? (
+                  ) : ui?.labelStyle === "mono" ? (
                     <>
                       <Badge variant="secondary" className="text-label-mono min-w-7 justify-center rounded-full">
                         {idx + 1}
                       </Badge>
                       <span className="text-label-mono text-xs uppercase tracking-wide text-muted-foreground">Step {idx + 1}</span>
                     </>
-                  ) : labelStyle === "micro" ? (
+                  ) : ui?.labelStyle === "micro" ? (
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
                       {idx + 1}
                     </span>

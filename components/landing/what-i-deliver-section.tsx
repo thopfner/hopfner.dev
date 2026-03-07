@@ -1,9 +1,12 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
-import { SectionHeading } from "@/components/landing/section-primitives"
+import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
+import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
+import { DENSITY_PADDING, GRID_GAP_CLASSES } from "@/lib/design-system/presentation"
+import { resolveCardClasses, DEFAULT_CARD_CLASS } from "@/lib/design-system/component-families"
 
 type SectionVariant =
   | "default"
@@ -29,13 +32,7 @@ export function WhatIDeliverSection({
   sectionVariant = "default",
   columns,
   cardTone = "default",
-  cardFamily,
-  cardChrome,
-  contentDensity,
-  gridGap,
-  rhythm,
-  surface,
-  dividerMode,
+  ui,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -72,13 +69,7 @@ export function WhatIDeliverSection({
   sectionVariant?: SectionVariant
   columns?: 2 | 3 | 4
   cardTone?: CardTone
-  cardFamily?: "quiet" | "service" | "metric" | "process" | "proof" | "logo_tile" | "cta"
-  cardChrome?: "flat" | "outlined" | "elevated" | "inset"
-  contentDensity?: "tight" | "standard" | "airy"
-  gridGap?: "tight" | "standard" | "wide"
-  rhythm?: string
-  surface?: string
-  dividerMode?: string
+  ui?: ResolvedSectionUi
 }) {
   const effectiveColumns = columns ?? (sectionVariant === "logo_tiles" ? 4 : 3)
   const gridCols =
@@ -88,51 +79,18 @@ export function WhatIDeliverSection({
         ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-4"
         : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
 
+  // Legacy tone fallback — used only when ui?.componentFamily is not set
   const toneClasses: Record<CardTone, string> = {
-    default: "surface-panel interactive-lift",
+    default: DEFAULT_CARD_CLASS,
     elevated: "surface-panel interactive-lift border-border/80 shadow-md",
     muted: "border-border/40 bg-card/20",
     contrast: "border-border/80 bg-foreground/[0.04] shadow-sm",
   }
 
-  // Chrome replaces the full card style when no cardFamily is set (legacy fallback)
-  const chromeClasses: Record<string, string> = {
-    flat: "border-transparent bg-card/20",
-    outlined: "border border-border/50 bg-card/20",
-    elevated: "border border-border/40 bg-card/30 shadow-md",
-    inset: "border border-border/30 bg-card/10 shadow-inner",
-  }
-
-  // Precedence: cardFamily = base style, cardChrome = additive modifier, cardTone = legacy fallback when no family
-  // chromeModifiers layer on top of cardFamily without replacing it
-  const chromeModifiers: Record<string, string> = {
-    flat: "border-transparent shadow-none",
-    outlined: "",  // already the default border from most families
-    elevated: "shadow-md",
-    inset: "shadow-inner bg-card/10",
-  }
-
-  const familyClasses: Record<string, string> = {
-    quiet: "border-border/30 bg-card/15",
-    service: "surface-panel interactive-lift",
-    metric: "border border-border/40 bg-card/20 text-center",
-    process: "border-l-2 border-l-accent/50 border border-border/30 bg-card/15",
-    proof: "border border-border/50 bg-card/25",
-    logo_tile: "border border-border/20 bg-card/10 flex items-center justify-center",
-    cta: "border border-accent/30 bg-accent/[0.04]",
-  }
-
-  const gapClasses: Record<string, string> = {
-    tight: "gap-2",
-    standard: "gap-4",
-    wide: "gap-6",
-  }
-
-  const densityPadding: Record<string, string> = {
-    tight: "py-3",
-    standard: "py-4",
-    airy: "py-6",
-  }
+  // Resolve card classes from design-system tokens when available
+  const resolved = ui?.componentFamily
+    ? resolveCardClasses(ui.componentFamily, ui.componentChrome, ui.accentRule)
+    : null
 
   const variantCardClass = (variant: SectionVariant): string => {
     switch (variant) {
@@ -153,13 +111,16 @@ export function WhatIDeliverSection({
   const hasSubtitle = (subtitle ?? "").trim().length > 0
 
   return (
-    <section
+    <SectionShell
       id={sectionId}
-      className={cn("scroll-mt-16 py-6", sectionClassName)}
-      aria-labelledby="services-title"
-      style={sectionStyle}
+      labelledBy="services-title"
+      sectionClassName={sectionClassName}
+      sectionStyle={sectionStyle}
+      containerClassName={containerClassName}
+      containerStyle={containerStyle}
+      rhythm={ui?.rhythm}
+      surface={ui?.surface}
     >
-      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
         <div className="space-y-1">
           {hasEyebrow ? (
             <p className="text-eyebrow text-muted-foreground">
@@ -172,7 +133,7 @@ export function WhatIDeliverSection({
           ) : null}
         </div>
 
-        <div className={cn("grid", gridGap ? gapClasses[gridGap] : "gap-4", gridCols)}>
+        <div className={cn("grid", GRID_GAP_CLASSES[ui?.gridGap ?? "standard"], gridCols)}>
           {cards.map((item, idx) => {
             const hasYouGetBlock =
               item.display.showYouGet &&
@@ -205,7 +166,7 @@ export function WhatIDeliverSection({
                   className={cn(
                     "rounded-xl border border-border/40 bg-card/20 p-4",
                     "flex items-center justify-center",
-                    toneClasses[cardTone]
+                    resolved ? resolved.cardClass : toneClasses[cardTone]
                   )}
                   style={panelStyle}
                 >
@@ -228,14 +189,10 @@ export function WhatIDeliverSection({
                 key={`${item.title}-${idx}`}
                 className={cn(
                   "gap-3",
-                  contentDensity ? densityPadding[contentDensity] : "py-4",
-                  cardFamily ? familyClasses[cardFamily] : toneClasses[cardTone],
-                  cardChrome
-                    ? cardFamily
-                      ? chromeModifiers[cardChrome]   // family set: layer modifier on top
-                      : chromeClasses[cardChrome]      // no family: full chrome replacement (legacy)
-                    : "",
-                  !cardFamily ? variantCardClass(sectionVariant) : ""
+                  DENSITY_PADDING[ui?.density ?? "standard"],
+                  resolved
+                    ? resolved.cardClass
+                    : cn(toneClasses[cardTone], variantCardClass(sectionVariant))
                 )}
                 style={panelStyle}
               >
@@ -329,7 +286,6 @@ export function WhatIDeliverSection({
             )
           })}
         </div>
-      </div>
-    </section>
+    </SectionShell>
   )
 }

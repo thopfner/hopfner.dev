@@ -5,6 +5,7 @@ import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 
 type LayoutVariant = "centered" | "split" | "compact" | "high_contrast"
@@ -23,9 +24,7 @@ export function FinalCtaSection({
   secondaryCta,
   layoutVariant = "centered",
   eyebrow,
-  rhythm,
-  surface,
-  headingTreatment,
+  ui,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -40,9 +39,7 @@ export function FinalCtaSection({
   secondaryCta: { label: string; href: string }
   layoutVariant?: LayoutVariant
   eyebrow?: string
-  rhythm?: string
-  surface?: string
-  headingTreatment?: string
+  ui?: ResolvedSectionUi
 }) {
   const ctaJustify = containerClassName?.includes("text-center")
     ? "justify-center"
@@ -58,8 +55,8 @@ export function FinalCtaSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={(rhythm ?? "compact") as Parameters<typeof SectionShell>[0]["rhythm"]}
-        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+        rhythm={ui?.rhythm ?? "compact"}
+        surface={ui?.surface}
       >
           <div
             className="flex flex-col items-center justify-between gap-3 rounded-xl border border-border/50 bg-card/30 px-6 py-4 sm:flex-row"
@@ -95,8 +92,8 @@ export function FinalCtaSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={(rhythm ?? "cta") as Parameters<typeof SectionShell>[0]["rhythm"]}
-        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+        rhythm={ui?.rhythm ?? "cta"}
+        surface={ui?.surface}
       >
           <Card className="surface-panel relative overflow-hidden gap-3 py-4" style={panelStyle}>
             <div
@@ -145,8 +142,8 @@ export function FinalCtaSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={(rhythm ?? "cta") as Parameters<typeof SectionShell>[0]["rhythm"]}
-        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+        rhythm={ui?.rhythm ?? "cta"}
+        surface={ui?.surface}
       >
           <div
             className="relative overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.06] px-6 py-8 text-center shadow-lg sm:px-10 sm:py-10"
@@ -160,7 +157,7 @@ export function FinalCtaSection({
               {hasEyebrow ? (
                 <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
               ) : null}
-              <h2 className={cn("text-balance text-2xl font-bold tracking-tight sm:text-3xl", headingTreatment === "display" && "text-display")}>{headline}</h2>
+              <h2 className={cn("text-balance text-2xl font-bold tracking-tight sm:text-3xl", ui?.headingTreatment === "display" && "text-display")}>{headline}</h2>
               {bodyHtml?.trim() ? (
                 <div
                   className={cn("mx-auto max-w-xl text-sm text-muted-foreground", RICH_TEXT_CLASS)}
@@ -194,8 +191,8 @@ export function FinalCtaSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
-      rhythm={(rhythm ?? "cta") as Parameters<typeof SectionShell>[0]["rhythm"]}
-      surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+      rhythm={ui?.rhythm ?? "cta"}
+      surface={ui?.surface}
     >
         <Card className="surface-panel relative overflow-hidden gap-3 py-4" style={panelStyle}>
           <div

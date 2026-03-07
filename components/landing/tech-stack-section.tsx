@@ -1,4 +1,5 @@
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { Metric } from "@/components/ui/metric"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
@@ -18,10 +19,7 @@ export function TechStackSection({
   items,
   layoutVariant = "default",
   compact = false,
-  contentDensity,
-  labelStyle,
-  rhythm,
-  surface,
+  ui,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -35,10 +33,7 @@ export function TechStackSection({
   items: Array<{ label: string; value: string; icon?: string; imageUrl?: string }>
   layoutVariant?: LayoutVariant
   compact?: boolean
-  contentDensity?: string
-  labelStyle?: string
-  rhythm?: string
-  surface?: string
+  ui?: ResolvedSectionUi
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
@@ -51,8 +46,8 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={(rhythm ?? "compact") as Parameters<typeof SectionShell>[0]["rhythm"]}
-        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+        rhythm={ui?.rhythm ?? "compact"}
+        surface={ui?.surface}
       >
           {title ? (
             <p className="text-eyebrow mb-3 text-center text-muted-foreground">
@@ -91,8 +86,8 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={(rhythm ?? "compact") as Parameters<typeof SectionShell>[0]["rhythm"]}
-        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+        rhythm={ui?.rhythm ?? "compact"}
+        surface={ui?.surface}
       >
           {title ? (
             <p className="text-eyebrow mb-3 text-center text-muted-foreground">
@@ -132,8 +127,8 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={rhythm as Parameters<typeof SectionShell>[0]["rhythm"]}
-        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+        rhythm={ui?.rhythm}
+        surface={ui?.surface}
       >
         <div className="space-y-1">
           {hasEyebrow ? (
@@ -179,8 +174,8 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={rhythm as Parameters<typeof SectionShell>[0]["rhythm"]}
-        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+        rhythm={ui?.rhythm}
+        surface={ui?.surface}
       >
         <div className="space-y-1">
           {hasEyebrow ? (
@@ -228,8 +223,8 @@ export function TechStackSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
-      rhythm={rhythm as Parameters<typeof SectionShell>[0]["rhythm"]}
-      surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
+      rhythm={ui?.rhythm}
+      surface={ui?.surface}
     >
       <div className="space-y-1">
         {hasEyebrow ? (
@@ -243,7 +238,7 @@ export function TechStackSection({
         ) : null}
       </div>
 
-      <div className={cn("grid grid-cols-1 sm:grid-cols-2", contentDensity === "tight" ? "gap-2" : "gap-3")}>
+      <div className={cn("grid grid-cols-1 sm:grid-cols-2", ui?.density === "tight" ? "gap-2" : "gap-3")}>
         {items.map((item) => (
           <Metric
             key={item.label}

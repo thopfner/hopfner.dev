@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from "react"
 
+import { RHYTHM_CLASSES, SURFACE_CLASSES } from "@/lib/design-system/presentation"
+import type { Rhythm, Surface } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 
 export function SectionShell({
@@ -23,30 +25,11 @@ export function SectionShell({
   containerClassName?: string
   containerStyle?: CSSProperties
   widthMode?: "content" | "full"
-  rhythm?: "hero" | "statement" | "compact" | "standard" | "proof" | "cta" | "footer"
-  surface?: "none" | "panel" | "soft_band" | "contrast_band" | "spotlight_stage" | "grid_stage"
+  rhythm?: Rhythm
+  surface?: Surface
   children: ReactNode
 }) {
   const maxW = widthMode === "full" ? "max-w-7xl" : "max-w-5xl"
-
-  const rhythmPadding: Record<string, string> = {
-    hero: "py-10 sm:py-16",
-    statement: "py-8 sm:py-12",
-    compact: "py-3 sm:py-4",
-    standard: "py-6 sm:py-10",
-    proof: "py-6 sm:py-8",
-    cta: "py-8 sm:py-14",
-    footer: "py-6 sm:py-8",
-  }
-
-  const surfaceClasses: Record<string, string> = {
-    none: "",
-    panel: "surface-panel",
-    soft_band: "bg-card/[0.03] border-y border-border/20",
-    contrast_band: "bg-card/10 border-y border-border/40",
-    spotlight_stage: "relative",
-    grid_stage: "relative",
-  }
 
   return (
     <section
@@ -54,8 +37,8 @@ export function SectionShell({
       aria-labelledby={labelledBy}
       className={cn(
         "scroll-mt-20",
-        rhythm ? rhythmPadding[rhythm] : "py-8 sm:py-10",
-        surface ? surfaceClasses[surface] : "",
+        rhythm ? RHYTHM_CLASSES[rhythm] : "py-8 sm:py-10",
+        surface ? SURFACE_CLASSES[surface] : "",
         surface === "spotlight_stage" && "sig-obsidian-signal",
         surface === "grid_stage" && "sig-grid-rays",
         sectionClassName,
