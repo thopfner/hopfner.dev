@@ -23,6 +23,9 @@ export function FinalCtaSection({
   secondaryCta,
   layoutVariant = "centered",
   eyebrow,
+  rhythm,
+  surface,
+  headingTreatment,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -37,6 +40,9 @@ export function FinalCtaSection({
   secondaryCta: { label: string; href: string }
   layoutVariant?: LayoutVariant
   eyebrow?: string
+  rhythm?: string
+  surface?: string
+  headingTreatment?: string
 }) {
   const ctaJustify = containerClassName?.includes("text-center")
     ? "justify-center"
@@ -130,7 +136,12 @@ export function FinalCtaSection({
     return (
       <section
         id={sectionId}
-        className={cn("scroll-mt-16 py-6", sectionClassName)}
+        className={cn(
+          "scroll-mt-16 py-6",
+          surface === "contrast_band" && "bg-card/10 border-y border-border/40",
+          surface === "spotlight_stage" && "relative sig-obsidian-signal",
+          sectionClassName
+        )}
         aria-labelledby="final-cta-title"
         style={sectionStyle}
       >
@@ -147,7 +158,7 @@ export function FinalCtaSection({
               {hasEyebrow ? (
                 <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
               ) : null}
-              <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl">{headline}</h2>
+              <h2 className={cn("text-balance text-2xl font-bold tracking-tight sm:text-3xl", headingTreatment === "display" && "text-display")}>{headline}</h2>
               {bodyHtml?.trim() ? (
                 <div
                   className={cn("mx-auto max-w-xl text-sm text-muted-foreground", RICH_TEXT_CLASS)}
@@ -177,7 +188,12 @@ export function FinalCtaSection({
   return (
     <section
       id={sectionId}
-      className={cn("scroll-mt-16 py-6", sectionClassName)}
+      className={cn(
+        "scroll-mt-16 py-6",
+        surface === "contrast_band" && "bg-card/10 border-y border-border/40",
+        surface === "spotlight_stage" && "relative sig-obsidian-signal",
+        sectionClassName
+      )}
       aria-labelledby="final-cta-title"
       style={sectionStyle}
     >

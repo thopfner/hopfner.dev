@@ -110,7 +110,7 @@ export function HeroSection({
   const hasHeroStats = Array.isArray(heroStats) && heroStats.length > 0
 
   const textContent = (
-    <div className={cn("space-y-4", isSplit ? "text-left" : "text-center")}>
+    <div className={cn("space-y-6", isSplit ? "text-left" : "text-center")}>
       {hasEyebrow ? (
         <p className="text-eyebrow text-muted-foreground">
           {eyebrow}
@@ -122,15 +122,15 @@ export function HeroSection({
           className={cn(
             "text-display text-pretty leading-tight",
             isSplit
-              ? "text-3xl sm:text-4xl lg:text-5xl"
-              : "text-3xl sm:text-4xl"
+              ? "text-4xl sm:text-5xl lg:text-6xl"
+              : "text-4xl sm:text-5xl"
           )}
         >
           {headline}
         </h1>
         <p
           className={cn(
-            "text-pretty text-sm text-muted-foreground sm:text-base",
+            "text-pretty text-base text-muted-foreground sm:text-lg",
             isSplit ? "max-w-lg" : "mx-auto max-w-3xl"
           )}
         >
@@ -147,16 +147,16 @@ export function HeroSection({
       ) : null}
 
       <div className={cn("flex flex-wrap items-center gap-2", isSplit ? "justify-start" : "justify-center")}>
-        <Button size="sm" variant="secondary" asChild>
+        <Button size="default" variant="secondary" className="px-6" asChild>
           <Link href={primaryCta.href}>{primaryCta.label}</Link>
         </Button>
-        <Button size="sm" asChild>
+        <Button size="default" className="px-6" asChild>
           <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
         </Button>
       </div>
 
       {hasHeroStats ? (
-        <div className={cn("flex flex-wrap gap-6 pt-2", isSplit ? "justify-start" : "justify-center")}>
+        <div className={cn("flex flex-wrap gap-8 pt-4", isSplit ? "justify-start" : "justify-center")}>
           {heroStats!.map((stat, i) => (
             <div key={i} className="text-center">
               <p className="text-metric text-2xl">{stat.value}</p>
@@ -175,11 +175,11 @@ export function HeroSection({
           {proofPanel!.headline ? (
             <p className="text-sm font-medium text-muted-foreground">{proofPanel!.headline}</p>
           ) : null}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {(proofPanel!.items ?? []).map((item, i) => (
               <div
                 key={i}
-                className="rounded-lg border border-border/40 bg-card/30 p-3 text-center"
+                className="rounded-lg border border-border/30 bg-card/20 p-4 text-center backdrop-blur-sm"
               >
                 <p className="text-metric text-xl">{item.value}</p>
                 <p className="text-label-mono text-muted-foreground">{item.label}</p>

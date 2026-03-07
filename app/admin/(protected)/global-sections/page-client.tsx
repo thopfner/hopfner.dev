@@ -708,6 +708,12 @@ export function GlobalSectionsPage() {
   const [signatureColor, setSignatureColor] = useState("rgba(120,140,255,0.08)")
   const [signatureGridOpacity, setSignatureGridOpacity] = useState(0.06)
   const [signatureGlowOpacity, setSignatureGlowOpacity] = useState(0.08)
+  const [displayWeight, setDisplayWeight] = useState(700)
+  const [headingWeight, setHeadingWeight] = useState(600)
+  const [bodyWeight, setBodyWeight] = useState(400)
+  const [metricTracking, setMetricTracking] = useState("-0.02em")
+  const [bodyScale, setBodyScale] = useState(1)
+  const [signatureNoiseOpacity, setSignatureNoiseOpacity] = useState(0)
 
   const [templates, setTemplates] = useState<FormattingTemplateRow[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
@@ -1141,6 +1147,12 @@ export function GlobalSectionsPage() {
         signatureColor: signatureColor.trim() || null,
         signatureGridOpacity,
         signatureGlowOpacity,
+        displayWeight,
+        headingWeight,
+        bodyWeight,
+        metricTracking: metricTracking.trim() || null,
+        bodyScale,
+        signatureNoiseOpacity,
       },
     } satisfies Record<string, unknown>
   }
@@ -1190,6 +1202,12 @@ export function GlobalSectionsPage() {
     setSignatureColor(String(tokens.signatureColor ?? "rgba(120,140,255,0.08)"))
     setSignatureGridOpacity(parseNum(String(tokens.signatureGridOpacity ?? 0.06), 0.06))
     setSignatureGlowOpacity(parseNum(String(tokens.signatureGlowOpacity ?? 0.08), 0.08))
+    setDisplayWeight(Number(tokens.displayWeight) || 700)
+    setHeadingWeight(Number(tokens.headingWeight) || 600)
+    setBodyWeight(Number(tokens.bodyWeight) || 400)
+    setMetricTracking(String(tokens.metricTracking ?? "-0.02em"))
+    setBodyScale(Number(tokens.bodyScale) || 1)
+    setSignatureNoiseOpacity(Number(tokens.signatureNoiseOpacity) || 0)
   }
 
   function renderSectionActions(row: Row) {
@@ -1394,9 +1412,26 @@ export function GlobalSectionsPage() {
                     <Text size="sm" fw={500}>Metric scale ({metricScale.toFixed(2)}x)</Text>
                     <Slider label={(v) => `${v.toFixed(2)}x`} min={0.8} max={1.6} step={0.05} value={metricScale} onChange={setMetricScale} />
                   </Stack>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Body scale ({bodyScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0.8} max={1.4} step={0.05} value={bodyScale} onChange={setBodyScale} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Display weight ({displayWeight})</Text>
+                    <Slider label={(v) => String(v)} min={300} max={900} step={100} value={displayWeight} onChange={setDisplayWeight} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Heading weight ({headingWeight})</Text>
+                    <Slider label={(v) => String(v)} min={300} max={900} step={100} value={headingWeight} onChange={setHeadingWeight} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Body weight ({bodyWeight})</Text>
+                    <Slider label={(v) => String(v)} min={300} max={700} step={100} value={bodyWeight} onChange={setBodyWeight} />
+                  </Stack>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <TextInput label="Display tracking" value={displayTracking} onChange={(e) => setDisplayTracking(e.currentTarget.value)} placeholder="-0.035em" />
                     <TextInput label="Eyebrow tracking" value={eyebrowTracking} onChange={(e) => setEyebrowTracking(e.currentTarget.value)} placeholder="0.12em" />
+                    <TextInput label="Metric tracking" value={metricTracking} onChange={(e) => setMetricTracking(e.currentTarget.value)} placeholder="-0.02em" />
                   </div>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
                     <ColorInput label="Text color" value={textColor} onChange={setTextColor} placeholder="#111827" />
@@ -1432,6 +1467,10 @@ export function GlobalSectionsPage() {
                   <Stack gap={4}>
                     <Text size="sm" fw={500}>Glow opacity ({signatureGlowOpacity.toFixed(2)})</Text>
                     <Slider label={(v) => v.toFixed(2)} min={0} max={0.5} step={0.01} value={signatureGlowOpacity} onChange={setSignatureGlowOpacity} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Noise opacity ({signatureNoiseOpacity.toFixed(2)})</Text>
+                    <Slider label={(v) => v.toFixed(2)} min={0} max={0.3} step={0.01} value={signatureNoiseOpacity} onChange={setSignatureNoiseOpacity} />
                   </Stack>
                 </Stack>
               ) : null}

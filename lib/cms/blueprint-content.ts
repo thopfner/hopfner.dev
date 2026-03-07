@@ -33,6 +33,12 @@ export type PageInput = {
   sections: SectionInput[]
 }
 
+const F_HERO = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "center", sectionRhythm: "hero", sectionSurface: "spotlight_stage", headingTreatment: "display" }
+const F_PROOF = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "proof", cardFamily: "proof", cardChrome: "outlined", contentDensity: "tight" }
+const F_SERVICE = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "standard", cardFamily: "service", cardChrome: "outlined" }
+const F_PROCESS = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "standard", cardFamily: "process", accentRule: "left", labelStyle: "mono" }
+const F_COMPACT = { maxWidth: "max-w-5xl", paddingY: "py-4", textAlign: "left", sectionRhythm: "compact", contentDensity: "tight", labelStyle: "mono" }
+const F_CTA = { maxWidth: "max-w-5xl", paddingY: "py-8", textAlign: "center", sectionRhythm: "cta", sectionSurface: "contrast_band", headingTreatment: "display" }
 const F_LEFT = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left" }
 const F_CENTER = { maxWidth: "max-w-5xl", paddingY: "py-8", textAlign: "center" }
 
@@ -59,10 +65,13 @@ export const BLUEPRINT_PAGES: PageInput[] = [
           cta_secondary_label: "See Services",
           cta_secondary_href: "/services",
           background_media_url: null,
-          formatting: F_CENTER,
+          formatting: F_HERO,
           content: {
             bullets: ["20–30 minutes.", "Practical review.", "No fluff."],
             trustLine: "Built for English-speaking SMEs and startups in the Western hemisphere.",
+            layoutVariant: "split",
+            proofPanel: { type: "stats", headline: "Proven Results", items: [{ label: "Workflows automated", value: "50+" }, { label: "Avg time saved", value: "40%" }, { label: "Client retention", value: "95%" }, { label: "Platforms integrated", value: "30+" }] },
+            heroStats: [{ value: "50+", label: "Workflows" }, { value: "40%", label: "Time saved" }, { value: "95%", label: "Retention" }],
           },
         },
       },
@@ -107,7 +116,7 @@ export const BLUEPRINT_PAGES: PageInput[] = [
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_LEFT,
+          formatting: F_PROOF,
           content: {
             cards: [
               {
@@ -170,7 +179,7 @@ export const BLUEPRINT_PAGES: PageInput[] = [
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_LEFT,
+          formatting: F_SERVICE,
           content: {
             cards: [
               { title: "Workflow Automation", text: "End-to-end automation of repetitive business workflows.", image: { url: "", alt: "", widthPx: 240 }, display: { showTitle: true, showText: true, showImage: false, showYouGet: false, showBestFor: false, youGetMode: "block", bestForMode: "block" } },
@@ -194,7 +203,7 @@ export const BLUEPRINT_PAGES: PageInput[] = [
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_LEFT,
+          formatting: F_PROCESS,
           content: {
             steps: [
               { title: "Workflow Mapping", body: "" },
@@ -219,7 +228,7 @@ export const BLUEPRINT_PAGES: PageInput[] = [
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_LEFT,
+          formatting: F_COMPACT,
           content: {
             items: [
               { label: "Workflows built", value: "Add your metric" },
@@ -244,7 +253,7 @@ export const BLUEPRINT_PAGES: PageInput[] = [
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_CENTER,
+          formatting: F_CTA,
           content: { body: "Practical recommendations you can implement fast." },
         },
       },

@@ -320,15 +320,15 @@ function sectionContainerProps(
     sectionStyle,
     containerStyle,
     panelStyle,
-    sectionRhythm,
-    contentDensity,
-    gridGap,
-    sectionSurface,
-    cardFamily,
-    cardChrome,
-    accentRule,
-    headingTreatment,
-    labelStyle,
+    rhythm: sectionRhythm || undefined,
+    surface: sectionSurface || undefined,
+    contentDensity: contentDensity || undefined,
+    gridGap: gridGap || undefined,
+    cardFamily: cardFamily || undefined,
+    cardChrome: cardChrome || undefined,
+    accentRule: accentRule || undefined,
+    headingTreatment: headingTreatment || undefined,
+    labelStyle: labelStyle || undefined,
   }
 }
 
@@ -730,6 +730,10 @@ export default async function MarketingPage({
                   sectionVariant={cardGridSectionVariant}
                   columns={cardGridColumns}
                   cardTone={cardGridTone}
+                  cardFamily={adjustedProps.cardFamily as any}
+                  cardChrome={adjustedProps.cardChrome as any}
+                  contentDensity={adjustedProps.contentDensity as any}
+                  gridGap={adjustedProps.gridGap as any}
                 />
               )
             }
@@ -751,6 +755,9 @@ export default async function MarketingPage({
                   eyebrow={asString(content.eyebrow)}
                   steps={steps}
                   layoutVariant={stepsLayout}
+                  cardFamily={adjustedProps.cardFamily as any}
+                  accentRule={adjustedProps.accentRule as any}
+                  labelStyle={adjustedProps.labelStyle as any}
                 />
               )
             }
@@ -807,6 +814,10 @@ export default async function MarketingPage({
                   items={items}
                   layoutVariant={lvLayout}
                   compact={content.compact === true}
+                  contentDensity={adjustedProps.contentDensity as any}
+                  labelStyle={adjustedProps.labelStyle as any}
+                  rhythm={adjustedProps.rhythm}
+                  surface={adjustedProps.surface}
                 />
               )
             }
@@ -847,6 +858,9 @@ export default async function MarketingPage({
                   }}
                   layoutVariant={ctaLayout}
                   eyebrow={asString(content.eyebrow)}
+                  rhythm={adjustedProps.rhythm}
+                  surface={adjustedProps.surface}
+                  headingTreatment={adjustedProps.headingTreatment}
                 />
               )
             }

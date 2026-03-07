@@ -29,6 +29,12 @@ export function WhatIDeliverSection({
   sectionVariant = "default",
   columns,
   cardTone = "default",
+  cardFamily,
+  cardChrome,
+  contentDensity,
+  gridGap,
+  rhythm,
+  surface,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -65,6 +71,12 @@ export function WhatIDeliverSection({
   sectionVariant?: SectionVariant
   columns?: 2 | 3 | 4
   cardTone?: CardTone
+  cardFamily?: "quiet" | "service" | "metric" | "process" | "proof" | "logo_tile" | "cta"
+  cardChrome?: "flat" | "outlined" | "elevated" | "inset"
+  contentDensity?: "tight" | "standard" | "airy"
+  gridGap?: "tight" | "standard" | "wide"
+  rhythm?: string
+  surface?: string
 }) {
   const effectiveColumns = columns ?? (sectionVariant === "logo_tiles" ? 4 : 3)
   const gridCols =
@@ -79,6 +91,35 @@ export function WhatIDeliverSection({
     elevated: "surface-panel interactive-lift border-border/80 shadow-md",
     muted: "border-border/40 bg-card/20",
     contrast: "border-border/80 bg-foreground/[0.04] shadow-sm",
+  }
+
+  const chromeClasses: Record<string, string> = {
+    flat: "border-transparent bg-card/20",
+    outlined: "border border-border/50 bg-card/20",
+    elevated: "border border-border/40 bg-card/30 shadow-md",
+    inset: "border border-border/30 bg-card/10 shadow-inner",
+  }
+
+  const familyClasses: Record<string, string> = {
+    quiet: "border-border/30 bg-card/15",
+    service: "surface-panel interactive-lift",
+    metric: "border border-border/40 bg-card/20 text-center",
+    process: "border-l-2 border-l-accent/50 border border-border/30 bg-card/15",
+    proof: "border border-border/50 bg-card/25",
+    logo_tile: "border border-border/20 bg-card/10 flex items-center justify-center",
+    cta: "border border-accent/30 bg-accent/[0.04]",
+  }
+
+  const gapClasses: Record<string, string> = {
+    tight: "gap-2",
+    standard: "gap-4",
+    wide: "gap-6",
+  }
+
+  const densityPadding: Record<string, string> = {
+    tight: "py-3",
+    standard: "py-4",
+    airy: "py-6",
   }
 
   const variantCardClass = (variant: SectionVariant): string => {
@@ -119,7 +160,7 @@ export function WhatIDeliverSection({
           ) : null}
         </div>
 
-        <div className={cn("grid gap-4", gridCols)}>
+        <div className={cn("grid", gridGap ? gapClasses[gridGap] : "gap-4", gridCols)}>
           {cards.map((item, idx) => {
             const hasYouGetBlock =
               item.display.showYouGet &&
@@ -174,9 +215,11 @@ export function WhatIDeliverSection({
               <Card
                 key={`${item.title}-${idx}`}
                 className={cn(
-                  "gap-3 py-4",
-                  toneClasses[cardTone],
-                  variantCardClass(sectionVariant)
+                  "gap-3",
+                  contentDensity ? densityPadding[contentDensity] : "py-4",
+                  cardFamily ? familyClasses[cardFamily] : toneClasses[cardTone],
+                  cardChrome && !cardFamily ? chromeClasses[cardChrome] : "",
+                  !cardFamily ? variantCardClass(sectionVariant) : ""
                 )}
                 style={panelStyle}
               >

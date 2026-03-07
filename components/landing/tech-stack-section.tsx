@@ -18,6 +18,10 @@ export function TechStackSection({
   items,
   layoutVariant = "default",
   compact = false,
+  contentDensity,
+  labelStyle,
+  rhythm,
+  surface,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -31,6 +35,10 @@ export function TechStackSection({
   items: Array<{ label: string; value: string; icon?: string; imageUrl?: string }>
   layoutVariant?: LayoutVariant
   compact?: boolean
+  contentDensity?: string
+  labelStyle?: string
+  rhythm?: string
+  surface?: string
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
@@ -225,7 +233,7 @@ export function TechStackSection({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className={cn("grid grid-cols-1 sm:grid-cols-2", contentDensity === "tight" ? "gap-2" : "gap-3")}>
         {items.map((item) => (
           <Metric
             key={item.label}

@@ -19,6 +19,9 @@ export function HowItWorksSection({
   eyebrow,
   steps,
   layoutVariant = "grid",
+  cardFamily,
+  accentRule,
+  labelStyle,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -31,6 +34,9 @@ export function HowItWorksSection({
   eyebrow?: string
   steps: Array<{ title: string; body?: string; bodyHtml?: string }>
   layoutVariant?: LayoutVariant
+  cardFamily?: string
+  accentRule?: string
+  labelStyle?: string
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
@@ -180,7 +186,10 @@ export function HowItWorksSection({
       <ol className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {steps.map((step, idx) => (
           <li key={`${idx}-${step.title}`} className="relative">
-            <Card className="surface-panel interactive-lift gap-3 py-4" style={panelStyle}>
+            <Card className={cn(
+              "gap-3 py-4",
+              cardFamily === "process" ? "border-l-2 border-l-accent/50 border border-border/30 bg-card/15" : "surface-panel interactive-lift"
+            )} style={panelStyle}>
               <CardContent className="space-y-2 px-4">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="min-w-7 justify-center rounded-full">
