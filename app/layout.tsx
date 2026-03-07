@@ -3,6 +3,7 @@ import {
   DM_Sans,
   Geist,
   Geist_Mono,
+  IBM_Plex_Mono,
   IBM_Plex_Sans,
   Inter,
   JetBrains_Mono,
@@ -15,6 +16,7 @@ import {
   Poppins,
   Roboto,
   Source_Sans_3,
+  Space_Grotesk,
   Work_Sans,
 } from "next/font/google";
 import "./globals.css";
@@ -35,6 +37,8 @@ const roboto = Roboto({ variable: "--font-roboto", subsets: ["latin"], weight: [
 const openSans = Open_Sans({ variable: "--font-open-sans", subsets: ["latin"] });
 const lato = Lato({ variable: "--font-lato", subsets: ["latin"], weight: ["400", "700"], style: ["normal"] });
 const montserrat = Montserrat({ variable: "--font-montserrat", subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin"] });
+const ibmPlexMono = IBM_Plex_Mono({ variable: "--font-ibm-plex-mono", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
   title: "Automation Consultancy",
@@ -49,7 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark scroll-smooth">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${ibmPlexSans.variable} ${merriweather.variable} ${jetbrainsMono.variable} ${poppins.variable} ${manrope.variable} ${dmSans.variable} ${nunitoSans.variable} ${workSans.variable} ${sourceSans3.variable} ${roboto.variable} ${openSans.variable} ${lato.variable} ${montserrat.variable} min-h-dvh antialiased`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${ibmPlexSans.variable} ${merriweather.variable} ${jetbrainsMono.variable} ${poppins.variable} ${manrope.variable} ${dmSans.variable} ${nunitoSans.variable} ${workSans.variable} ${sourceSans3.variable} ${roboto.variable} ${openSans.variable} ${lato.variable} ${montserrat.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable} min-h-dvh antialiased`}
       >
         {children}
       </body>

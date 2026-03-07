@@ -44,7 +44,7 @@ export function TechStackSection({
       >
         <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
           {title ? (
-            <p className="mb-3 text-center text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="text-eyebrow mb-3 text-center text-muted-foreground">
               {title}
             </p>
           ) : null}
@@ -82,7 +82,7 @@ export function TechStackSection({
       >
         <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
           {title ? (
-            <p className="mb-3 text-center text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="text-eyebrow mb-3 text-center text-muted-foreground">
               {title}
             </p>
           ) : null}
@@ -123,7 +123,7 @@ export function TechStackSection({
       >
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="text-eyebrow text-muted-foreground">
               {eyebrow}
             </p>
           ) : null}
@@ -168,7 +168,7 @@ export function TechStackSection({
       >
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="text-eyebrow text-muted-foreground">
               {eyebrow}
             </p>
           ) : null}
@@ -192,10 +192,10 @@ export function TechStackSection({
               style={panelStyle}
             >
               {item.icon ? <span className="mb-1 block text-xl">{item.icon}</span> : null}
-              <p className={cn("font-bold tracking-tight", compact ? "text-xl" : "text-2xl lg:text-3xl")}>
+              <p className={cn("text-metric", compact ? "text-xl" : "text-2xl lg:text-3xl")}>
                 {item.value}
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{item.label}</p>
+              <p className="text-label-mono mt-0.5 text-muted-foreground">{item.label}</p>
             </div>
           ))}
         </div>

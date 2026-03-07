@@ -43,7 +43,7 @@ export function WorkflowsSection({
   const headerBlock = (
     <div className="space-y-1">
       {hasEyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+        <p className="text-eyebrow text-muted-foreground">
           {eyebrow}
         </p>
       ) : null}

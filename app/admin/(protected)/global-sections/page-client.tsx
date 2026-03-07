@@ -694,6 +694,21 @@ export function GlobalSectionsPage() {
   const [backgroundColor, setBackgroundColor] = useState("")
   const [cardBackgroundColor, setCardBackgroundColor] = useState("")
 
+  const [displayFontFamily, setDisplayFontFamily] = useState("var(--font-space-grotesk)")
+  const [bodyFontFamily, setBodyFontFamily] = useState("var(--font-ibm-plex-sans)")
+  const [monoFontFamily, setMonoFontFamily] = useState("var(--font-ibm-plex-mono)")
+  const [displayScale, setDisplayScale] = useState(1)
+  const [headingScale, setHeadingScale] = useState(1)
+  const [eyebrowScale, setEyebrowScale] = useState(0.8)
+  const [metricScale, setMetricScale] = useState(1)
+  const [displayTracking, setDisplayTracking] = useState("")
+  const [eyebrowTracking, setEyebrowTracking] = useState("")
+  const [signatureStyle, setSignatureStyle] = useState("off")
+  const [signatureIntensity, setSignatureIntensity] = useState(0.5)
+  const [signatureColor, setSignatureColor] = useState("rgba(120,140,255,0.08)")
+  const [signatureGridOpacity, setSignatureGridOpacity] = useState(0.06)
+  const [signatureGlowOpacity, setSignatureGlowOpacity] = useState(0.08)
+
   const [templates, setTemplates] = useState<FormattingTemplateRow[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [templateName, setTemplateName] = useState("")
@@ -1112,6 +1127,20 @@ export function GlobalSectionsPage() {
         accentColor: accentColor.trim() || null,
         backgroundColor: backgroundColor.trim() || null,
         cardBackgroundColor: cardBackgroundColor.trim() || null,
+        displayFontFamily: displayFontFamily.trim() || null,
+        bodyFontFamily: bodyFontFamily.trim() || null,
+        monoFontFamily: monoFontFamily.trim() || null,
+        displayScale,
+        headingScale,
+        eyebrowScale,
+        metricScale,
+        displayTracking: displayTracking.trim() || null,
+        eyebrowTracking: eyebrowTracking.trim() || null,
+        signatureStyle: signatureStyle || "off",
+        signatureIntensity,
+        signatureColor: signatureColor.trim() || null,
+        signatureGridOpacity,
+        signatureGlowOpacity,
       },
     } satisfies Record<string, unknown>
   }
@@ -1147,6 +1176,20 @@ export function GlobalSectionsPage() {
     setAccentColor(String(tokens.accentColor ?? ""))
     setBackgroundColor(String(tokens.backgroundColor ?? ""))
     setCardBackgroundColor(String(tokens.cardBackgroundColor ?? ""))
+    setDisplayFontFamily(String(tokens.displayFontFamily ?? "var(--font-space-grotesk)"))
+    setBodyFontFamily(String(tokens.bodyFontFamily ?? "var(--font-ibm-plex-sans)"))
+    setMonoFontFamily(String(tokens.monoFontFamily ?? "var(--font-ibm-plex-mono)"))
+    setDisplayScale(parseNum(String(tokens.displayScale ?? 1), 1))
+    setHeadingScale(parseNum(String(tokens.headingScale ?? 1), 1))
+    setEyebrowScale(parseNum(String(tokens.eyebrowScale ?? 0.8), 0.8))
+    setMetricScale(parseNum(String(tokens.metricScale ?? 1), 1))
+    setDisplayTracking(String(tokens.displayTracking ?? ""))
+    setEyebrowTracking(String(tokens.eyebrowTracking ?? ""))
+    setSignatureStyle(String(tokens.signatureStyle ?? "off"))
+    setSignatureIntensity(parseNum(String(tokens.signatureIntensity ?? 0.5), 0.5))
+    setSignatureColor(String(tokens.signatureColor ?? "rgba(120,140,255,0.08)"))
+    setSignatureGridOpacity(parseNum(String(tokens.signatureGridOpacity ?? 0.06), 0.06))
+    setSignatureGlowOpacity(parseNum(String(tokens.signatureGlowOpacity ?? 0.08), 0.08))
   }
 
   function renderSectionActions(row: Row) {
@@ -1279,6 +1322,42 @@ export function GlobalSectionsPage() {
 
                   <Select label="Font family" value={fontFamily} onChange={(v) => setFontFamily(v ?? FONT_STACKS[0].value)} data={[...FONT_STACKS, { value: "__custom", label: "Custom…" }]} />
                   {fontFamily === "__custom" ? <TextInput label="Custom font stack" value={customFontFamily} onChange={(e) => setCustomFontFamily(e.currentTarget.value)} placeholder="'Your Font', Inter, system-ui, sans-serif" /> : null}
+                  <Select
+                    label="Display font"
+                    value={displayFontFamily}
+                    onChange={(v) => setDisplayFontFamily(v ?? "var(--font-space-grotesk)")}
+                    data={[
+                      { value: "var(--font-space-grotesk)", label: "Space Grotesk" },
+                      { value: "var(--font-inter)", label: "Inter" },
+                      { value: "var(--font-manrope)", label: "Manrope" },
+                      { value: "var(--font-dm-sans)", label: "DM Sans" },
+                      { value: "var(--font-montserrat)", label: "Montserrat" },
+                      { value: "var(--font-poppins)", label: "Poppins" },
+                    ]}
+                  />
+                  <Select
+                    label="Body font"
+                    value={bodyFontFamily}
+                    onChange={(v) => setBodyFontFamily(v ?? "var(--font-ibm-plex-sans)")}
+                    data={[
+                      { value: "var(--font-ibm-plex-sans)", label: "IBM Plex Sans" },
+                      { value: "var(--font-inter)", label: "Inter" },
+                      { value: "var(--font-dm-sans)", label: "DM Sans" },
+                      { value: "var(--font-work-sans)", label: "Work Sans" },
+                      { value: "var(--font-source-sans-3)", label: "Source Sans 3" },
+                      { value: "var(--font-open-sans)", label: "Open Sans" },
+                    ]}
+                  />
+                  <Select
+                    label="Mono / data font"
+                    value={monoFontFamily}
+                    onChange={(v) => setMonoFontFamily(v ?? "var(--font-ibm-plex-mono)")}
+                    data={[
+                      { value: "var(--font-ibm-plex-mono)", label: "IBM Plex Mono" },
+                      { value: "var(--font-jetbrains-mono)", label: "JetBrains Mono" },
+                      { value: "var(--font-geist-mono)", label: "Geist Mono" },
+                    ]}
+                  />
                   <Stack gap={4}>
                     <Text size="sm" fw={500}>Font scale ({fontScale.toFixed(2)}x)</Text>
                     <Slider label={(v) => `${v.toFixed(2)}x`} min={0.8} max={1.4} step={0.05} value={fontScale} onChange={setFontScale} />
@@ -1299,6 +1378,26 @@ export function GlobalSectionsPage() {
                     <Text size="sm" fw={500}>Inner bevel/glow scale ({innerShadowScale.toFixed(2)}x)</Text>
                     <Slider label={(v) => `${v.toFixed(2)}x`} min={0} max={1.8} step={0.05} value={innerShadowScale} onChange={setInnerShadowScale} />
                   </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Display scale ({displayScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0.8} max={1.6} step={0.05} value={displayScale} onChange={setDisplayScale} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Heading scale ({headingScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0.8} max={1.4} step={0.05} value={headingScale} onChange={setHeadingScale} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Eyebrow scale ({eyebrowScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0.6} max={1.4} step={0.05} value={eyebrowScale} onChange={setEyebrowScale} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Metric scale ({metricScale.toFixed(2)}x)</Text>
+                    <Slider label={(v) => `${v.toFixed(2)}x`} min={0.8} max={1.6} step={0.05} value={metricScale} onChange={setMetricScale} />
+                  </Stack>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <TextInput label="Display tracking" value={displayTracking} onChange={(e) => setDisplayTracking(e.currentTarget.value)} placeholder="-0.035em" />
+                    <TextInput label="Eyebrow tracking" value={eyebrowTracking} onChange={(e) => setEyebrowTracking(e.currentTarget.value)} placeholder="0.12em" />
+                  </div>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
                     <ColorInput label="Text color" value={textColor} onChange={setTextColor} placeholder="#111827" />
                     <ColorInput label="Muted text color" value={mutedTextColor} onChange={setMutedTextColor} placeholder="#6b7280" />
@@ -1307,6 +1406,33 @@ export function GlobalSectionsPage() {
                     <ColorInput label="Background color" value={backgroundColor} onChange={setBackgroundColor} placeholder="#ffffff" />
                     <ColorInput label="Card background color" value={cardBackgroundColor} onChange={setCardBackgroundColor} placeholder="#1f2937" />
                   </div>
+
+                  <Divider />
+                  <Text size="sm" fw={600}>Brand signature</Text>
+                  <Select
+                    label="Signature style"
+                    value={signatureStyle}
+                    onChange={(v) => setSignatureStyle(v ?? "off")}
+                    data={[
+                      { value: "off", label: "Off" },
+                      { value: "obsidian_signal", label: "Obsidian Signal" },
+                      { value: "grid_rays", label: "Grid Rays" },
+                      { value: "topographic_dark", label: "Topographic Dark" },
+                    ]}
+                  />
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Signature intensity ({signatureIntensity.toFixed(2)})</Text>
+                    <Slider label={(v) => v.toFixed(2)} min={0} max={1} step={0.05} value={signatureIntensity} onChange={setSignatureIntensity} />
+                  </Stack>
+                  <TextInput label="Signature color" value={signatureColor} onChange={(e) => setSignatureColor(e.currentTarget.value)} placeholder="rgba(120,140,255,0.08)" />
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Grid opacity ({signatureGridOpacity.toFixed(2)})</Text>
+                    <Slider label={(v) => v.toFixed(2)} min={0} max={0.5} step={0.01} value={signatureGridOpacity} onChange={setSignatureGridOpacity} />
+                  </Stack>
+                  <Stack gap={4}>
+                    <Text size="sm" fw={500}>Glow opacity ({signatureGlowOpacity.toFixed(2)})</Text>
+                    <Slider label={(v) => v.toFixed(2)} min={0} max={0.5} step={0.01} value={signatureGlowOpacity} onChange={setSignatureGlowOpacity} />
+                  </Stack>
                 </Stack>
               ) : null}
             </Stack>

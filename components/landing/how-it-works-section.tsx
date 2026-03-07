@@ -47,7 +47,7 @@ export function HowItWorksSection({
       >
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="text-eyebrow text-muted-foreground">
               {eyebrow}
             </p>
           ) : null}
@@ -75,7 +75,7 @@ export function HowItWorksSection({
                 <Card className="surface-panel gap-2 py-3" style={panelStyle}>
                   <CardContent className="space-y-1.5 px-4">
                     <div className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
+                      <span className="text-label-mono flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-accent">
                         {idx + 1}
                       </span>
                       <p className="text-sm font-medium sm:text-base">{step.title}</p>
@@ -110,7 +110,7 @@ export function HowItWorksSection({
       >
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="text-eyebrow text-muted-foreground">
               {eyebrow}
             </p>
           ) : null}
@@ -127,7 +127,7 @@ export function HowItWorksSection({
                 className="flex w-full flex-1 flex-col rounded-xl border border-border/50 bg-card/30 p-4 text-center"
                 style={panelStyle}
               >
-                <span className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-sm font-bold text-accent">
+                <span className="text-label-mono mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent">
                   {idx + 1}
                 </span>
                 <p className="text-sm font-medium">{step.title}</p>

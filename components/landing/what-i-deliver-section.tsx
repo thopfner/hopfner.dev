@@ -109,7 +109,7 @@ export function WhatIDeliverSection({
       <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="text-eyebrow text-muted-foreground">
               {eyebrow}
             </p>
           ) : null}
@@ -198,7 +198,7 @@ export function WhatIDeliverSection({
                 ) : null}
                 <CardHeader className="gap-1 px-4 pb-0">
                   {hasTag ? (
-                    <span className="w-fit rounded-full border border-border/50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    <span className="text-label-mono w-fit rounded-full border border-border/50 px-2 py-0.5 text-muted-foreground">
                       {item.tag}
                     </span>
                   ) : null}
@@ -206,7 +206,7 @@ export function WhatIDeliverSection({
                     <span className="text-lg">{item.icon}</span>
                   ) : null}
                   {hasStat ? (
-                    <p className="text-2xl font-bold tracking-tight">{item.stat}</p>
+                    <p className="text-metric text-2xl">{item.stat}</p>
                   ) : null}
                   {item.display.showTitle ? (
                     <h3 className={cn(

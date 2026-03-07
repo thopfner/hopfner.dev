@@ -112,7 +112,7 @@ export function HeroSection({
   const textContent = (
     <div className={cn("space-y-4", isSplit ? "text-left" : "text-center")}>
       {hasEyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+        <p className="text-eyebrow text-muted-foreground">
           {eyebrow}
         </p>
       ) : null}
@@ -120,7 +120,7 @@ export function HeroSection({
       <div className="space-y-2">
         <h1
           className={cn(
-            "text-pretty font-semibold leading-tight tracking-tight",
+            "text-display text-pretty leading-tight",
             isSplit
               ? "text-3xl sm:text-4xl lg:text-5xl"
               : "text-3xl sm:text-4xl"
@@ -159,8 +159,8 @@ export function HeroSection({
         <div className={cn("flex flex-wrap gap-6 pt-2", isSplit ? "justify-start" : "justify-center")}>
           {heroStats!.map((stat, i) => (
             <div key={i} className="text-center">
-              <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="text-metric text-2xl">{stat.value}</p>
+              <p className="text-label-mono text-muted-foreground">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -181,8 +181,8 @@ export function HeroSection({
                 key={i}
                 className="rounded-lg border border-border/40 bg-card/30 p-3 text-center"
               >
-                <p className="text-xl font-bold tracking-tight">{item.value}</p>
-                <p className="text-xs text-muted-foreground">{item.label}</p>
+                <p className="text-metric text-xl">{item.value}</p>
+                <p className="text-label-mono text-muted-foreground">{item.label}</p>
               </div>
             ))}
           </div>
@@ -300,7 +300,7 @@ export function HeroSection({
                     <Separator className="bg-border/60" />
                     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
                       {trustItems!.map((item, i) => (
-                        <span key={i} className="text-xs text-muted-foreground">
+                        <span key={i} className="text-label-mono text-muted-foreground">
                           {item.text}
                         </span>
                       ))}
@@ -323,7 +323,7 @@ export function HeroSection({
                 {hasTrustItems ? (
                   <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1">
                     {trustItems!.map((item, i) => (
-                      <span key={i} className="text-xs text-muted-foreground">
+                      <span key={i} className="text-label-mono text-muted-foreground">
                         {item.text}
                       </span>
                     ))}

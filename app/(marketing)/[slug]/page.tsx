@@ -296,6 +296,15 @@ function sectionContainerProps(
   const spacingTop = asString(formatting.spacingTop)
   const spacingBottom = asString(formatting.spacingBottom)
   const outerSpacing = asString(formatting.outerSpacing)
+  const sectionRhythm = asString(formatting.sectionRhythm)
+  const contentDensity = asString(formatting.contentDensity)
+  const gridGap = asString(formatting.gridGap)
+  const sectionSurface = asString(formatting.sectionSurface)
+  const cardFamily = asString(formatting.cardFamily)
+  const cardChrome = asString(formatting.cardChrome)
+  const accentRule = asString(formatting.accentRule)
+  const headingTreatment = asString(formatting.headingTreatment)
+  const labelStyle = asString(formatting.labelStyle)
 
   Object.assign(sectionStyle, spacingTokenToMarginStyle(spacingTop, spacingBottom, outerSpacing))
 
@@ -311,6 +320,15 @@ function sectionContainerProps(
     sectionStyle,
     containerStyle,
     panelStyle,
+    sectionRhythm,
+    contentDensity,
+    gridGap,
+    sectionSurface,
+    cardFamily,
+    cardChrome,
+    accentRule,
+    headingTreatment,
+    labelStyle,
   }
 }
 
@@ -417,6 +435,28 @@ export default async function MarketingPage({
   const rootCardBackgroundColor = asString(mergedTokens.cardBackgroundColor)
   const rootShadowColor = asString(mergedTokens.shadowColor) || (rootAccentColor ? `color-mix(in srgb, ${rootAccentColor} 28%, black)` : "")
 
+  // Role-based typography tokens
+  const displayFontFamily = asString(mergedTokens.displayFontFamily)
+  const bodyFontFamily = asString(mergedTokens.bodyFontFamily)
+  const monoFontFamily = asString(mergedTokens.monoFontFamily)
+  const displayWeight = clampNumber(mergedTokens.displayWeight, 300, 900, 700)
+  const headingWeight = clampNumber(mergedTokens.headingWeight, 300, 900, 600)
+  const bodyWeight = clampNumber(mergedTokens.bodyWeight, 300, 700, 400)
+  const displayTracking = asString(mergedTokens.displayTracking) || "-0.035em"
+  const eyebrowTracking = asString(mergedTokens.eyebrowTracking) || "0.12em"
+  const metricTracking = asString(mergedTokens.metricTracking) || "-0.02em"
+  const displayScale = clampNumber(mergedTokens.displayScale, 0.8, 1.6, 1)
+  const headingScale = clampNumber(mergedTokens.headingScale, 0.8, 1.4, 1)
+  const bodyScale = clampNumber(mergedTokens.bodyScale, 0.8, 1.4, 1)
+  const eyebrowScale = clampNumber(mergedTokens.eyebrowScale, 0.6, 1.4, 0.8)
+  const metricScale = clampNumber(mergedTokens.metricScale, 0.8, 1.6, 1)
+  // Brand signature tokens
+  const signatureStyle = asString(mergedTokens.signatureStyle) || "off"
+  const signatureIntensity = clampNumber(mergedTokens.signatureIntensity, 0, 1, 0.5)
+  const signatureColor = asString(mergedTokens.signatureColor) || "rgba(120,140,255,0.08)"
+  const signatureGridOpacity = clampNumber(mergedTokens.signatureGridOpacity, 0, 0.5, 0.06)
+  const signatureGlowOpacity = clampNumber(mergedTokens.signatureGlowOpacity, 0, 0.5, 0.08)
+
   const rootStyle: CSSProperties = {
     fontFamily: rootFontFamily || undefined,
     fontSize: `${rootFontScale}rem`,
@@ -441,6 +481,27 @@ export default async function MarketingPage({
       ? "none"
       : `0 ${Math.round(14 * rootShadowScale)}px ${Math.round(32 * rootShadowScale)}px -${Math.round(10 * rootShadowScale)}px color-mix(in srgb, var(--section-shadow-color) 40%, transparent)`,
     ...accentDerivedVars(rootAccentColor),
+    // Role-based typography CSS variables
+    ["--font-display" as string]: displayFontFamily || rootFontFamily || "var(--font-space-grotesk), var(--font-inter), system-ui, sans-serif",
+    ["--font-body" as string]: bodyFontFamily || rootFontFamily || "var(--font-ibm-plex-sans), var(--font-inter), system-ui, sans-serif",
+    ["--font-mono" as string]: monoFontFamily || "var(--font-ibm-plex-mono), var(--font-jetbrains-mono), monospace",
+    ["--display-weight" as string]: String(displayWeight),
+    ["--heading-weight" as string]: String(headingWeight),
+    ["--body-weight" as string]: String(bodyWeight),
+    ["--display-tracking" as string]: displayTracking,
+    ["--eyebrow-tracking" as string]: eyebrowTracking,
+    ["--metric-tracking" as string]: metricTracking,
+    ["--display-scale" as string]: String(displayScale),
+    ["--heading-scale" as string]: String(headingScale),
+    ["--body-scale" as string]: String(bodyScale),
+    ["--eyebrow-scale" as string]: String(eyebrowScale),
+    ["--metric-scale" as string]: String(metricScale),
+    // Brand signature
+    ["--sig-style" as string]: signatureStyle,
+    ["--sig-intensity" as string]: String(signatureIntensity),
+    ["--sig-color" as string]: signatureColor,
+    ["--sig-grid-opacity" as string]: String(signatureGridOpacity),
+    ["--sig-glow-opacity" as string]: String(signatureGlowOpacity),
   }
   if (rootTextColor) {
     ;(rootStyle as Record<string, string>)["--foreground"] = rootTextColor
@@ -461,7 +522,12 @@ export default async function MarketingPage({
   const topBgImageOpacity = clampNumber(pageFormattingOverride.topBackdropImageOpacity, 0, 1, 1)
 
   return (
-    <div className="relative min-h-dvh bg-background" style={rootStyle}>
+    <div className={cn(
+      "relative min-h-dvh bg-background",
+      signatureStyle === "obsidian_signal" && "sig-obsidian-signal",
+      signatureStyle === "grid_rays" && "sig-grid-rays",
+      signatureStyle === "topographic_dark" && "sig-topographic-dark"
+    )} style={rootStyle}>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_55%),radial-gradient(700px_circle_at_50%_100%,hsl(var(--foreground)/0.06),transparent_50%)]"

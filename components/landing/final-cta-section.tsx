@@ -58,7 +58,7 @@ export function FinalCtaSection({
           >
             <div>
               {hasEyebrow ? (
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{eyebrow}</p>
+                <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
               ) : null}
               <p className="text-sm font-semibold sm:text-base">{headline}</p>
             </div>
@@ -96,7 +96,7 @@ export function FinalCtaSection({
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   {hasEyebrow ? (
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{eyebrow}</p>
+                    <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
                   ) : null}
                   <SectionHeading id="final-cta-title" title={headline} />
                   {bodyHtml?.trim() ? (
@@ -145,7 +145,7 @@ export function FinalCtaSection({
             />
             <div className="relative space-y-4">
               {hasEyebrow ? (
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{eyebrow}</p>
+                <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
               ) : null}
               <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl">{headline}</h2>
               {bodyHtml?.trim() ? (
@@ -189,7 +189,7 @@ export function FinalCtaSection({
           />
           <CardContent className="relative space-y-3 px-4">
             {hasEyebrow ? (
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{eyebrow}</p>
+              <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
             ) : null}
             <SectionHeading id="final-cta-title" title={headline} />
             {bodyHtml?.trim() ? (

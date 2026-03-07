@@ -124,6 +124,39 @@ export type SiteFormattingSettings = {
     accentColor?: string
     backgroundColor?: string
     cardBackgroundColor?: string
+    // Role-based typography
+    displayFontFamily?: string
+    bodyFontFamily?: string
+    monoFontFamily?: string
+    displayWeight?: number
+    headingWeight?: number
+    bodyWeight?: number
+    displayTracking?: string
+    eyebrowTracking?: string
+    metricTracking?: string
+    displayScale?: number
+    headingScale?: number
+    bodyScale?: number
+    eyebrowScale?: number
+    metricScale?: number
+    // Brand signature
+    signatureStyle?: string
+    signatureIntensity?: number
+    signatureColor?: string
+    signatureGridOpacity?: number
+    signatureGlowOpacity?: number
+    signatureNoiseOpacity?: number
+    // Semantic section formatting
+    sectionRhythm?: string
+    contentDensity?: string
+    gridGap?: string
+    sectionSurface?: string
+    cardFamily?: string
+    cardChrome?: string
+    accentRule?: string
+    dividerMode?: string
+    headingTreatment?: string
+    labelStyle?: string
   }
   backgroundType?: "none" | "color" | "gradient" | "image"
   backgroundColor?: string
