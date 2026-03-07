@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="hopfner-dev-admin"
+APP_NAME="hopfner.dev"
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOCK_FILE="/tmp/${APP_NAME}.deploy.lock"
 
@@ -20,7 +20,7 @@ npm run build
 systemctl restart "${APP_NAME}.service"
 
 sleep 2
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3011/admin/login || true)
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3010/admin/login || true)
 if [[ "$HTTP_CODE" != "200" && "$HTTP_CODE" != "307" ]]; then
   echo "[$(date -u +%FT%TZ)] healthcheck failed: /admin/login returned ${HTTP_CODE}"
   exit 1
