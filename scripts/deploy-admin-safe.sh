@@ -2,7 +2,7 @@
 set -euo pipefail
 
 APP_NAME="hopfner.dev-admin"
-APP_DIR="/var/www/html/hopfner.dev-admin"
+APP_DIR="/var/www/html/hopfner.dev-backend"
 LOCK_FILE="/tmp/${APP_NAME}.deploy.lock"
 
 cd "$APP_DIR"
