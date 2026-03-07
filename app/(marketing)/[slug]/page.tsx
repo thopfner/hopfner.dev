@@ -305,6 +305,7 @@ function sectionContainerProps(
   const accentRule = asString(formatting.accentRule)
   const headingTreatment = asString(formatting.headingTreatment)
   const labelStyle = asString(formatting.labelStyle)
+  const dividerMode = asString(formatting.dividerMode)
 
   Object.assign(sectionStyle, spacingTokenToMarginStyle(spacingTop, spacingBottom, outerSpacing))
 
@@ -329,6 +330,7 @@ function sectionContainerProps(
     accentRule: accentRule || undefined,
     headingTreatment: headingTreatment || undefined,
     labelStyle: labelStyle || undefined,
+    dividerMode: dividerMode || undefined,
   }
 }
 
@@ -456,6 +458,7 @@ export default async function MarketingPage({
   const signatureColor = asString(mergedTokens.signatureColor) || "rgba(120,140,255,0.08)"
   const signatureGridOpacity = clampNumber(mergedTokens.signatureGridOpacity, 0, 0.5, 0.06)
   const signatureGlowOpacity = clampNumber(mergedTokens.signatureGlowOpacity, 0, 0.5, 0.08)
+  const signatureNoiseOpacity = clampNumber(mergedTokens.signatureNoiseOpacity, 0, 0.3, 0)
 
   const rootStyle: CSSProperties = {
     fontFamily: rootFontFamily || undefined,
@@ -502,6 +505,7 @@ export default async function MarketingPage({
     ["--sig-color" as string]: signatureColor,
     ["--sig-grid-opacity" as string]: String(signatureGridOpacity),
     ["--sig-glow-opacity" as string]: String(signatureGlowOpacity),
+    ["--sig-noise-opacity" as string]: String(signatureNoiseOpacity),
   }
   if (rootTextColor) {
     ;(rootStyle as Record<string, string>)["--foreground"] = rootTextColor
@@ -528,6 +532,7 @@ export default async function MarketingPage({
       signatureStyle === "grid_rays" && "sig-grid-rays",
       signatureStyle === "topographic_dark" && "sig-topographic-dark"
     )} style={rootStyle}>
+      {signatureNoiseOpacity > 0 ? <div aria-hidden className="sig-noise-layer" /> : null}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_55%),radial-gradient(700px_circle_at_50%_100%,hsl(var(--foreground)/0.06),transparent_50%)]"
@@ -734,6 +739,7 @@ export default async function MarketingPage({
                   cardChrome={adjustedProps.cardChrome as any}
                   contentDensity={adjustedProps.contentDensity as any}
                   gridGap={adjustedProps.gridGap as any}
+                  dividerMode={adjustedProps.dividerMode as any}
                 />
               )
             }
@@ -758,6 +764,7 @@ export default async function MarketingPage({
                   cardFamily={adjustedProps.cardFamily as any}
                   accentRule={adjustedProps.accentRule as any}
                   labelStyle={adjustedProps.labelStyle as any}
+                  dividerMode={adjustedProps.dividerMode as any}
                 />
               )
             }
@@ -779,6 +786,11 @@ export default async function MarketingPage({
                   eyebrow={asString(content.eyebrow)}
                   items={items}
                   layoutVariant={tbLayout}
+                  rhythm={adjustedProps.rhythm}
+                  surface={adjustedProps.surface}
+                  contentDensity={adjustedProps.contentDensity}
+                  dividerMode={adjustedProps.dividerMode}
+                  headingTreatment={adjustedProps.headingTreatment}
                 />
               )
             }
@@ -791,6 +803,9 @@ export default async function MarketingPage({
                   title={pickText(v.title, defaults?.default_title)}
                   heading={pickText(v.subtitle, defaults?.default_subtitle)}
                   bodyHtml={bodyHtml}
+                  rhythm={adjustedProps.rhythm}
+                  surface={adjustedProps.surface}
+                  headingTreatment={adjustedProps.headingTreatment}
                 />
               )
             }
@@ -833,6 +848,9 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   title={pickText(v.title, defaults?.default_title)}
                   items={items}
+                  rhythm={adjustedProps.rhythm}
+                  surface={adjustedProps.surface}
+                  dividerMode={adjustedProps.dividerMode}
                 />
               )
             }
@@ -946,6 +964,13 @@ export default async function MarketingPage({
                   content={asRecord(v.content)}
                   title={asString(v.title)}
                   subtitle={asString(v.subtitle)}
+                  rhythm={adjustedProps.rhythm}
+                  surface={adjustedProps.surface}
+                  contentDensity={adjustedProps.contentDensity}
+                  gridGap={adjustedProps.gridGap}
+                  headingTreatment={adjustedProps.headingTreatment}
+                  labelStyle={adjustedProps.labelStyle}
+                  dividerMode={adjustedProps.dividerMode}
                 />
               )
             }

@@ -1255,6 +1255,7 @@ export function GlobalSectionsPage() {
       <Paper withBorder p="md" radius="md">
         <Stack>
           <Title order={4}>Formatting tokens (site-wide)</Title>
+          <Text size="xs" c="dimmed">These settings apply to the live site immediately when saved. No publish step required.</Text>
 
           <Paper withBorder p="sm" radius="md">
             <Stack gap="sm">

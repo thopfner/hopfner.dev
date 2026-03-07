@@ -45,6 +45,7 @@ import Image from "@tiptap/extension-image"
 import StarterKit from "@tiptap/starter-kit"
 import { useEditor } from "@tiptap/react"
 
+import { isControlSupported, type SemanticControl } from "@/lib/cms/section-capabilities"
 import { uploadMedia } from "@/lib/media/upload"
 import type { MediaItem } from "@/lib/media/types"
 import { ImageFieldPicker } from "@/components/image-field-picker"
@@ -1916,11 +1917,19 @@ export function SectionEditorDrawer({
 
               {isDirty ? (
                 <Group justify="space-between" gap="xs">
-                  <Text size="xs" c="dimmed">
-                    Unsaved changes. Save draft to publish your edits.
+                  <Text size="xs" c="yellow.6">
+                    Unsaved changes. Save draft first, then publish to update the live site.
                   </Text>
                 </Group>
-              ) : null}
+              ) : activeDraft ? (
+                <Text size="xs" c="dimmed">
+                  Draft saved. Live site unchanged until you publish.
+                </Text>
+              ) : (
+                <Text size="xs" c="dimmed">
+                  Changes here are draft-only until you publish.
+                </Text>
+              )}
             </Stack>
           </Paper>
 
@@ -2009,174 +2018,190 @@ export function SectionEditorDrawer({
                 Formatting
               </Text>
               <Text fw={600} size="sm">Section style</Text>
-              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-                {normalizedType !== "nav_links" ? (
-                  <Select
-                    label="Section rhythm"
-                    comboboxProps={{ withinPortal: false }}
-                    value={formatting.sectionRhythm || ""}
-                    onChange={(val: string) =>
-                      setFormatting((f) => ({ ...f, sectionRhythm: (val || "") as FormattingState["sectionRhythm"] }))
-                    }
-                    data={[
-                      { value: "", label: "Default" },
-                      { value: "hero", label: "Hero" },
-                      { value: "statement", label: "Statement" },
-                      { value: "compact", label: "Compact" },
-                      { value: "standard", label: "Standard" },
-                      { value: "proof", label: "Proof" },
-                      { value: "cta", label: "CTA" },
-                      { value: "footer", label: "Footer" },
-                    ]}
-                  />
-                ) : null}
-                {normalizedType !== "nav_links" ? (
-                  <Select
-                    label="Section surface"
-                    comboboxProps={{ withinPortal: false }}
-                    value={formatting.sectionSurface || ""}
-                    onChange={(val: string) =>
-                      setFormatting((f) => ({ ...f, sectionSurface: (val || "") as FormattingState["sectionSurface"] }))
-                    }
-                    data={[
-                      { value: "", label: "Default" },
-                      { value: "none", label: "None" },
-                      { value: "panel", label: "Panel" },
-                      { value: "soft_band", label: "Soft band" },
-                      { value: "contrast_band", label: "Contrast band" },
-                      { value: "spotlight_stage", label: "Spotlight stage" },
-                      { value: "grid_stage", label: "Grid stage" },
-                    ]}
-                  />
-                ) : null}
-                {(normalizedType === "card_grid" || normalizedType === "steps_list" || normalizedType === "label_value_list") ? (
-                  <>
-                    <Select
-                      label="Card family"
-                      comboboxProps={{ withinPortal: false }}
-                      value={formatting.cardFamily || ""}
-                      onChange={(val: string) =>
-                        setFormatting((f) => ({ ...f, cardFamily: (val || "") as FormattingState["cardFamily"] }))
-                      }
-                      data={[
-                        { value: "", label: "Default" },
-                        { value: "quiet", label: "Quiet" },
-                        { value: "service", label: "Service" },
-                        { value: "metric", label: "Metric" },
-                        { value: "process", label: "Process" },
-                        { value: "proof", label: "Proof" },
-                        { value: "logo_tile", label: "Logo tile" },
-                        { value: "cta", label: "CTA" },
-                      ]}
-                    />
-                    <Select
-                      label="Card chrome"
-                      comboboxProps={{ withinPortal: false }}
-                      value={formatting.cardChrome || ""}
-                      onChange={(val: string) =>
-                        setFormatting((f) => ({ ...f, cardChrome: (val || "") as FormattingState["cardChrome"] }))
-                      }
-                      data={[
-                        { value: "", label: "Default" },
-                        { value: "flat", label: "Flat" },
-                        { value: "outlined", label: "Outlined" },
-                        { value: "elevated", label: "Elevated" },
-                        { value: "inset", label: "Inset" },
-                      ]}
-                    />
-                  </>
-                ) : null}
-                {normalizedType !== "nav_links" ? (
-                  <>
-                    <Select
-                      label="Content density"
-                      comboboxProps={{ withinPortal: false }}
-                      value={formatting.contentDensity || ""}
-                      onChange={(val: string) =>
-                        setFormatting((f) => ({ ...f, contentDensity: (val || "") as FormattingState["contentDensity"] }))
-                      }
-                      data={[
-                        { value: "", label: "Default" },
-                        { value: "tight", label: "Tight" },
-                        { value: "standard", label: "Standard" },
-                        { value: "airy", label: "Airy" },
-                      ]}
-                    />
-                    <Select
-                      label="Grid gap"
-                      comboboxProps={{ withinPortal: false }}
-                      value={formatting.gridGap || ""}
-                      onChange={(val: string) =>
-                        setFormatting((f) => ({ ...f, gridGap: (val || "") as FormattingState["gridGap"] }))
-                      }
-                      data={[
-                        { value: "", label: "Default" },
-                        { value: "tight", label: "Tight" },
-                        { value: "standard", label: "Standard" },
-                        { value: "wide", label: "Wide" },
-                      ]}
-                    />
-                    <Select
-                      label="Heading treatment"
-                      comboboxProps={{ withinPortal: false }}
-                      value={formatting.headingTreatment || ""}
-                      onChange={(val: string) =>
-                        setFormatting((f) => ({ ...f, headingTreatment: (val || "") as FormattingState["headingTreatment"] }))
-                      }
-                      data={[
-                        { value: "", label: "Default" },
-                        { value: "default", label: "Default (explicit)" },
-                        { value: "display", label: "Display" },
-                        { value: "mono", label: "Mono" },
-                      ]}
-                    />
-                    <Select
-                      label="Label style"
-                      comboboxProps={{ withinPortal: false }}
-                      value={formatting.labelStyle || ""}
-                      onChange={(val: string) =>
-                        setFormatting((f) => ({ ...f, labelStyle: (val || "") as FormattingState["labelStyle"] }))
-                      }
-                      data={[
-                        { value: "", label: "Default" },
-                        { value: "default", label: "Default (explicit)" },
-                        { value: "mono", label: "Mono" },
-                        { value: "pill", label: "Pill" },
-                        { value: "micro", label: "Micro" },
-                      ]}
-                    />
-                    <Select
-                      label="Accent rule"
-                      comboboxProps={{ withinPortal: false }}
-                      value={formatting.accentRule || ""}
-                      onChange={(val: string) =>
-                        setFormatting((f) => ({ ...f, accentRule: (val || "") as FormattingState["accentRule"] }))
-                      }
-                      data={[
-                        { value: "", label: "Default" },
-                        { value: "none", label: "None" },
-                        { value: "top", label: "Top" },
-                        { value: "left", label: "Left" },
-                        { value: "inline", label: "Inline" },
-                      ]}
-                    />
-                    <Select
-                      label="Divider mode"
-                      comboboxProps={{ withinPortal: false }}
-                      value={formatting.dividerMode || ""}
-                      onChange={(val: string) =>
-                        setFormatting((f) => ({ ...f, dividerMode: (val || "") as FormattingState["dividerMode"] }))
-                      }
-                      data={[
-                        { value: "", label: "Default" },
-                        { value: "none", label: "None" },
-                        { value: "subtle", label: "Subtle" },
-                        { value: "strong", label: "Strong" },
-                      ]}
-                    />
-                  </>
-                ) : null}
-              </SimpleGrid>
+              {(() => {
+                const has = (c: SemanticControl) => isControlSupported(normalizedType ?? "", c)
+                const anySupported = has("sectionRhythm") || has("sectionSurface") || has("cardFamily") || has("contentDensity") || has("gridGap") || has("headingTreatment") || has("labelStyle") || has("accentRule") || has("dividerMode") || has("cardChrome")
+                if (!anySupported) return <Text size="xs" c="dimmed">No semantic controls for this section type.</Text>
+                return (
+                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                    {has("sectionRhythm") ? (
+                      <Select
+                        label="Section rhythm"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.sectionRhythm || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, sectionRhythm: (val || "") as FormattingState["sectionRhythm"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "hero", label: "Hero" },
+                          { value: "statement", label: "Statement" },
+                          { value: "compact", label: "Compact" },
+                          { value: "standard", label: "Standard" },
+                          { value: "proof", label: "Proof" },
+                          { value: "cta", label: "CTA" },
+                          { value: "footer", label: "Footer" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("sectionSurface") ? (
+                      <Select
+                        label="Section surface"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.sectionSurface || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, sectionSurface: (val || "") as FormattingState["sectionSurface"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "none", label: "None" },
+                          { value: "panel", label: "Panel" },
+                          { value: "soft_band", label: "Soft band" },
+                          { value: "contrast_band", label: "Contrast band" },
+                          { value: "spotlight_stage", label: "Spotlight stage" },
+                          { value: "grid_stage", label: "Grid stage" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("cardFamily") ? (
+                      <Select
+                        label="Card family"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.cardFamily || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, cardFamily: (val || "") as FormattingState["cardFamily"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "quiet", label: "Quiet" },
+                          { value: "service", label: "Service" },
+                          { value: "metric", label: "Metric" },
+                          { value: "process", label: "Process" },
+                          { value: "proof", label: "Proof" },
+                          { value: "logo_tile", label: "Logo tile" },
+                          { value: "cta", label: "CTA" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("cardChrome") ? (
+                      <Select
+                        label="Card chrome"
+                        description="Modifies the card family base style"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.cardChrome || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, cardChrome: (val || "") as FormattingState["cardChrome"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "flat", label: "Flat" },
+                          { value: "outlined", label: "Outlined" },
+                          { value: "elevated", label: "Elevated" },
+                          { value: "inset", label: "Inset" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("contentDensity") ? (
+                      <Select
+                        label="Content density"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.contentDensity || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, contentDensity: (val || "") as FormattingState["contentDensity"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "tight", label: "Tight" },
+                          { value: "standard", label: "Standard" },
+                          { value: "airy", label: "Airy" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("gridGap") ? (
+                      <Select
+                        label="Grid gap"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.gridGap || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, gridGap: (val || "") as FormattingState["gridGap"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "tight", label: "Tight" },
+                          { value: "standard", label: "Standard" },
+                          { value: "wide", label: "Wide" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("headingTreatment") ? (
+                      <Select
+                        label="Heading treatment"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.headingTreatment || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, headingTreatment: (val || "") as FormattingState["headingTreatment"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "default", label: "Default (explicit)" },
+                          { value: "display", label: "Display" },
+                          { value: "mono", label: "Mono" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("labelStyle") ? (
+                      <Select
+                        label="Label style"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.labelStyle || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, labelStyle: (val || "") as FormattingState["labelStyle"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "default", label: "Default (explicit)" },
+                          { value: "mono", label: "Mono" },
+                          { value: "pill", label: "Pill" },
+                          { value: "micro", label: "Micro" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("accentRule") ? (
+                      <Select
+                        label="Accent rule"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.accentRule || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, accentRule: (val || "") as FormattingState["accentRule"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "none", label: "None" },
+                          { value: "top", label: "Top" },
+                          { value: "left", label: "Left" },
+                          { value: "inline", label: "Inline" },
+                        ]}
+                      />
+                    ) : null}
+                    {has("dividerMode") ? (
+                      <Select
+                        label="Divider mode"
+                        comboboxProps={{ withinPortal: false }}
+                        value={formatting.dividerMode || ""}
+                        onChange={(val: string) =>
+                          setFormatting((f) => ({ ...f, dividerMode: (val || "") as FormattingState["dividerMode"] }))
+                        }
+                        data={[
+                          { value: "", label: "Default" },
+                          { value: "none", label: "None" },
+                          { value: "subtle", label: "Subtle" },
+                          { value: "strong", label: "Strong" },
+                        ]}
+                      />
+                    ) : null}
+                  </SimpleGrid>
+                )
+              })()}
 
               <Divider style={{ marginTop: 4, marginBottom: 4 }} />
 

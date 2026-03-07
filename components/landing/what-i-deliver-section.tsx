@@ -35,6 +35,7 @@ export function WhatIDeliverSection({
   gridGap,
   rhythm,
   surface,
+  dividerMode,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -77,6 +78,7 @@ export function WhatIDeliverSection({
   gridGap?: "tight" | "standard" | "wide"
   rhythm?: string
   surface?: string
+  dividerMode?: string
 }) {
   const effectiveColumns = columns ?? (sectionVariant === "logo_tiles" ? 4 : 3)
   const gridCols =
@@ -93,11 +95,21 @@ export function WhatIDeliverSection({
     contrast: "border-border/80 bg-foreground/[0.04] shadow-sm",
   }
 
+  // Chrome replaces the full card style when no cardFamily is set (legacy fallback)
   const chromeClasses: Record<string, string> = {
     flat: "border-transparent bg-card/20",
     outlined: "border border-border/50 bg-card/20",
     elevated: "border border-border/40 bg-card/30 shadow-md",
     inset: "border border-border/30 bg-card/10 shadow-inner",
+  }
+
+  // Precedence: cardFamily = base style, cardChrome = additive modifier, cardTone = legacy fallback when no family
+  // chromeModifiers layer on top of cardFamily without replacing it
+  const chromeModifiers: Record<string, string> = {
+    flat: "border-transparent shadow-none",
+    outlined: "",  // already the default border from most families
+    elevated: "shadow-md",
+    inset: "shadow-inner bg-card/10",
   }
 
   const familyClasses: Record<string, string> = {
@@ -218,7 +230,11 @@ export function WhatIDeliverSection({
                   "gap-3",
                   contentDensity ? densityPadding[contentDensity] : "py-4",
                   cardFamily ? familyClasses[cardFamily] : toneClasses[cardTone],
-                  cardChrome && !cardFamily ? chromeClasses[cardChrome] : "",
+                  cardChrome
+                    ? cardFamily
+                      ? chromeModifiers[cardChrome]   // family set: layer modifier on top
+                      : chromeClasses[cardChrome]      // no family: full chrome replacement (legacy)
+                    : "",
                   !cardFamily ? variantCardClass(sectionVariant) : ""
                 )}
                 style={panelStyle}

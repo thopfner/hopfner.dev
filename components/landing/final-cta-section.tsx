@@ -2,7 +2,7 @@ import Link from "next/link"
 import type { CSSProperties } from "react"
 
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
-import { SectionHeading } from "@/components/landing/section-primitives"
+import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -51,13 +51,16 @@ export function FinalCtaSection({
 
   if (layoutVariant === "compact") {
     return (
-      <section
+      <SectionShell
         id={sectionId}
-        className={cn("scroll-mt-16 py-4", sectionClassName)}
-        aria-labelledby="final-cta-title"
-        style={sectionStyle}
+        labelledBy="final-cta-title"
+        sectionClassName={sectionClassName}
+        sectionStyle={sectionStyle}
+        containerClassName={containerClassName}
+        containerStyle={containerStyle}
+        rhythm={(rhythm ?? "compact") as Parameters<typeof SectionShell>[0]["rhythm"]}
+        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
       >
-        <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
           <div
             className="flex flex-col items-center justify-between gap-3 rounded-xl border border-border/50 bg-card/30 px-6 py-4 sm:flex-row"
             style={panelStyle}
@@ -79,20 +82,22 @@ export function FinalCtaSection({
               ) : null}
             </div>
           </div>
-        </div>
-      </section>
+      </SectionShell>
     )
   }
 
   if (layoutVariant === "split") {
     return (
-      <section
+      <SectionShell
         id={sectionId}
-        className={cn("scroll-mt-16 py-6", sectionClassName)}
-        aria-labelledby="final-cta-title"
-        style={sectionStyle}
+        labelledBy="final-cta-title"
+        sectionClassName={sectionClassName}
+        sectionStyle={sectionStyle}
+        containerClassName={containerClassName}
+        containerStyle={containerStyle}
+        rhythm={(rhythm ?? "cta") as Parameters<typeof SectionShell>[0]["rhythm"]}
+        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
       >
-        <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
           <Card className="surface-panel relative overflow-hidden gap-3 py-4" style={panelStyle}>
             <div
               aria-hidden
@@ -127,25 +132,22 @@ export function FinalCtaSection({
               </div>
             </CardContent>
           </Card>
-        </div>
-      </section>
+      </SectionShell>
     )
   }
 
   if (layoutVariant === "high_contrast") {
     return (
-      <section
+      <SectionShell
         id={sectionId}
-        className={cn(
-          "scroll-mt-16 py-6",
-          surface === "contrast_band" && "bg-card/10 border-y border-border/40",
-          surface === "spotlight_stage" && "relative sig-obsidian-signal",
-          sectionClassName
-        )}
-        aria-labelledby="final-cta-title"
-        style={sectionStyle}
+        labelledBy="final-cta-title"
+        sectionClassName={sectionClassName}
+        sectionStyle={sectionStyle}
+        containerClassName={containerClassName}
+        containerStyle={containerStyle}
+        rhythm={(rhythm ?? "cta") as Parameters<typeof SectionShell>[0]["rhythm"]}
+        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
       >
-        <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
           <div
             className="relative overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.06] px-6 py-8 text-center shadow-lg sm:px-10 sm:py-10"
             style={panelStyle}
@@ -179,25 +181,22 @@ export function FinalCtaSection({
               </div>
             </div>
           </div>
-        </div>
-      </section>
+      </SectionShell>
     )
   }
 
   // Default centered layout
   return (
-    <section
+    <SectionShell
       id={sectionId}
-      className={cn(
-        "scroll-mt-16 py-6",
-        surface === "contrast_band" && "bg-card/10 border-y border-border/40",
-        surface === "spotlight_stage" && "relative sig-obsidian-signal",
-        sectionClassName
-      )}
-      aria-labelledby="final-cta-title"
-      style={sectionStyle}
+      labelledBy="final-cta-title"
+      sectionClassName={sectionClassName}
+      sectionStyle={sectionStyle}
+      containerClassName={containerClassName}
+      containerStyle={containerStyle}
+      rhythm={(rhythm ?? "cta") as Parameters<typeof SectionShell>[0]["rhythm"]}
+      surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
     >
-      <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
         <Card className="surface-panel relative overflow-hidden gap-3 py-4" style={panelStyle}>
           <div
             aria-hidden
@@ -226,7 +225,6 @@ export function FinalCtaSection({
             </div>
           </CardContent>
         </Card>
-      </div>
-    </section>
+    </SectionShell>
   )
 }

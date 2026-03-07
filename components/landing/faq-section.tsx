@@ -18,6 +18,9 @@ export function FaqSection({
   panelStyle,
   title,
   items,
+  rhythm,
+  surface,
+  dividerMode,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -27,7 +30,11 @@ export function FaqSection({
   panelStyle?: CSSProperties
   title: string
   items: Array<{ question: string; answerHtml: string; answer?: string }>
+  rhythm?: string
+  surface?: string
+  dividerMode?: string
 }) {
+  const dividerClass = dividerMode === "strong" ? "divide-border/70" : dividerMode === "subtle" ? "divide-border/30" : ""
   return (
     <SectionShell
       id={sectionId}
@@ -36,13 +43,15 @@ export function FaqSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
+      rhythm={rhythm as any}
+      surface={surface as any}
     >
       <SectionHeading id="faq-title" title={title} />
 
       <Accordion
         type="single"
         collapsible
-        className="surface-panel px-4"
+        className={cn("surface-panel px-4", dividerClass)}
         style={panelStyle}
       >
         {items.map((item) => (

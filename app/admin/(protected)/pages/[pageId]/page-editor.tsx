@@ -1399,7 +1399,7 @@ function SectionRow({
               </Badge>
               {draft ? (
                 <Badge size="xs" color="yellow" variant="light">
-                  Unpublished changes
+                  Draft — not live until published
                 </Badge>
               ) : null}
               {!section.enabled ? (
@@ -2614,6 +2614,7 @@ export function PageEditor({ pageId }: { pageId: string }) {
           <Group justify="space-between" align="center" wrap="wrap" gap="xs">
             <Group gap="xs">
               <Text fw={600} size="sm">Page backdrop</Text>
+              <Text size="xs" c="dimmed">(live-immediate)</Text>
               <ActionIcon
                 variant="subtle"
                 aria-label={backdropPanelOpen ? "Collapse backdrop panel" : "Expand backdrop panel"}

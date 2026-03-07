@@ -73,14 +73,26 @@ function withCustomContent(block: ComposerBlock, customBlocks: Record<string, un
   } as ComposerBlock
 }
 
-function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties) {
+type SemanticContext = {
+  headingTreatment?: string
+  labelStyle?: string
+  contentDensity?: string
+}
+
+function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: SemanticContext) {
   // --- Original block types ---
 
   if (b.type === "heading") {
+    const treatment = semantics?.headingTreatment
+    const headingClass = treatment === "display"
+      ? "text-3xl font-bold tracking-tight text-display"
+      : treatment === "mono"
+        ? "text-lg font-semibold uppercase tracking-widest text-label-mono"
+        : "text-2xl font-semibold tracking-tight"
     return (
       <h2
         key={b.id}
-        className="text-2xl font-semibold tracking-tight"
+        className={headingClass}
         style={{ color: "var(--foreground)" }}
       >
         {b.title || "Heading"}
@@ -89,7 +101,13 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties) {
   }
 
   if (b.type === "subtitle") {
-    return <p key={b.id} className="text-base text-muted-foreground">{b.body || "Subtitle"}</p>
+    const lStyle = semantics?.labelStyle
+    const subtitleClass = lStyle === "mono"
+      ? "text-xs uppercase tracking-widest font-medium text-muted-foreground"
+      : lStyle === "accent"
+        ? "text-base font-medium text-accent"
+        : "text-base text-muted-foreground"
+    return <p key={b.id} className={subtitleClass}>{b.body || "Subtitle"}</p>
   }
 
   if (b.type === "rich_text") {
@@ -227,10 +245,16 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties) {
 
   if (b.type === "logo_strip") {
     const logos = Array.isArray(b.logos) ? b.logos : []
+    const lStyle = semantics?.labelStyle
+    const eyebrowClass = lStyle === "mono"
+      ? "text-center text-xs font-medium uppercase tracking-widest text-muted-foreground"
+      : lStyle === "accent"
+        ? "text-center text-xs font-medium uppercase tracking-[0.15em] text-accent"
+        : "text-center text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground"
     return (
       <div key={b.id} className="space-y-2">
         {b.title ? (
-          <p className="text-center text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground">{b.title}</p>
+          <p className={eyebrowClass}>{b.title}</p>
         ) : null}
         <div className="flex flex-wrap items-center justify-center gap-6">
           {logos.map((logo, i) =>
@@ -464,6 +488,13 @@ export function ComposedSection({
   content,
   title,
   subtitle,
+  rhythm,
+  surface,
+  contentDensity,
+  gridGap,
+  headingTreatment,
+  labelStyle,
+  dividerMode,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -475,38 +506,74 @@ export function ComposedSection({
   content?: Record<string, unknown>
   title?: string
   subtitle?: string
+  rhythm?: string
+  surface?: string
+  contentDensity?: string
+  gridGap?: string
+  headingTreatment?: string
+  labelStyle?: string
+  dividerMode?: string
 }) {
   const s = asSchema(schema)
   const customBlocks = asRecord(content?.customBlocks)
   const rows = Array.isArray(s.rows) ? s.rows : []
   const textAlignClass = s.tokens?.textAlign === "center" ? "text-center" : "text-left"
 
+  // If schema has explicit spacingY, use it as sectionClassName override;
+  // otherwise let the rhythm prop control spacing via SectionShell.
+  const spacingOverride = s.tokens?.spacingY
+    ? cn(s.tokens.spacingY, sectionClassName)
+    : sectionClassName
+
+  // Grid gap between row columns
+  const gapClass = gridGap === "tight" ? "gap-2" : gridGap === "wide" ? "gap-6" : "gap-4"
+
+  // Column block spacing (content density)
+  const densityClass = contentDensity === "tight" ? "space-y-2" : contentDensity === "airy" ? "space-y-5" : "space-y-3"
+
+  // Semantic context passed to renderBlock
+  const semantics: SemanticContext = { headingTreatment, labelStyle, contentDensity }
+
   return (
     <SectionShell
       id={sectionId}
-      sectionClassName={cn(s.tokens?.spacingY ?? "py-6", sectionClassName)}
+      sectionClassName={spacingOverride}
       sectionStyle={sectionStyle}
       containerClassName={cn(textAlignClass, containerClassName)}
       containerStyle={containerStyle}
       widthMode={s.tokens?.widthMode}
+      rhythm={rhythm as Parameters<typeof SectionShell>[0]["rhythm"]}
+      surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
     >
       {title?.trim() ? <SectionHeading id={`${sectionId ?? "composed"}-title`} title={title.trim()} /> : null}
       {subtitle?.trim() ? <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">{subtitle.trim()}</p> : null}
 
-      {rows.map((row) => {
+      {rows.map((row, rowIdx) => {
         const cols = Array.isArray(row.columns) ? row.columns : []
         const colClass = cols.length >= 3 ? "lg:grid-cols-3" : cols.length === 2 ? "md:grid-cols-2" : "grid-cols-1"
 
         return (
-          <div key={row.id} className={cn("grid grid-cols-1 gap-4", colClass)}>
-            {cols.map((col) => (
-              <div key={col.id} className="space-y-3">
-                {(Array.isArray(col.blocks) ? col.blocks : []).map((rawBlock) => {
-                  const b = withCustomContent(rawBlock, customBlocks)
-                  return renderBlock(b, panelStyle)
-                })}
-              </div>
-            ))}
+          <div key={row.id}>
+            {dividerMode && dividerMode !== "none" && rowIdx > 0 ? (
+              <hr
+                className={cn(
+                  "mb-4",
+                  dividerMode === "strong"
+                    ? "border-border/60"
+                    : "border-border/20"
+                )}
+              />
+            ) : null}
+            <div className={cn("grid grid-cols-1", gapClass, colClass)}>
+              {cols.map((col) => (
+                <div key={col.id} className={densityClass}>
+                  {(Array.isArray(col.blocks) ? col.blocks : []).map((rawBlock) => {
+                    const b = withCustomContent(rawBlock, customBlocks)
+                    return renderBlock(b, panelStyle, semantics)
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         )
       })}

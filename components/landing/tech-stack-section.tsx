@@ -45,12 +45,15 @@ export function TechStackSection({
 
   if (layoutVariant === "trust_strip") {
     return (
-      <section
+      <SectionShell
         id={sectionId}
-        className={cn("scroll-mt-16 py-4", sectionClassName)}
-        style={sectionStyle}
+        sectionClassName={sectionClassName}
+        sectionStyle={sectionStyle}
+        containerClassName={containerClassName}
+        containerStyle={containerStyle}
+        rhythm={(rhythm ?? "compact") as Parameters<typeof SectionShell>[0]["rhythm"]}
+        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
       >
-        <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
           {title ? (
             <p className="text-eyebrow mb-3 text-center text-muted-foreground">
               {title}
@@ -76,19 +79,21 @@ export function TechStackSection({
               </div>
             ))}
           </div>
-        </div>
-      </section>
+      </SectionShell>
     )
   }
 
   if (layoutVariant === "logo_row") {
     return (
-      <section
+      <SectionShell
         id={sectionId}
-        className={cn("scroll-mt-16 py-4", sectionClassName)}
-        style={sectionStyle}
+        sectionClassName={sectionClassName}
+        sectionStyle={sectionStyle}
+        containerClassName={containerClassName}
+        containerStyle={containerStyle}
+        rhythm={(rhythm ?? "compact") as Parameters<typeof SectionShell>[0]["rhythm"]}
+        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
       >
-        <div className={cn("mx-auto max-w-5xl px-4", containerClassName)} style={containerStyle}>
           {title ? (
             <p className="text-eyebrow mb-3 text-center text-muted-foreground">
               {title}
@@ -114,8 +119,7 @@ export function TechStackSection({
               )
             )}
           </div>
-        </div>
-      </section>
+      </SectionShell>
     )
   }
 
@@ -128,6 +132,8 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
+        rhythm={rhythm as Parameters<typeof SectionShell>[0]["rhythm"]}
+        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
       >
         <div className="space-y-1">
           {hasEyebrow ? (
@@ -173,6 +179,8 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
+        rhythm={rhythm as Parameters<typeof SectionShell>[0]["rhythm"]}
+        surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
       >
         <div className="space-y-1">
           {hasEyebrow ? (
@@ -220,6 +228,8 @@ export function TechStackSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
+      rhythm={rhythm as Parameters<typeof SectionShell>[0]["rhythm"]}
+      surface={surface as Parameters<typeof SectionShell>[0]["surface"]}
     >
       <div className="space-y-1">
         {hasEyebrow ? (

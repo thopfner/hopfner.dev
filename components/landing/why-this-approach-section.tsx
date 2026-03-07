@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
-import { SectionHeading } from "@/components/landing/section-primitives"
+import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -14,6 +14,9 @@ export function WhyThisApproachSection({
   title,
   heading,
   bodyHtml,
+  rhythm,
+  surface,
+  headingTreatment,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -24,27 +27,32 @@ export function WhyThisApproachSection({
   title: string
   heading: string
   bodyHtml: string
+  rhythm?: string
+  surface?: string
+  headingTreatment?: string
 }) {
   return (
-    <section
+    <SectionShell
       id={sectionId}
-      className={cn("scroll-mt-16 py-6", sectionClassName)}
-      aria-labelledby="why-title"
-    style={sectionStyle}
+      labelledBy="why-title"
+      sectionClassName={sectionClassName}
+      sectionStyle={sectionStyle}
+      containerClassName={containerClassName}
+      containerStyle={containerStyle}
+      rhythm={rhythm as any}
+      surface={surface as any}
     >
-      <div className={cn("mx-auto max-w-5xl space-y-4 px-4", containerClassName)} style={containerStyle}>
         <SectionHeading id="why-title" title={title} />
 
         <Card className="surface-panel gap-3 py-4" style={panelStyle}>
           <CardContent className="space-y-2 px-4">
-            <h3 className="text-sm font-semibold">{heading}</h3>
+            <h3 className={cn("text-sm font-semibold", headingTreatment === "display" && "text-display text-base", headingTreatment === "mono" && "text-label-mono")}>{heading}</h3>
             <div
               className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
           </CardContent>
         </Card>
-      </div>
-    </section>
+    </SectionShell>
   )
 }

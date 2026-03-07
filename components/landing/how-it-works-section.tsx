@@ -22,6 +22,7 @@ export function HowItWorksSection({
   cardFamily,
   accentRule,
   labelStyle,
+  dividerMode,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -37,11 +38,22 @@ export function HowItWorksSection({
   cardFamily?: string
   accentRule?: string
   labelStyle?: string
+  dividerMode?: string
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
 
   if (layoutVariant === "timeline") {
+    // Timeline line color intensity: accentRule controls emphasis
+    const timelineLineClass =
+      accentRule === "left" || accentRule === "inline"
+        ? "bg-accent/40"
+        : accentRule === "top"
+          ? "bg-accent/25"
+          : accentRule === "none"
+            ? "bg-border/30"
+            : "bg-border/60" // default (unset)
+
     return (
       <SectionShell
         id={sectionId}
@@ -67,7 +79,7 @@ export function HowItWorksSection({
           {/* Timeline line */}
           <div
             aria-hidden
-            className="absolute left-4 top-0 hidden h-full w-px bg-border/60 sm:block"
+            className={cn("absolute left-4 top-0 hidden h-full w-px sm:block", timelineLineClass)}
           />
           <ol className="space-y-4 sm:pl-12">
             {steps.map((step, idx) => (
@@ -81,9 +93,24 @@ export function HowItWorksSection({
                 <Card className="surface-panel gap-2 py-3" style={panelStyle}>
                   <CardContent className="space-y-1.5 px-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-label-mono flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-accent">
-                        {idx + 1}
-                      </span>
+                      {labelStyle === "pill" ? (
+                        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-accent/20 px-1.5 text-xs font-medium text-accent">
+                          {idx + 1}
+                        </span>
+                      ) : labelStyle === "mono" ? (
+                        <span className="text-label-mono flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-accent">
+                          {idx + 1}
+                        </span>
+                      ) : labelStyle === "micro" ? (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+                          {idx + 1}
+                        </span>
+                      ) : (
+                        /* default: mono style preserved from original */
+                        <span className="text-label-mono flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-accent">
+                          {idx + 1}
+                        </span>
+                      )}
                       <p className="text-sm font-medium sm:text-base">{step.title}</p>
                     </div>
                     {step.bodyHtml?.trim() ? (
@@ -133,9 +160,24 @@ export function HowItWorksSection({
                 className="flex w-full flex-1 flex-col rounded-xl border border-border/50 bg-card/30 p-4 text-center"
                 style={panelStyle}
               >
-                <span className="text-label-mono mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent">
-                  {idx + 1}
-                </span>
+                {labelStyle === "pill" ? (
+                  <span className="mx-auto mb-2 flex h-8 min-w-8 items-center justify-center rounded-full bg-accent/20 px-2 text-sm font-medium text-accent">
+                    {idx + 1}
+                  </span>
+                ) : labelStyle === "mono" ? (
+                  <span className="text-label-mono mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    {idx + 1}
+                  </span>
+                ) : labelStyle === "micro" ? (
+                  <span className="mx-auto mb-2 flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+                    {idx + 1}
+                  </span>
+                ) : (
+                  /* default: preserve original mono style */
+                  <span className="text-label-mono mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    {idx + 1}
+                  </span>
+                )}
                 <p className="text-sm font-medium">{step.title}</p>
                 {step.bodyHtml?.trim() ? (
                   <div
@@ -162,6 +204,17 @@ export function HowItWorksSection({
   }
 
   // Default grid layout
+
+  // Resolve accentRule: explicit prop wins; fall back to "left" when cardFamily="process" for backward compat
+  const resolvedAccentRule = accentRule ?? (cardFamily === "process" ? "left" : "none")
+
+  const accentClasses: Record<string, string> = {
+    left: "border-l-2 border-l-accent/50",
+    top: "border-t-2 border-t-accent/50",
+    inline: "", // inline accent is rendered inside the card, not via class
+    none: "",
+  }
+
   return (
     <SectionShell
       id={sectionId}
@@ -188,14 +241,39 @@ export function HowItWorksSection({
           <li key={`${idx}-${step.title}`} className="relative">
             <Card className={cn(
               "gap-3 py-4",
-              cardFamily === "process" ? "border-l-2 border-l-accent/50 border border-border/30 bg-card/15" : "surface-panel interactive-lift"
+              cardFamily === "process" ? "border border-border/30 bg-card/15" : "surface-panel interactive-lift",
+              accentClasses[resolvedAccentRule] ?? ""
             )} style={panelStyle}>
               <CardContent className="space-y-2 px-4">
+                {/* Inline accent: small accent bar before the step header */}
+                {resolvedAccentRule === "inline" ? (
+                  <div aria-hidden className="mb-1 h-0.5 w-6 rounded-full bg-accent/50" />
+                ) : null}
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="min-w-7 justify-center rounded-full">
-                    {idx + 1}
-                  </Badge>
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Step {idx + 1}</span>
+                  {labelStyle === "pill" ? (
+                    <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-accent/20 px-2 text-xs font-medium text-accent">
+                      {idx + 1}
+                    </span>
+                  ) : labelStyle === "mono" ? (
+                    <>
+                      <Badge variant="secondary" className="text-label-mono min-w-7 justify-center rounded-full">
+                        {idx + 1}
+                      </Badge>
+                      <span className="text-label-mono text-xs uppercase tracking-wide text-muted-foreground">Step {idx + 1}</span>
+                    </>
+                  ) : labelStyle === "micro" ? (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+                      {idx + 1}
+                    </span>
+                  ) : (
+                    /* default label style */
+                    <>
+                      <Badge variant="secondary" className="min-w-7 justify-center rounded-full">
+                        {idx + 1}
+                      </Badge>
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Step {idx + 1}</span>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-sm font-medium sm:text-base">{step.title}</p>

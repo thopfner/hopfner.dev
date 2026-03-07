@@ -24,6 +24,11 @@ export function WorkflowsSection({
   eyebrow,
   items,
   layoutVariant = "accordion",
+  rhythm,
+  surface,
+  contentDensity,
+  dividerMode,
+  headingTreatment,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -36,6 +41,11 @@ export function WorkflowsSection({
   eyebrow?: string
   items: Array<{ title: string; body: string; bodyHtml?: string }>
   layoutVariant?: LayoutVariant
+  rhythm?: string
+  surface?: string
+  contentDensity?: string
+  dividerMode?: string
+  headingTreatment?: string
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
@@ -167,6 +177,8 @@ export function WorkflowsSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
+      rhythm={rhythm as any}
+      surface={surface as any}
     >
       {headerBlock}
 
