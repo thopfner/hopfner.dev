@@ -127,6 +127,7 @@ export function BlogPageClient() {
   const [deleteState, setDeleteState] = useState<DeleteState | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [previewState, setPreviewState] = useState<PreviewState | null>(null)
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false)
   const [actionMenuAnchorEl, setActionMenuAnchorEl] = useState<HTMLElement | null>(null)
   const [actionMenuRow, setActionMenuRow] = useState<BlogListItem | null>(null)
 
@@ -393,23 +394,14 @@ export function BlogPageClient() {
             onChange={(e) => setQuery(e.currentTarget.value)}
             fullWidth
           />
-          <TextField
-            size="small"
-            select
-            label="Status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            sx={{ minWidth: { sm: 180 }, width: { xs: "100%", sm: "auto" } }}
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="draft">Draft</MenuItem>
-            <MenuItem value="approved">Approved</MenuItem>
-            <MenuItem value="published">Published</MenuItem>
-            <MenuItem value="rejected">Rejected</MenuItem>
-          </TextField>
-          <Button variant="outlined" onClick={() => void load()} disabled={loading}>
-            Refresh
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" startIcon={<MoreVertIcon fontSize="small" />} onClick={() => setFilterDialogOpen(true)}>
+              Filters{statusFilter !== "all" ? " (1)" : ""}
+            </Button>
+            <Button variant="outlined" onClick={() => void load()} disabled={loading}>
+              Refresh
+            </Button>
+          </Stack>
         </Stack>
       </AdminPanel>
 
@@ -508,6 +500,36 @@ export function BlogPageClient() {
           </TableContainer>
         )}
       </AdminPanel>
+
+      <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Blog filters</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ mt: 0.5 }}>
+            <TextField
+              size="small"
+              select
+              label="Status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              fullWidth
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="draft">Draft</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="published">Published</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+            </TextField>
+            <Stack direction="row" justifyContent="space-between">
+              <Button variant="text" onClick={() => { setStatusFilter("all"); setQuery("") }}>
+                Clear all
+              </Button>
+              <Button variant="contained" onClick={() => setFilterDialogOpen(false)}>
+                Done
+              </Button>
+            </Stack>
+          </Stack>
+        </DialogContent>
+      </Dialog>
 
       <Menu
         anchorEl={actionMenuAnchorEl}

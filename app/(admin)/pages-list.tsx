@@ -11,6 +11,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   IconButton,
   MenuItem,
   Paper,
@@ -25,6 +26,7 @@ import {
   Typography,
 } from "@mui/material"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import MoreVertIcon from "@mui/icons-material/MoreVert"
 
 import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
 import { createClient } from "@/lib/supabase/browser"
@@ -135,14 +137,20 @@ export function PagesList() {
   const [newSlug, setNewSlug] = useState("home")
   const [newTitle, setNewTitle] = useState("Home")
   const [creating, setCreating] = useState(false)
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   const [search, setSearch] = useState("")
   const [sortMode, setSortMode] = useState<"slug_asc" | "updated_desc" | "status">("updated_desc")
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false)
 
   const [publishAllOpen, setPublishAllOpen] = useState(false)
   const [publishingAll, setPublishingAll] = useState(false)
 
   const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  const createDrawerTitleId = "create-page-drawer-title"
+  const createDrawerDescriptionId = "create-page-drawer-description"
 
   const pushToast = useCallback((message: string, tone: ToastItem["tone"] = "info") => {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`
@@ -205,33 +213,34 @@ export function PagesList() {
   async function onCreatePage() {
     setCreating(true)
     setError(null)
+    setCreateError(null)
     try {
       const slug = newSlug.trim().toLowerCase()
       const title = newTitle.trim()
       const slugError = validateSlug(slug)
       if (slugError) {
-        setError(slugError)
+        setCreateError(slugError)
         pushToast(slugError, "error")
         return
       }
       if (!title) {
-        setError("Title is required.")
-        pushToast("Title is required.", "error")
+        const msg = "Title is required."
+        setCreateError(msg)
+        pushToast(msg, "error")
         return
       }
       const { error: insertError } = await supabase.from("pages").insert({ slug, title })
 
       if (insertError) {
-        applyEditorError({
-          error: insertError,
-          fallback: "Failed to create page.",
-          setError,
-          pushToast,
-        })
+        const msg = toEditorErrorMessage(insertError, "Failed to create page.")
+        setCreateError(msg)
+        pushToast(msg, "error")
         return
       }
 
       pushToast("Page created", "success")
+      setCreateDrawerOpen(false)
+      setCreateError(null)
       await loadPages()
     } finally {
       setCreating(false)
@@ -338,32 +347,30 @@ export function PagesList() {
       />
 
       <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
-        <Stack spacing={1.5}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 1.5 }}>
-            <TextField
-              label="Slug"
-              value={newSlug}
-              onChange={(e) => setNewSlug(e.target.value.toLowerCase())}
-              placeholder="home"
-              size="small"
-              sx={{ flex: "1 1 180px", minWidth: 0 }}
-            />
-            <TextField
-              label="Title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Home"
-              size="small"
-              sx={{ flex: "2 1 220px", minWidth: 0 }}
-            />
-            <Button variant="contained" size="small" color="primary" disabled={creating} onClick={onCreatePage}>
-              {creating ? "Creating…" : "Create page"}
-            </Button>
-          </Box>
-
-          {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
-        </Stack>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+          <Stack spacing={0.25}>
+            <Typography variant="body2" fontWeight={700}>
+              Page creation
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Open the Create Page sidebar to add a new page without disrupting list context.
+            </Typography>
+          </Stack>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={() => {
+              setCreateError(null)
+              setCreateDrawerOpen(true)
+            }}
+          >
+            Create page
+          </Button>
+        </Box>
       </AdminPanel>
+
+      {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
 
       <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
         <Stack spacing={1.5}>
@@ -396,17 +403,9 @@ export function PagesList() {
               size="small"
               sx={{ flex: "1 1 240px", minWidth: 0 }}
             />
-            <TextField
-              select
-              size="small"
-              value={sortMode}
-              onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-              sx={{ width: 220 }}
-            >
-              <MenuItem value="slug_asc">Sort: Slug (A-Z)</MenuItem>
-              <MenuItem value="updated_desc">Sort: Last updated</MenuItem>
-              <MenuItem value="status">Sort: Status</MenuItem>
-            </TextField>
+            <Button size="small" variant="outlined" startIcon={<MoreVertIcon fontSize="small" />} onClick={() => setFilterDialogOpen(true)}>
+              Filters
+            </Button>
           </Box>
 
           <TableContainer
@@ -533,6 +532,131 @@ export function PagesList() {
           </Stack>
         </Stack>
       </AdminPanel>
+
+      <Drawer
+        anchor="right"
+        open={createDrawerOpen}
+        ModalProps={{
+          keepMounted: true,
+          "aria-labelledby": createDrawerTitleId,
+          "aria-describedby": createDrawerDescriptionId,
+        }}
+        onClose={() => {
+          if (creating) return
+          setCreateError(null)
+          setCreateDrawerOpen(false)
+        }}
+        PaperProps={{
+          role: "dialog",
+          "aria-modal": true,
+          "aria-labelledby": createDrawerTitleId,
+          "aria-describedby": createDrawerDescriptionId,
+          sx: {
+            width: { xs: "100%", sm: 420 },
+            p: 2,
+            borderLeft: "1px solid",
+            borderColor: "rgba(140,157,255,0.22)",
+            background: "rgba(10,15,27,0.94)",
+            backdropFilter: "blur(6px)",
+          },
+        }}
+      >
+        <Stack spacing={2}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+            <Stack spacing={0.5}>
+              <Typography id={createDrawerTitleId} variant="h6" fontWeight={700}>
+                Create page
+              </Typography>
+              <Typography id={createDrawerDescriptionId} variant="body2" color="text.secondary">
+                Add a new page slug and title.
+              </Typography>
+            </Stack>
+            <IconButton
+              aria-label="Close create page panel"
+              onClick={() => {
+                setCreateError(null)
+                setCreateDrawerOpen(false)
+              }}
+              disabled={creating}
+            >
+              <CloseRoundedIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {createError ? <Alert severity="error" variant="outlined">{createError}</Alert> : null}
+
+          <Box
+            component="form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void onCreatePage()
+            }}
+          >
+            <Stack spacing={1.5}>
+              <TextField
+                label="Slug"
+                value={newSlug}
+                onChange={(e) => setNewSlug(e.target.value.toLowerCase())}
+                placeholder="home"
+                size="small"
+                autoFocus
+                fullWidth
+              />
+              <TextField
+                label="Title"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="Home"
+                size="small"
+                fullWidth
+              />
+
+              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                <Button
+                  onClick={() => {
+                    setCreateError(null)
+                    setCreateDrawerOpen(false)
+                  }}
+                  disabled={creating}
+                >
+                  Cancel
+                </Button>
+                <Button variant="contained" color="primary" disabled={creating} type="submit">
+                  {creating ? "Creating…" : "Create page"}
+                </Button>
+              </Stack>
+            </Stack>
+          </Box>
+        </Stack>
+      </Drawer>
+
+      <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Page list filters</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ pt: 0.5 }}>
+            <TextField
+              select
+              size="small"
+              label="Sort"
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
+              fullWidth
+            >
+              <MenuItem value="slug_asc">Sort: Slug (A-Z)</MenuItem>
+              <MenuItem value="updated_desc">Sort: Last updated</MenuItem>
+              <MenuItem value="status">Sort: Status</MenuItem>
+            </TextField>
+            <Stack direction="row" justifyContent="space-between">
+              <Button variant="text" onClick={() => { setSortMode("updated_desc"); setSearch("") }}>
+                Clear all
+              </Button>
+              <Button variant="contained" onClick={() => setFilterDialogOpen(false)}>
+                Done
+              </Button>
+            </Stack>
+          </Stack>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={publishAllOpen}

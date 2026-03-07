@@ -873,7 +873,7 @@ function PageEditorHeader({ page }: { page: CmsPageRow | null }) {
         <Title order={2} size="h3">
           Page Editor
         </Title>
-        <Text c="dimmed" size="sm">
+        <Text c="dimmed" size="sm" style={{ lineHeight: 1.6 }}>
           {page ? (
             <>
               Editing <b>{page.title}</b> (<code>{page.slug}</code>)
@@ -986,6 +986,7 @@ function SectionsToolbar({
   sortMode,
   onSortMode,
   types,
+  onAddSection,
 }: {
   search: string
   onSearch: (value: string) => void
@@ -998,7 +999,15 @@ function SectionsToolbar({
   sortMode: "manual" | "updated"
   onSortMode: (value: "manual" | "updated") => void
   types: Array<{ value: string; label: string }>
+  onAddSection: () => void
 }) {
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [controlsAnchorEl, setControlsAnchorEl] = useState<HTMLElement | null>(null)
+  const controlsOpen = Boolean(controlsAnchorEl)
+  const controlsButtonRef = useRef<HTMLButtonElement | null>(null)
+  const controlsMenuId = "sections-controls-menu"
+  const filtersDialogTitleId = "sections-filters-dialog-title"
+
   function toggleStatusFilter(value: SectionFilterStatus) {
     onStatusFilters(
       statusFilters.includes(value)
@@ -1015,9 +1024,19 @@ function SectionsToolbar({
     )
   }
 
+  const activeFilterCount =
+    statusFilters.length + sourceFilters.length + (typeFilter ? 1 : 0) + (search.trim() ? 1 : 0)
+
   return (
     <Stack gap="xs" mb="sm">
-      <Group grow>
+      <Box
+        sx={{
+          display: "grid",
+          gap: 1,
+          gridTemplateColumns: { xs: "1fr", sm: "1fr auto auto" },
+          alignItems: "center",
+        }}
+      >
         <TextInput
           leftSection={<IconSearch size={14} />}
           placeholder="Search sections…"
@@ -1025,67 +1044,202 @@ function SectionsToolbar({
           onChange={(e) => onSearch(e.currentTarget.value)}
           aria-label="Search sections"
         />
-        <Select
-          aria-label="Sort sections"
-          value={sortMode}
-          onChange={(v) => onSortMode(v === "updated" ? "updated" : "manual")}
-          data={[
-            { value: "manual", label: "Sort: Manual order" },
-            { value: "updated", label: "Sort: Last updated" },
-          ]}
-          w={220}
-        />
-      </Group>
-      <Group gap="sm" wrap="wrap">
-        <Group gap="xs">
-          <MuiChip
-            clickable
-            label="Published"
-            color={statusFilters.includes("published") ? "primary" : "default"}
-            variant={statusFilters.includes("published") ? "filled" : "outlined"}
-            onClick={() => toggleStatusFilter("published")}
-          />
-          <MuiChip
-            clickable
-            label="Draft"
-            color={statusFilters.includes("draft") ? "primary" : "default"}
-            variant={statusFilters.includes("draft") ? "filled" : "outlined"}
-            onClick={() => toggleStatusFilter("draft")}
-          />
-          <MuiChip
-            clickable
-            label="Hidden"
-            color={statusFilters.includes("hidden") ? "primary" : "default"}
-            variant={statusFilters.includes("hidden") ? "filled" : "outlined"}
-            onClick={() => toggleStatusFilter("hidden")}
-          />
+
+        <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+          <Button
+            ref={controlsButtonRef}
+            variant="default"
+            leftSection={<IconDotsVertical size={14} />}
+            onClick={(event) => setControlsAnchorEl(event.currentTarget)}
+            aria-label="Open section controls"
+            aria-haspopup="menu"
+            aria-expanded={controlsOpen}
+            aria-controls={controlsOpen ? controlsMenuId : undefined}
+          >
+            Controls{activeFilterCount ? ` (${activeFilterCount})` : ""}
+          </Button>
+
+          <MuiMenu
+            id={controlsMenuId}
+            anchorEl={controlsAnchorEl}
+            open={controlsOpen}
+            onClose={() => {
+              setControlsAnchorEl(null)
+              controlsButtonRef.current?.focus()
+            }}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+            slotProps={{
+              paper: {
+                sx: {
+                  width: { xs: "min(92vw, 280px)", sm: 260 },
+                  maxWidth: "92vw",
+                  maxHeight: "70vh",
+                  overflowY: "auto",
+                  zIndex: (theme) => theme.zIndex.modal + 1,
+                },
+              },
+            }}
+          >
+            <MenuItem
+              selected={sortMode === "manual"}
+              onClick={() => {
+                onSortMode("manual")
+                setControlsAnchorEl(null)
+              }}
+            >
+              Sort: Manual order
+            </MenuItem>
+            <MenuItem
+              selected={sortMode === "updated"}
+              onClick={() => {
+                onSortMode("updated")
+                setControlsAnchorEl(null)
+              }}
+            >
+              Sort: Last updated
+            </MenuItem>
+            <Divider />
+            <MenuItem
+              onClick={() => {
+                setControlsAnchorEl(null)
+                setFiltersOpen(true)
+              }}
+            >
+              Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onStatusFilters([])
+                onSourceFilters([])
+                onTypeFilter(null)
+                onSearch("")
+                setControlsAnchorEl(null)
+              }}
+            >
+              Reset controls
+            </MenuItem>
+          </MuiMenu>
         </Group>
-        <Group gap="xs">
-          <MuiChip
-            clickable
-            label="Local"
-            color={sourceFilters.includes("local") ? "primary" : "default"}
-            variant={sourceFilters.includes("local") ? "filled" : "outlined"}
-            onClick={() => toggleSourceFilter("local")}
-          />
-          <MuiChip
-            clickable
-            label="Global"
-            color={sourceFilters.includes("global") ? "primary" : "default"}
-            variant={sourceFilters.includes("global") ? "filled" : "outlined"}
-            onClick={() => toggleSourceFilter("global")}
-          />
-        </Group>
-        <Select
-          placeholder="Type"
-          clearable
-          value={typeFilter}
-          onChange={onTypeFilter}
-          data={types}
-          w={220}
-          aria-label="Filter by section type"
-        />
-      </Group>
+
+        <Box sx={{ display: "flex", justifyContent: { xs: "flex-end", sm: "flex-start" } }}>
+          <Button size="sm" onClick={onAddSection}>
+            Add section
+          </Button>
+        </Box>
+      </Box>
+
+      <Dialog
+        open={filtersOpen}
+        onClose={() => {
+          setFiltersOpen(false)
+          controlsButtonRef.current?.focus()
+        }}
+        aria-labelledby={filtersDialogTitleId}
+        fullWidth
+        maxWidth="sm"
+        slotProps={{
+          paper: {
+            sx: {
+              width: { xs: "92vw", sm: "100%" },
+              maxWidth: { xs: "92vw", sm: 560 },
+              maxHeight: { xs: "78vh", sm: "70vh" },
+              display: "flex",
+            },
+          },
+        }}
+      >
+        <DialogTitle id={filtersDialogTitleId}>Section filters</DialogTitle>
+        <DialogContent sx={{ overflowY: "auto" }}>
+          <Stack gap="sm" mt="xs">
+            <Text size="xs" c="dimmed">Status</Text>
+            <Group gap="xs">
+              <MuiChip
+                clickable
+                label="Published"
+                color={statusFilters.includes("published") ? "primary" : "default"}
+                variant={statusFilters.includes("published") ? "filled" : "outlined"}
+                onClick={() => toggleStatusFilter("published")}
+              />
+              <MuiChip
+                clickable
+                label="Draft"
+                color={statusFilters.includes("draft") ? "primary" : "default"}
+                variant={statusFilters.includes("draft") ? "filled" : "outlined"}
+                onClick={() => toggleStatusFilter("draft")}
+              />
+              <MuiChip
+                clickable
+                label="Hidden"
+                color={statusFilters.includes("hidden") ? "primary" : "default"}
+                variant={statusFilters.includes("hidden") ? "filled" : "outlined"}
+                onClick={() => toggleStatusFilter("hidden")}
+              />
+            </Group>
+
+            <Text size="xs" c="dimmed">Source</Text>
+            <Group gap="xs">
+              <MuiChip
+                clickable
+                label="Local"
+                color={sourceFilters.includes("local") ? "primary" : "default"}
+                variant={sourceFilters.includes("local") ? "filled" : "outlined"}
+                onClick={() => toggleSourceFilter("local")}
+              />
+              <MuiChip
+                clickable
+                label="Global"
+                color={sourceFilters.includes("global") ? "primary" : "default"}
+                variant={sourceFilters.includes("global") ? "filled" : "outlined"}
+                onClick={() => toggleSourceFilter("global")}
+              />
+            </Group>
+
+            <Text size="xs" c="dimmed">Type</Text>
+            <Select
+              placeholder="Type"
+              clearable
+              value={typeFilter}
+              onChange={onTypeFilter}
+              data={types}
+              aria-label="Filter by section type"
+            />
+
+            <Group
+              justify="space-between"
+              mt="xs"
+              sx={{
+                position: "sticky",
+                bottom: -1,
+                backgroundColor: "background.paper",
+                py: 1,
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Button
+                variant="subtle"
+                onClick={() => {
+                  onStatusFilters([])
+                  onSourceFilters([])
+                  onTypeFilter(null)
+                  onSearch("")
+                }}
+              >
+                Clear all
+              </Button>
+              <Button
+                onClick={() => {
+                  setFiltersOpen(false)
+                  controlsButtonRef.current?.focus()
+                }}
+              >
+                Done
+              </Button>
+            </Group>
+          </Stack>
+        </DialogContent>
+      </Dialog>
     </Stack>
   )
 }
@@ -2627,9 +2781,6 @@ export function PageEditor({ pageId }: { pageId: string }) {
             </Text>
             <Badge variant="default">{sections.length}</Badge>
           </Group>
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            Add section
-          </Button>
         </Group>
 
         <SectionsToolbar
@@ -2644,6 +2795,7 @@ export function PageEditor({ pageId }: { pageId: string }) {
           sortMode={sortMode}
           onSortMode={setSortMode}
           types={sectionTypeOptions}
+          onAddSection={() => setAddOpen(true)}
         />
 
         {!canManualReorder ? (

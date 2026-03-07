@@ -162,14 +162,6 @@ export function MediaPageClient() {
       <AdminPageHeader
         title="Media"
         description="Upload images and manage your media library. Removing images from sections will not delete files here."
-        sx={{
-          p: { xs: 1.5, sm: 2 },
-          border: "1px solid",
-          borderColor: "rgba(140,157,255,0.22)",
-          borderRadius: 2,
-          background: "linear-gradient(140deg, rgba(16,24,39,0.78), rgba(10,15,27,0.68))",
-          backdropFilter: "blur(6px)",
-        }}
       />
 
       <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
