@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs"
 import path from "node:path"
 
-const IMAGE_DIR = "/var/www/html/hopfner.dev-frontend/public/hero-backgrounds"
+const IMAGE_DIR = path.join(process.cwd(), "public", "hero-backgrounds")
 
 function contentTypeFor(fileName: string) {
   const lower = fileName.toLowerCase()

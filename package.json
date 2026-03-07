@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy:safe": "bash scripts/deploy-admin-safe.sh"
+    "deploy:safe": "bash scripts/deploy-safe.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
