@@ -1,8 +1,0 @@
-# generated 2026-02-24T09:14:47Z
-HTTP/2 401 
-server: nginx/1.26.0 (Ubuntu)
-date: Tue, 24 Feb 2026 09:14:47 GMT
-content-type: application/json
-vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
-
-{"error":"Not authenticated."}

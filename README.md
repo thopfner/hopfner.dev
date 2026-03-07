@@ -17,6 +17,8 @@ npm run dev
 Important files:
 - Public app overview: `README_PUBLIC.md`
 - Admin app overview: `README_ADMIN.md`
+- Current deployment state: `docs/CURRENT_STATE.md`
+- Blog ingest API: `docs/BLOG_API.md`
 - Safe deploy script: `scripts/deploy-safe.sh`
 
 Production on this server:
