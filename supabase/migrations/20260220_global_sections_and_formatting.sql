@@ -60,6 +60,7 @@ insert into public.site_formatting_settings (id, settings)
 values ('default', jsonb_build_object('fontFamily', 'Inter, system-ui, sans-serif', 'fontScale', 1))
 on conflict (id) do nothing;
 
+-- basic backfill for section-level overrides from historical formatting
 update public.sections s
 set formatting_override = coalesce(v.formatting, '{}'::jsonb)
 from public.section_versions v

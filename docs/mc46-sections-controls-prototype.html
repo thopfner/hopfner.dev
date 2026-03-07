@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MC-46 Prototype — Compact Sections Controls</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2b;
+      --panel-2: #0f1726;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --line: rgba(140,157,255,0.22);
+      --accent: #8da2ff;
+      --success: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --r: 12px;
+      --h: 40px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: linear-gradient(180deg, #0a1220, #0b1322);
+      color: var(--text);
+      padding: 20px;
+    }
+    .frame {
+      max-width: 1280px;
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      background: rgba(17,26,43,.78);
+      padding: 12px;
+    }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(15,23,38,.9);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .input, .btn, .select {
+      height: var(--h);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0d1728;
+      color: var(--text);
+      padding: 0 12px;
+      font-size: 14px;
+    }
+    .input { width: 100%; }
+    .btn { cursor: pointer; }
+    .btn.primary { background: #223158; border-color: #7e95ff; }
+    .btn.ghost { background: #111d31; }
+    .cards {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .card {
+      border: 1px solid rgba(140,157,255,.18);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(10,15,27,.58);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .meta { display: flex; gap: 6px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
+    .chip { border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
+    .chip.ok { border-color: rgba(34,197,94,.45); color: #86efac; }
+    .chip.warn { border-color: rgba(245,158,11,.5); color: #fcd34d; }
+    .menu, .sheet {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #101b30;
+      padding: 10px;
+    }
+    .menu { max-width: 280px; }
+    .sheet { max-width: 560px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .note { margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+    /* tablet */
+    @media (max-width: 900px) {
+      .toolbar { grid-template-columns: 1fr auto auto; }
+      .sheet { max-width: 92vw; }
+    }
+
+    /* mobile <=375 */
+    @media (max-width: 375px) {
+      body { padding: 10px; }
+      .toolbar {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .toolbar .actions {
+        display: grid;
+        grid-template-columns: auto auto;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .menu, .sheet { max-width: 100%; }
+      .sheet { max-height: 78vh; overflow: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <h3>Prototype: Compact Sections Controls (Recommended Option B)</h3>
+
+    <div class="toolbar" aria-label="Sections toolbar prototype">
+      <input class="input" aria-label="Search sections" placeholder="Search sections…" />
+      <button class="btn ghost" aria-haspopup="menu" aria-expanded="true">Controls ▾</button>
+      <button class="btn primary">Add section</button>
+
+      <div class="actions" hidden></div>
+    </div>
+
+    <div class="menu" role="menu" aria-label="Controls menu">
+      <div class="row">
+        <select class="select" aria-label="Sort sections">
+          <option>Sort: Manual order</option>
+          <option>Sort: Last updated</option>
+        </select>
+        <button class="btn">Filters…</button>
+        <button class="btn">Reset</button>
+      </div>
+    </div>
+
+    <div class="sheet" role="dialog" aria-label="Filters panel">
+      <div class="row">
+        <span class="chip">Published</span><span class="chip">Draft</span><span class="chip">Hidden</span>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <span class="chip">Local</span><span class="chip">Global</span>
+      </div>
+      <div class="row" style="margin-top:10px; justify-content:flex-end;">
+        <button class="btn">Clear all</button>
+        <button class="btn primary">Apply</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div>
+          <strong>Hero section</strong>
+          <div class="meta">
+            <span class="chip ok">Published</span>
+            <span class="chip warn">Draft changes</span>
+            <span>Updated 2 days ago</span>
+          </div>
+        </div>
+        <div>toggle · ⋮</div>
+      </div>
+      <div class="card">
+        <div>
+          <strong>Qualification fields</strong>
+          <div class="meta"><span class="chip">Unpublished</span><span>Updated today</span></div>
+        </div>
+        <div>toggle · ⋮</div>
+      </div>
+    </div>
+
+    <p class="note">Responsive behavior: desktop/tablet keeps one-row toolbar; <=375 stacks search row + action row, preserving Add section visibility and avoiding card overlap.</p>
+  </div>
+</body>
+</html>

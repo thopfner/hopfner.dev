@@ -1,0 +1,111 @@
+[Runtime refresh start - 2026-02-24T09:40:34Z]
+[PM2] Applying action stopProcessId on app [hopfner.dev-admin](ids: [ 4 ])
+[PM2] [hopfner.dev-admin](4) ✓
+┌────┬──────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                 │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼──────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ hopfner.dev          │ default     │ N/A     │ fork    │ 2596124  │ 12h    │ 129  │ online    │ 0%       │ 65.6mb   │ root     │ disabled │
+│ 4  │ hopfner.dev-admin    │ default     │ N/A     │ fork    │ 0        │ 0      │ 241  │ stopped   │ 0%       │ 0b       │ root     │ disabled │
+│ 2  │ pdp                  │ default     │ N/A     │ fork    │ 2289896  │ 6D     │ 2    │ online    │ 0%       │ 23.9mb   │ root     │ disabled │
+│ 3  │ ts-dev               │ default     │ N/A     │ fork    │ 2575764  │ 6D     │ 3    │ online    │ 0%       │ 87.8mb   │ root     │ disabled │
+└────┴──────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+-- removed .next
+-- npm run build
+
+> hopfner.dev-admin@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 16.1s
+  Running TypeScript ...
+  Collecting page data using 2 workers ...
+  Generating static pages using 2 workers (0/15) ...
+  Generating static pages using 2 workers (3/15) 
+  Generating static pages using 2 workers (7/15) 
+  Generating static pages using 2 workers (11/15) 
+✓ Generating static pages using 2 workers (15/15) in 192.8ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /api/blog/articles
+├ ƒ /api/blog/articles/[id]
+├ ƒ /api/blog/versions/[id]
+├ ƒ /api/blog/versions/[id]/approve
+├ ƒ /api/blog/versions/[id]/publish
+├ ƒ /api/blog/versions/[id]/reject
+├ ƒ /api/bootstrap
+├ ƒ /api/content/blueprint
+├ ƒ /api/content/blueprint/rollback
+├ ƒ /api/content/sections/duplicate-all
+├ ƒ /api/global-sections/attach
+├ ƒ /api/internal/blog/ingest
+├ ƒ /api/media
+├ ƒ /api/media/upload
+├ ƒ /api/pages/overview
+├ ƒ /api/pages/publish-all
+├ ƒ /auth/callback
+├ ƒ /blog
+├ ƒ /global-sections
+├ ƒ /login
+├ ƒ /media
+├ ƒ /pages/[pageId]
+├ ƒ /section-library
+└ ƒ /setup
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+-- restart
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [hopfner.dev-admin](ids: [ 4 ])
+[PM2] [hopfner.dev-admin](4) ✓
+┌────┬──────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                 │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼──────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ hopfner.dev          │ default     │ N/A     │ fork    │ 2596124  │ 12h    │ 129  │ online    │ 0%       │ 65.6mb   │ root     │ disabled │
+│ 4  │ hopfner.dev-admin    │ default     │ N/A     │ fork    │ 274494   │ 0s     │ 241  │ online    │ 0%       │ 13.0mb   │ root     │ disabled │
+│ 2  │ pdp                  │ default     │ N/A     │ fork    │ 2289896  │ 6D     │ 2    │ online    │ 0%       │ 23.8mb   │ root     │ disabled │
+│ 3  │ ts-dev               │ default     │ N/A     │ fork    │ 2575764  │ 6D     │ 3    │ online    │ 0%       │ 87.8mb   │ root     │ disabled │
+└────┴──────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+-- verification
+== https://hopfner.dev/admin/_next/static/chunks/9bfd6948c5f0f648.js
+HTTP 502
+== https://hopfner.dev/admin/_next/static/chunks/b293a7f33e5cd254.js
+HTTP 502
+== https://hopfner.dev/admin/global-sections
+HTTP 502
+[Runtime refresh end - 2026-02-24T09:41:11Z]
+[Post-restart warmup verify - 2026-02-24T09:41:15Z]
+-- attempt 1
+502 https://hopfner.dev/admin/_next/static/chunks/9bfd6948c5f0f648.js
+502 https://hopfner.dev/admin/_next/static/chunks/b293a7f33e5cd254.js
+502 https://hopfner.dev/admin/global-sections
+-- attempt 2
+502 https://hopfner.dev/admin/_next/static/chunks/9bfd6948c5f0f648.js
+502 https://hopfner.dev/admin/_next/static/chunks/b293a7f33e5cd254.js
+502 https://hopfner.dev/admin/global-sections
+-- attempt 3
+502 https://hopfner.dev/admin/_next/static/chunks/9bfd6948c5f0f648.js
+502 https://hopfner.dev/admin/_next/static/chunks/b293a7f33e5cd254.js
+502 https://hopfner.dev/admin/global-sections
+-- attempt 4
+502 https://hopfner.dev/admin/_next/static/chunks/9bfd6948c5f0f648.js
+502 https://hopfner.dev/admin/_next/static/chunks/b293a7f33e5cd254.js
+502 https://hopfner.dev/admin/global-sections
+-- attempt 5
+502 https://hopfner.dev/admin/_next/static/chunks/9bfd6948c5f0f648.js
+502 https://hopfner.dev/admin/_next/static/chunks/b293a7f33e5cd254.js
+502 https://hopfner.dev/admin/global-sections
+[Final verification after webpack build + restart - 2026-02-24T09:43:27Z]
+== https://hopfner.dev/admin/_next/static/chunks/9bfd6948c5f0f648.js
+HTTP 404
+== https://hopfner.dev/admin/_next/static/chunks/b293a7f33e5cd254.js
+HTTP 404
+== https://hopfner.dev/admin/global-sections
+HTTP 307

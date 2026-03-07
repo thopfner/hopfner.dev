@@ -156,3 +156,80 @@
     scroll-behavior: auto !important;
   }
 }
+
+.admin-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@media (max-width: 768px) {
+  .editor-drawer-body {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+
+  .editor-drawer-content .mantine-Input-input,
+  .editor-drawer-content .mantine-Textarea-input,
+  .editor-drawer-content .mantine-Select-input,
+  .editor-drawer-content .MuiInputBase-input,
+  .editor-drawer-content .MuiSelect-select {
+    font-size: 16px;
+  }
+
+  .editor-drawer-content .MuiButton-root {
+    min-height: 40px;
+  }
+
+  .editor-drawer-content .MuiPaper-root {
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .editor-drawer-content .MuiStack-root {
+    row-gap: 8px;
+  }
+}
+
+.editor-drawer-content .rte-content .ProseMirror {
+  min-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid rgba(142, 162, 255, 0.22);
+  border-radius: 10px;
+  background: rgba(14, 22, 39, 0.55);
+}
+
+.editor-drawer-content .rte-content .ProseMirror:focus {
+  outline: 2px solid #8ea2ff;
+  outline-offset: 1px;
+}
+
+.editor-drawer-content .rte-content .ProseMirror :where(ul) {
+  list-style: disc;
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.editor-drawer-content .rte-content .ProseMirror :where(ol) {
+  list-style: decimal;
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.editor-drawer-content .rte-content .ProseMirror :where(li) {
+  margin: 0.25rem 0;
+}
+
+.editor-drawer-content .rte-content .ProseMirror :where(h2) {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.editor-drawer-content .rte-content .ProseMirror :where(h3) {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}
