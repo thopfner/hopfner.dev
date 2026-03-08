@@ -48,6 +48,7 @@ export function HowItWorksSection({
   const density = ui?.density ?? "standard"
   const gridGapToken = ui?.gridGap ?? "standard"
   const dividerMode = ui?.dividerMode ?? "none"
+  const headingId = sectionId ? `${sectionId}-heading` : "how-it-works-title"
 
   if (layoutVariant === "timeline") {
     const timelineCard = resolveCardPresentation(ui, { mode: "compact" })
@@ -64,7 +65,7 @@ export function HowItWorksSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="how-it-works-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
@@ -76,11 +77,11 @@ export function HowItWorksSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className="text-eyebrow text-muted-foreground">
+              <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"], "text-muted-foreground")}>
                 {eyebrow}
               </p>
             ) : null}
-            <SectionHeading id="how-it-works-title" title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
               <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
             ) : null}
@@ -150,7 +151,7 @@ export function HowItWorksSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="how-it-works-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
@@ -162,11 +163,11 @@ export function HowItWorksSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className="text-eyebrow text-muted-foreground">
+              <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"], "text-muted-foreground")}>
                 {eyebrow}
               </p>
             ) : null}
-            <SectionHeading id="how-it-works-title" title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
               <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
             ) : null}
@@ -257,7 +258,7 @@ export function HowItWorksSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="how-it-works-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
@@ -272,7 +273,7 @@ export function HowItWorksSection({
               {hasEyebrow ? (
                 <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
               ) : null}
-              <SectionHeading id="how-it-works-title" title={title} headingTreatment={ui?.headingTreatment} />
+              <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
               {hasSubtitle ? (
                 <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
               ) : null}
@@ -353,7 +354,7 @@ export function HowItWorksSection({
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="how-it-works-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
@@ -367,7 +368,7 @@ export function HowItWorksSection({
           {hasEyebrow ? (
             <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>{eyebrow}</p>
           ) : null}
-          <SectionHeading id="how-it-works-title" title={title} headingTreatment={ui?.headingTreatment} />
+          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
           {hasSubtitle ? (
             <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
           ) : null}

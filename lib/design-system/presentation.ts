@@ -16,10 +16,10 @@ export const RHYTHM_CLASSES: Record<Rhythm, string> = {
 export const SURFACE_CLASSES: Record<Surface, string> = {
   none: "",
   panel: "surface-panel",
-  soft_band: "bg-card/[0.07] border-y border-border/35",
-  contrast_band: "bg-card/[0.16] border-y border-border/60",
-  spotlight_stage: "relative bg-gradient-to-b from-accent/[0.07] to-transparent border-y border-accent/[0.15]",
-  grid_stage: "relative bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,color-mix(in_oklch,var(--accent)_9%,transparent),transparent_70%)]",
+  soft_band: "bg-[color-mix(in_oklch,var(--foreground)_6%,var(--background))]",
+  contrast_band: "bg-[color-mix(in_oklch,var(--foreground)_12%,var(--background))]",
+  spotlight_stage: "relative bg-[linear-gradient(to_bottom,color-mix(in_oklch,var(--accent-glow)_16%,transparent),transparent_65%)]",
+  grid_stage: "relative bg-[radial-gradient(ellipse_90%_55%_at_50%_-20%,color-mix(in_oklch,var(--accent-glow)_20%,transparent),transparent_70%)]",
   gradient_mesh: "surface-gradient-mesh",
   accent_glow: "surface-accent-glow",
   dark_elevated: "surface-dark-elevated",
@@ -100,7 +100,7 @@ export const HEADING_TREATMENT_CLASSES: Record<HeadingTreatment, string> = {
 
 /** Label style classes — applied to tags, badges, eyebrows, micro-labels. */
 export const LABEL_STYLE_CLASSES: Record<LabelStyle, string> = {
-  default: "text-label-mono w-fit rounded-full border border-border/50 px-2 py-0.5 text-muted-foreground",
+  default: "text-[10px] font-semibold uppercase tracking-widest text-muted-foreground",
   mono: "text-label-mono text-muted-foreground",
   pill: "rounded-full border border-accent/25 bg-accent/[0.08] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-accent/80",
   micro: "text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60",
@@ -111,4 +111,6 @@ export const DEFAULT_RHYTHM: Record<string, Rhythm> = {
   hero_cta: "hero",
   cta_block: "cta",
   footer_grid: "footer",
+  social_proof_strip: "compact",
+  label_value_list: "compact",
 }

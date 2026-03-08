@@ -45,6 +45,7 @@ export function TechStackSection({
   const hasSubtitle = (subtitle ?? "").trim().length > 0
   const labelStyle = ui?.labelStyle ?? "default"
   const gridGap = ui?.gridGap ?? "standard"
+  const headingId = sectionId ? `${sectionId}-heading` : "tech-title"
   const card = resolveCardPresentation(ui, { mode: "compact" })
 
   if (layoutVariant === "trust_strip") {
@@ -55,7 +56,7 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={ui?.rhythm ?? "compact"}
+        rhythm={ui?.rhythm}
         surface={ui?.surface}
         density={ui?.density}
       >
@@ -98,7 +99,7 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={ui?.rhythm ?? "compact"}
+        rhythm={ui?.rhythm}
         surface={ui?.surface}
         density={ui?.density}
       >
@@ -141,7 +142,7 @@ export function TechStackSection({
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={ui?.rhythm ?? "compact"}
+        rhythm={ui?.rhythm}
         surface={ui?.surface}
         density={ui?.density}
       >
@@ -161,7 +162,7 @@ export function TechStackSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="tech-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
@@ -175,7 +176,7 @@ export function TechStackSection({
             {hasEyebrow ? (
               <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
             ) : null}
-            <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
               <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
             ) : null}
@@ -209,7 +210,7 @@ export function TechStackSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="tech-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
@@ -223,7 +224,7 @@ export function TechStackSection({
             {hasEyebrow ? (
               <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
             ) : null}
-            <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
               <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
             ) : null}
@@ -275,7 +276,7 @@ export function TechStackSection({
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="tech-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
@@ -289,7 +290,7 @@ export function TechStackSection({
           {hasEyebrow ? (
             <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
           ) : null}
-          <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
+          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
           {hasSubtitle ? (
             <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
           ) : null}

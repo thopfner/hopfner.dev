@@ -95,6 +95,8 @@ export function resolveSectionUi(
     hero_cta: "hero",
     cta_block: "cta",
     footer_grid: "footer",
+    social_proof_strip: "compact",
+    label_value_list: "compact",
   }
   const effectiveRhythm = rhythm || (sectionType ? defaultRhythm[sectionType] : "") || "standard"
 

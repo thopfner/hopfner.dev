@@ -160,11 +160,13 @@ export async function loadCapabilitiesFromClient(
       .from("section_control_capabilities")
       .select("*")
 
+    // Start from code constants, then overlay DB rows on top
+    const result: Record<string, SectionCapability> = { ...SECTION_CAPABILITIES }
+
     if (error || !data?.length) {
-      return { ...SECTION_CAPABILITIES }
+      return result
     }
 
-    const result: Record<string, SectionCapability> = {}
     for (const row of data as CapabilityRow[]) {
       const supported: SemanticControl[] = []
       for (const [col, control] of Object.entries(CONTROL_COLUMN_MAP)) {

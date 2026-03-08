@@ -342,18 +342,23 @@ export function SegmentedControl({
   )
 }
 
-export function Drawer({ opened, onClose, title, position = "right", size = "xl", children, ...props }: any) {
-  const width = size === "xl" ? 920 : size === "lg" ? 760 : size === "md" ? 620 : 480
+export function Drawer({ opened, onClose, title, position = "right", size = "xl", children, styles: _styles, classNames: _classNames, ...props }: any) {
+  const isFullScreen = size === "100%"
+  const width = isFullScreen ? "100vw" : size === "xl" ? 920 : size === "lg" ? 760 : size === "md" ? 620 : 480
   return (
     <MuiDrawer
       open={!!opened}
       onClose={onClose}
       anchor={position === "left" ? "left" : "right"}
-      PaperProps={{ sx: { width: { xs: "100vw", sm: width } } }}
+      PaperProps={{ sx: { width: isFullScreen ? "100vw" : { xs: "100vw", sm: width } } }}
       {...props}
     >
       {title ? <Box p={2} borderBottom="1px solid" borderColor="divider">{title}</Box> : null}
-      <Box p={2} sx={{ overflow: "auto", height: "100%" }}>{children}</Box>
+      {isFullScreen ? (
+        <Box sx={{ flex: 1, overflow: "hidden", height: "100%" }}>{children}</Box>
+      ) : (
+        <Box p={2} sx={{ overflow: "auto", height: "100%" }}>{children}</Box>
+      )}
     </MuiDrawer>
   )
 }

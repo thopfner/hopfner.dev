@@ -65,6 +65,7 @@ export function CaseStudySplitSection({
   const density = ui?.density ?? "standard"
   const gridGap = ui?.gridGap ?? "standard"
   const labelStyle = ui?.labelStyle ?? "default"
+  const headingId = sectionId ? `${sectionId}-heading` : "case-study-title"
   const card = resolveCardPresentation(ui, { mode: "compact" })
   const bLabel = (beforeLabel ?? "").trim() || "Before"
   const aLabel = (afterLabel ?? "").trim() || "After"
@@ -72,7 +73,7 @@ export function CaseStudySplitSection({
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="case-study-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
@@ -81,7 +82,7 @@ export function CaseStudySplitSection({
       surface={ui?.surface}
       density={ui?.density}
     >
-      <div className={cn("grid grid-cols-1 lg:grid-cols-2", GRID_GAP_CLASSES[gridGap === "tight" ? "standard" : "wide"])}>
+      <div className={cn("grid grid-cols-1 lg:grid-cols-2", GRID_GAP_CLASSES[gridGap])}>
         {/* Left column: narrative + comparison */}
         <div className={DENSITY_SECTION_GAP[density]}>
           {hasEyebrow || hasTitle || hasSubtitle ? (
@@ -91,7 +92,7 @@ export function CaseStudySplitSection({
                   <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
                 ) : null}
                 {hasTitle ? (
-                  <SectionHeading id="case-study-title" title={title!} headingTreatment={ui?.headingTreatment} />
+                  <SectionHeading id={headingId} title={title!} headingTreatment={ui?.headingTreatment} />
                 ) : null}
                 {hasSubtitle ? (
                   <p className="max-w-lg text-sm text-muted-foreground">{subtitle}</p>
@@ -184,11 +185,7 @@ export function CaseStudySplitSection({
                       className="w-full rounded-md object-cover"
                     />
                   </div>
-                ) : (
-                  <div className="flex h-48 items-center justify-center bg-card/30 text-muted-foreground/30">
-                    <span className="text-sm italic">Media placeholder</span>
-                  </div>
-                )}
+                ) : null}
               </div>
             </FadeIn>
           ) : null}
@@ -206,8 +203,8 @@ export function CaseStudySplitSection({
                     {card.isInlineAccent ? (
                       <div aria-hidden className="mx-auto mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                     ) : null}
-                    <p className="text-metric text-xl font-semibold">{s.value}</p>
-                    <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-1")}>{s.label}</p>
+                    <p className="text-metric text-gradient text-2xl font-semibold">{s.value}</p>
+                    <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-1.5")}>{s.label}</p>
                   </div>
                 ))}
               </div>

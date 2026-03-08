@@ -92,6 +92,7 @@ export function WhatIDeliverSection({
   const isServiceFamily = ui?.componentFamily === "service"
   const dividerMode = ui?.dividerMode ?? "none"
   const labelStyle = ui?.labelStyle ?? "default"
+  const headingId = sectionId ? `${sectionId}-heading` : "services-title"
 
   // Legacy tone fallback — used only when ui?.componentFamily is not set
   const toneClasses: Record<CardTone, string> = {
@@ -138,7 +139,7 @@ export function WhatIDeliverSection({
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="services-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
@@ -150,11 +151,11 @@ export function WhatIDeliverSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className="text-eyebrow text-muted-foreground">
+              <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "text-muted-foreground")}>
                 {eyebrow}
               </p>
             ) : null}
-            <SectionHeading id="services-title" title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
               <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
             ) : null}

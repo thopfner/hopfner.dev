@@ -56,13 +56,14 @@ export function WorkflowsSection({
   const dividerClass = dividerMode !== "none" ? DIVIDER_CLASSES[dividerMode] : ""
   const card = resolveCardPresentation(ui, { mode: "compact" })
   const accordionCard = resolveCardPresentation(ui, { mode: "accordion" })
+  const headingId = sectionId ? `${sectionId}-heading` : "examples-title"
 
   const headerBlock = (
     <div className="space-y-1">
       {hasEyebrow ? (
         <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
       ) : null}
-      <SectionHeading id="examples-title" title={title} headingTreatment={ui?.headingTreatment} />
+      <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
       {hasSubtitle ? (
         <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
       ) : null}
@@ -73,7 +74,7 @@ export function WorkflowsSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="examples-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
@@ -114,7 +115,7 @@ export function WorkflowsSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="examples-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
@@ -155,7 +156,7 @@ export function WorkflowsSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="examples-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
@@ -196,7 +197,7 @@ export function WorkflowsSection({
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="examples-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}

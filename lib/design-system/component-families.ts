@@ -39,22 +39,30 @@ export const FAMILY_CLASSES: Record<CardFamily, string> = {
     "border-2 border-accent/35 bg-gradient-to-br from-accent/[0.10] to-accent/[0.03] rounded-2xl shadow-lg ring-1 ring-accent/[0.10]",
 }
 
-/** Chrome modifiers layer on top of a family — never used standalone. */
+/** Chrome modifiers layer on top of a family — never used standalone.
+ *
+ * Each chrome is designed for clear visual distinction:
+ * - flat: Stripped-back, borderless, no depth — "print" aesthetic (Linear-inspired)
+ * - outlined: Crisp border ring — structured, architectural (Stripe-inspired)
+ * - elevated: Strong shadow + highlight ring — floating, lifted (Material Design)
+ * - inset: Recessed, sunken — pressed/embedded feel (neumorphism-lite)
+ * - glow: Ambient accent glow at rest + enhanced on hover (premium/gaming UIs)
+ */
 export const CHROME_MODIFIERS: Record<CardChrome, string> = {
-  flat: "border-transparent shadow-none ring-0",
-  outlined: "ring-1 ring-border/30 shadow-none",
-  elevated: "shadow-lg shadow-black/25 ring-1 ring-white/[0.04]",
-  inset: "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] bg-card/[0.06]",
-  glow: "card-glow-hover shadow-lg",
+  flat: "border-transparent shadow-none ring-0 bg-card/[0.03]",
+  outlined: "ring-1 ring-border/50 shadow-none border-border/40",
+  elevated: "shadow-xl shadow-black/30 ring-1 ring-white/[0.06] border-transparent",
+  inset: "shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_2px_rgba(0,0,0,0.3)] bg-card/[0.04] ring-0 border-border/15",
+  glow: "card-chrome-glow shadow-lg",
 }
 
 /** Full chrome replacements for legacy mode (no family set). */
 export const CHROME_STANDALONE: Record<CardChrome, string> = {
-  flat: "border-transparent bg-card/20",
-  outlined: "border border-border/50 bg-card/20 ring-1 ring-border/20",
-  elevated: "border border-border/40 bg-card/30 shadow-lg shadow-black/25",
-  inset: "border border-border/30 bg-card/[0.06] shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)]",
-  glow: "border border-border/40 bg-card/20 card-glow-hover shadow-lg",
+  flat: "border-transparent bg-card/[0.06] rounded-xl",
+  outlined: "border border-border/40 bg-card/[0.08] ring-1 ring-border/30 rounded-xl",
+  elevated: "border-transparent bg-card/[0.12] shadow-xl shadow-black/30 ring-1 ring-white/[0.06] rounded-xl",
+  inset: "border border-border/15 bg-card/[0.04] shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_2px_rgba(0,0,0,0.3)] rounded-xl",
+  glow: "border border-border/30 bg-card/[0.08] card-chrome-glow shadow-lg rounded-xl",
 }
 
 /** Accent rule classes applied to cards. */

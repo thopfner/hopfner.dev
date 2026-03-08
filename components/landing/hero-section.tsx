@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { HeroEntrance, AnimatedCounter } from "@/components/landing/motion-primitives"
-import { HEADING_TREATMENT_CLASSES, LABEL_STYLE_CLASSES } from "@/lib/design-system/presentation"
+import { HEADING_TREATMENT_CLASSES, LABEL_STYLE_CLASSES, RHYTHM_CLASSES, SURFACE_CLASSES } from "@/lib/design-system/presentation"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
@@ -371,6 +371,7 @@ export function HeroSection({
       id={sectionId}
       className={cn(
         "relative scroll-mt-16 py-6",
+        ui?.surface ? SURFACE_CLASSES[ui.surface] : "",
         sectionClassName,
         fullBleed || (minHeight && minHeight !== "auto") ? "pt-0" : undefined
       )}

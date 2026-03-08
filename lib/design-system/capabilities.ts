@@ -23,8 +23,7 @@ const COMMON: SemanticControl[] = ["sectionRhythm", "sectionSurface"]
 
 export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
   hero_cta: {
-    supported: ["headingTreatment", "labelStyle"],
-    notes: { sectionRhythm: "Hero uses bespoke layout; rhythm/surface not applicable" },
+    supported: ["sectionSurface", "contentDensity", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
   },
   card_grid: {
     supported: [
@@ -75,7 +74,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
     supported: [],
   },
   social_proof_strip: {
-    supported: [...COMMON, "headingTreatment", "labelStyle"],
+    supported: [...COMMON, "contentDensity", "gridGap", "headingTreatment", "labelStyle"],
   },
   proof_cluster: {
     supported: [
@@ -84,6 +83,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "gridGap",
       "headingTreatment",
       "labelStyle",
+      "dividerMode",
       "cardFamily",
       "cardChrome",
       "accentRule",

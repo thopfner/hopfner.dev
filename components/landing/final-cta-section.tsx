@@ -49,17 +49,18 @@ export function FinalCtaSection({
     : "justify-start"
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const labelStyle = ui?.labelStyle ?? "default"
+  const headingId = sectionId ? `${sectionId}-heading` : "final-cta-title"
 
   if (layoutVariant === "compact") {
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="final-cta-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={ui?.rhythm ?? "compact"}
+        rhythm={ui?.rhythm}
         surface={ui?.surface}
         density={ui?.density}
       >
@@ -94,12 +95,12 @@ export function FinalCtaSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="final-cta-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={ui?.rhythm ?? "cta"}
+        rhythm={ui?.rhythm}
         surface={ui?.surface}
         density={ui?.density}
       >
@@ -115,7 +116,7 @@ export function FinalCtaSection({
                   {hasEyebrow ? (
                     <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
                   ) : null}
-                  <SectionHeading id="final-cta-title" title={headline} headingTreatment={ui?.headingTreatment} />
+                  <SectionHeading id={headingId} title={headline} headingTreatment={ui?.headingTreatment} />
                   {bodyHtml?.trim() ? (
                     <div
                       className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
@@ -147,12 +148,12 @@ export function FinalCtaSection({
     return (
       <SectionShell
         id={sectionId}
-        labelledBy="final-cta-title"
+        labelledBy={headingId}
         sectionClassName={sectionClassName}
         sectionStyle={sectionStyle}
         containerClassName={containerClassName}
         containerStyle={containerStyle}
-        rhythm={ui?.rhythm ?? "cta"}
+        rhythm={ui?.rhythm}
         surface={ui?.surface}
         density={ui?.density}
       >
@@ -199,12 +200,12 @@ export function FinalCtaSection({
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="final-cta-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
-      rhythm={ui?.rhythm ?? "cta"}
+      rhythm={ui?.rhythm}
       surface={ui?.surface}
       density={ui?.density}
     >
@@ -218,7 +219,7 @@ export function FinalCtaSection({
             {hasEyebrow ? (
               <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
             ) : null}
-            <SectionHeading id="final-cta-title" title={headline} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={headline} headingTreatment={ui?.headingTreatment} />
             {bodyHtml?.trim() ? (
               <div
                 className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}

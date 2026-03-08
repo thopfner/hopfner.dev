@@ -34,12 +34,13 @@ export function WhyThisApproachSection({
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const labelStyle = ui?.labelStyle ?? "default"
+  const headingId = sectionId ? `${sectionId}-heading` : "why-title"
   const { cardClass, isInlineAccent, spacing } = resolveCardPresentation(ui)
 
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="why-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
@@ -53,7 +54,7 @@ export function WhyThisApproachSection({
             {hasEyebrow ? (
               <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
             ) : null}
-            <SectionHeading id="why-title" title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
           </div>
         </FadeIn>
 

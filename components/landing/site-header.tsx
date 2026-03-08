@@ -123,14 +123,14 @@ export function SiteHeader({
       className={cn(
         "sticky top-0 z-50",
         topBackdropEnabled
-          ? "border-b-0 bg-transparent"
-          : "border-b border-border/60 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50"
+          ? "border-b border-border/10 bg-transparent"
+          : "border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60"
       )}
       style={
         topBackdropEnabled
           ? {
               backgroundColor: `rgba(0,0,0,${overlayOpacity})`,
-              backdropFilter: "blur(2px)",
+              backdropFilter: "blur(8px)",
             }
           : undefined
       }
@@ -210,7 +210,7 @@ export function SiteHeader({
         ) : null}
 
         <nav aria-label="Top navigation" className="min-w-0 flex-1">
-          <ul className="hidden flex-wrap items-center gap-1 text-xs text-muted-foreground sm:text-sm md:flex">
+          <ul className="hidden flex-wrap items-center gap-0.5 text-xs text-muted-foreground sm:text-sm md:flex">
             {links.map((item, idx) => {
               const isAnchorLink = item.href.startsWith("#")
               const isActive = isAnchorLink
@@ -223,16 +223,16 @@ export function SiteHeader({
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "truncate rounded-md px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "truncate rounded-md px-2.5 py-1 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       isActive
-                        ? "bg-primary font-semibold text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-foreground/10 font-medium text-foreground"
+                        : "text-muted-foreground/80 hover:text-foreground"
                     )}
                   >
                     {item.label}
                   </Link>
                   {idx < links.length - 1 ? (
-                    <span aria-hidden className="px-1 text-muted-foreground/70">
+                    <span aria-hidden className="px-0.5 text-muted-foreground/30">
                       ·
                     </span>
                   ) : null}

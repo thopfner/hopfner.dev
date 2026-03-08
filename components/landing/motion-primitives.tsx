@@ -1,6 +1,6 @@
 "use client"
 
-import { type ReactNode, useRef, useEffect, useState } from "react"
+import { type ReactNode, useRef, useEffect, useState, createContext, useContext } from "react"
 import {
   motion,
   useMotionValue,
@@ -11,6 +11,15 @@ import {
 } from "framer-motion"
 
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
+// ---------------------------------------------------------------------------
+// Preview context — when true, all animations are skipped and content renders
+// immediately. Used by the admin section preview to avoid IntersectionObserver
+// issues inside scaled/overflow containers.
+// ---------------------------------------------------------------------------
+const SkipAnimationContext = createContext(false)
+export const SkipAnimationProvider = SkipAnimationContext.Provider
+function useSkipAnimation() { return useContext(SkipAnimationContext) }
 
 // ---------------------------------------------------------------------------
 // FadeIn — fade up on scroll into view
@@ -26,7 +35,8 @@ export function FadeIn({
   className?: string
 }) {
   const reduce = useReducedMotion()
-  if (reduce) return <div className={className}>{children}</div>
+  const skip = useSkipAnimation()
+  if (reduce || skip) return <div className={className}>{children}</div>
 
   return (
     <motion.div
@@ -71,7 +81,8 @@ export function StaggerContainer({
   className?: string
 }) {
   const reduce = useReducedMotion()
-  if (reduce) return <div className={className}>{children}</div>
+  const skip = useSkipAnimation()
+  if (reduce || skip) return <div className={className}>{children}</div>
 
   return (
     <motion.div
@@ -94,7 +105,8 @@ export function StaggerItem({
   className?: string
 }) {
   const reduce = useReducedMotion()
-  if (reduce) return <div className={className}>{children}</div>
+  const skip = useSkipAnimation()
+  if (reduce || skip) return <div className={className}>{children}</div>
 
   return (
     <motion.div variants={staggerItemVariants} className={className}>
@@ -117,7 +129,8 @@ export function ScaleIn({
   className?: string
 }) {
   const reduce = useReducedMotion()
-  if (reduce) return <div className={className}>{children}</div>
+  const skip = useSkipAnimation()
+  if (reduce || skip) return <div className={className}>{children}</div>
 
   return (
     <motion.div
@@ -157,7 +170,8 @@ export function AnimatedCounter({
     // If target has decimals, show one decimal place
     return target % 1 !== 0 ? v.toFixed(1) : Math.round(v).toString()
   })
-  const [display, setDisplay] = useState(reduce ? formatTarget() : `${prefix}0${suffix}`)
+  const skip = useSkipAnimation()
+  const [display, setDisplay] = useState(reduce || skip ? formatTarget() : `${prefix}0${suffix}`)
 
   function formatTarget() {
     const val = target % 1 !== 0 ? target.toFixed(1) : Math.round(target).toString()
@@ -165,7 +179,7 @@ export function AnimatedCounter({
   }
 
   useEffect(() => {
-    if (reduce) {
+    if (reduce || skip) {
       setDisplay(formatTarget())
       return
     }
@@ -185,7 +199,7 @@ export function AnimatedCounter({
       unsub()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInView, reduce])
+  }, [isInView, reduce, skip])
 
   return (
     <span ref={ref} className={className}>
@@ -208,7 +222,8 @@ export function HeroEntrance({
   className?: string
 }) {
   const reduce = useReducedMotion()
-  if (reduce) return <div className={className}>{children}</div>
+  const skip = useSkipAnimation()
+  if (reduce || skip) return <div className={className}>{children}</div>
 
   return (
     <motion.div

@@ -95,7 +95,7 @@
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: oklch(0.55 0.15 264);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -114,6 +114,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --accent-glow: oklch(0.55 0.15 264);
 }
 
 @layer base {
@@ -136,9 +137,12 @@
 
 @layer utilities {
   .surface-panel {
-    @apply rounded-2xl border border-border/60;
-    background-color: var(--panel-bg, color-mix(in oklch, var(--card) 45%, transparent));
-    box-shadow: var(--panel-shadow, var(--shadow-sm)), var(--section-inner-shadow, none);
+    @apply rounded-2xl;
+    border: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent);
+    background-color: color-mix(in oklch, var(--foreground) 5%, var(--background));
+    box-shadow:
+      0 2px 8px -2px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 color-mix(in oklch, var(--foreground) 4%, transparent);
   }
 
   .interactive-lift {
@@ -149,7 +153,7 @@
     box-shadow: 0 8px 24px -4px color-mix(in oklch, var(--foreground) 12%, transparent), 0 0 0 1px color-mix(in oklch, var(--border) 15%, transparent);
   }
 
-  /* v13: Card glow chrome — premium hover glow effect */
+  /* v13: Card glow chrome — premium hover glow effect (legacy compat) */
   .card-glow-hover {
     position: relative;
     transition: transform 200ms ease-out, box-shadow 200ms ease-out;
@@ -171,6 +175,43 @@
   .card-glow-hover:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 32px -8px color-mix(in oklch, var(--foreground) 15%, transparent);
+  }
+
+  /* v17: Card chrome glow — ambient accent glow visible at rest, enhanced on hover.
+   * Distinct from elevated (shadow) and outlined (border) by using colored light emission.
+   * Inspired by premium SaaS dashboards (Vercel, Raycast, Arc Browser). */
+  .card-chrome-glow {
+    position: relative;
+    box-shadow:
+      0 0 12px -3px color-mix(in oklch, var(--accent-glow) 25%, transparent),
+      0 0 4px -1px color-mix(in oklch, var(--accent-glow) 15%, transparent);
+    transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+  }
+  .card-chrome-glow::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--accent-glow) 12%, transparent),
+      transparent 40%,
+      color-mix(in oklch, var(--accent-glow) 6%, transparent) 100%
+    );
+    opacity: 0.6;
+    transition: opacity 250ms ease-out;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .card-chrome-glow:hover::after {
+    opacity: 1;
+  }
+  .card-chrome-glow:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 20px -4px color-mix(in oklch, var(--accent-glow) 35%, transparent),
+      0 0 8px -2px color-mix(in oklch, var(--accent-glow) 20%, transparent),
+      0 12px 32px -8px color-mix(in oklch, var(--foreground) 12%, transparent);
   }
 
   /* v13: Gradient text effects */
@@ -208,35 +249,31 @@
   /* v13: Ambient surface effects */
   .surface-gradient-mesh {
     background:
-      radial-gradient(ellipse 80% 50% at 20% 50%, color-mix(in oklch, var(--foreground) 4%, transparent), transparent 70%),
-      radial-gradient(ellipse 60% 40% at 80% 30%, color-mix(in oklch, var(--foreground) 3%, transparent), transparent 60%),
-      radial-gradient(ellipse 90% 60% at 50% 100%, color-mix(in oklch, var(--foreground) 3.5%, transparent), transparent 50%);
+      radial-gradient(ellipse 80% 50% at 20% 50%, color-mix(in oklch, var(--foreground) 10%, transparent), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 30%, color-mix(in oklch, var(--accent-glow) 8%, transparent), transparent 60%),
+      radial-gradient(ellipse 90% 60% at 50% 100%, color-mix(in oklch, var(--foreground) 9%, transparent), transparent 50%);
     animation: mesh-drift 20s ease-in-out infinite alternate;
   }
 
   .surface-accent-glow {
     position: relative;
-    border-top: 1px solid color-mix(in oklch, var(--accent) 15%, transparent);
-    border-bottom: 1px solid color-mix(in oklch, var(--accent) 15%, transparent);
   }
   .surface-accent-glow::before {
     content: '';
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(800px circle at 50% 0%, color-mix(in oklch, var(--accent) 10%, transparent), transparent 70%),
-      radial-gradient(600px circle at 50% 100%, color-mix(in oklch, var(--accent) 6%, transparent), transparent 60%);
+      radial-gradient(800px circle at 50% 0%, color-mix(in oklch, var(--accent-glow) 18%, transparent), transparent 70%),
+      radial-gradient(600px circle at 50% 100%, color-mix(in oklch, var(--accent-glow) 12%, transparent), transparent 60%);
     pointer-events: none;
   }
 
   .surface-dark-elevated {
-    background-color: color-mix(in oklch, var(--card) 8%, transparent);
-    border-top: 1px solid color-mix(in oklch, var(--border) 15%, transparent);
-    border-bottom: 1px solid color-mix(in oklch, var(--border) 15%, transparent);
+    background-color: color-mix(in oklch, var(--foreground) 7%, var(--background));
   }
 
   .surface-dot-grid {
-    background-image: radial-gradient(circle, color-mix(in oklch, var(--foreground) 6%, transparent) 1px, transparent 1px);
+    background-image: radial-gradient(circle, color-mix(in oklch, var(--foreground) 14%, transparent) 1px, transparent 1px);
     background-size: 24px 24px;
   }
 
@@ -453,7 +490,9 @@
   .editor-drawer-body {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 8px;
+    padding: 0 !important;
+    height: 100%;
+    overflow: hidden;
   }
 
   .editor-drawer-content .mantine-Input-input,

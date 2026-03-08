@@ -49,6 +49,8 @@ import { isControlSupported, type SemanticControl } from "@/lib/design-system/ca
 import { SECTION_PRESETS, type SectionPreset } from "@/lib/design-system/presets"
 import { loadSectionPresetsFromClient, loadCapabilitiesFromClient } from "@/lib/design-system/loaders"
 import type { SectionCapability } from "@/lib/design-system/capabilities"
+import { FormattingControls, type FormattingState } from "@/components/admin/formatting-controls"
+import { SectionPreview } from "@/components/admin/section-preview"
 import { uploadMedia } from "@/lib/media/upload"
 import type { MediaItem } from "@/lib/media/types"
 import { ImageFieldPicker } from "@/components/image-field-picker"
@@ -120,35 +122,7 @@ type SectionVersionRow = {
   published_at: string | null
 }
 
-type FormattingState = {
-  containerClass: string
-  sectionClass: string
-  paddingY: "" | "py-4" | "py-6" | "py-8" | "py-10" | "py-12"
-  outerSpacing: "" | "my-2" | "my-4" | "my-6" | "my-8" | "my-10" | "my-12"
-  maxWidth: "" | "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl"
-  textAlign: "" | "left" | "center"
-  widthMode: "content" | "full"
-  heroMinHeight: "auto" | "70svh" | "100svh"
-  shadowMode: "inherit" | "on" | "off"
-  innerShadowMode: "inherit" | "on" | "off"
-  innerShadowStrength: number
-  sectionRhythm?: "" | "hero" | "statement" | "compact" | "standard" | "proof" | "cta" | "footer"
-  contentDensity?: "" | "tight" | "standard" | "airy"
-  gridGap?: "" | "tight" | "standard" | "wide"
-  sectionSurface?: "" | "none" | "panel" | "soft_band" | "contrast_band" | "spotlight_stage" | "grid_stage"
-  cardFamily?: "" | "quiet" | "service" | "metric" | "process" | "proof" | "logo_tile" | "cta"
-  cardChrome?: "" | "flat" | "outlined" | "elevated" | "inset"
-  accentRule?: "" | "none" | "top" | "left" | "inline"
-  dividerMode?: "" | "none" | "subtle" | "strong"
-  headingTreatment?: "" | "default" | "display" | "mono"
-  labelStyle?: "" | "default" | "mono" | "pill" | "micro"
-  sectionPresetKey?: string
-  mobile?: {
-    containerClass: string
-    sectionClass: string
-    paddingY: "" | "py-4" | "py-6" | "py-8" | "py-10" | "py-12"
-  }
-}
+// FormattingState imported from @/components/admin/formatting-controls
 
 const DEFAULT_FORMATTING: FormattingState = {
   containerClass: "",
@@ -185,6 +159,126 @@ const DEFAULT_CARD_DISPLAY: CardDisplayState = {
 }
 
 const DEFAULT_CARD_IMAGE_WIDTH = 240
+
+// ---------------------------------------------------------------------------
+// Static Select/SegmentedControl data — hoisted out of render to avoid
+// creating new array references on every keystroke.
+// ---------------------------------------------------------------------------
+
+const HERO_LAYOUT_OPTIONS = [
+  { value: "centered", label: "Centered" },
+  { value: "split", label: "Split (text left, proof right)" },
+  { value: "split_reversed", label: "Split reversed (proof left, text right)" },
+] as const
+
+const HERO_PROOF_PANEL_OPTIONS = [
+  { value: "", label: "None" },
+  { value: "stats", label: "Stats grid" },
+  { value: "mockup", label: "Mockup / screenshot" },
+  { value: "image", label: "Image" },
+] as const
+
+const HERO_MOCKUP_VARIANT_OPTIONS = [
+  { value: "dashboard", label: "Dashboard" },
+  { value: "workflow", label: "Workflow" },
+  { value: "terminal", label: "Terminal" },
+] as const
+
+const CARD_GRID_VARIANT_OPTIONS = [
+  { value: "default", label: "Default" },
+  { value: "value_pillars", label: "Value pillars" },
+  { value: "services", label: "Services" },
+  { value: "problem_cards", label: "Problem cards" },
+  { value: "proof_cards", label: "Proof cards" },
+  { value: "logo_tiles", label: "Logo tiles" },
+] as const
+
+const CARD_GRID_COLUMNS_OPTIONS = [
+  { value: "", label: "Auto" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+  { value: "4", label: "4" },
+] as const
+
+const CARD_GRID_TONE_OPTIONS = [
+  { value: "default", label: "Default" },
+  { value: "elevated", label: "Elevated" },
+  { value: "muted", label: "Muted" },
+  { value: "contrast", label: "Contrast" },
+] as const
+
+const BLOCK_LIST_MODE_OPTIONS = [
+  { label: "Block", value: "block" },
+  { label: "List", value: "list" },
+] as const
+
+const STEPS_LIST_LAYOUT_OPTIONS = [
+  { value: "grid", label: "Grid (default)" },
+  { value: "timeline", label: "Timeline" },
+  { value: "connected_flow", label: "Connected flow" },
+  { value: "workflow_visual", label: "Workflow visual" },
+] as const
+
+const TITLE_BODY_LIST_LAYOUT_OPTIONS = [
+  { value: "accordion", label: "Accordion (default)" },
+  { value: "stacked", label: "Stacked list" },
+  { value: "two_column", label: "Two-column grid" },
+  { value: "cards", label: "Cards" },
+] as const
+
+const LABEL_VALUE_LIST_LAYOUT_OPTIONS = [
+  { value: "default", label: "Default (label/value tiles)" },
+  { value: "metrics_grid", label: "Metrics grid" },
+  { value: "trust_strip", label: "Trust strip (compact horizontal)" },
+  { value: "tool_badges", label: "Tool badges" },
+  { value: "logo_row", label: "Logo row" },
+] as const
+
+const CTA_BLOCK_LAYOUT_OPTIONS = [
+  { value: "centered", label: "Centered (default)" },
+  { value: "split", label: "Split (text left, CTAs right)" },
+  { value: "compact", label: "Compact inline" },
+  { value: "high_contrast", label: "High contrast" },
+] as const
+
+const FOOTER_LINKS_MODE_OPTIONS = [
+  { label: "Flat links", value: "flat" },
+  { label: "Grouped links", value: "grouped" },
+] as const
+
+const SOCIAL_PROOF_LAYOUT_OPTIONS = [
+  { value: "inline", label: "Inline (default)" },
+  { value: "marquee", label: "Marquee / ticker" },
+  { value: "grid", label: "Grid" },
+] as const
+
+const COMPOSER_LIST_STYLE_OPTIONS = [
+  { label: "Steps", value: "steps" },
+  { label: "Basic list", value: "basic" },
+] as const
+
+// Drawer chrome — stable references to prevent Mantine Drawer from re-diffing.
+const DRAWER_STYLES = {
+  content: {
+    top: `${ADMIN_SHELL_HEADER_HEIGHT_PX}px`,
+    height: `calc(100dvh - ${ADMIN_SHELL_HEADER_HEIGHT_PX}px)`,
+  },
+  header: {
+    position: "sticky" as const,
+    top: 0,
+    zIndex: 2,
+    backgroundColor: "var(--mantine-color-body)",
+  },
+  body: {
+    height: "100%",
+    padding: 0,
+    overflow: "hidden" as const,
+  },
+}
+const DRAWER_CLASS_NAMES = {
+  content: "editor-drawer-content",
+  body: "editor-drawer-body",
+}
 
 function asString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback
@@ -1286,19 +1380,19 @@ export function SectionEditorDrawer({
     [dbCapabilities]
   )
 
-  const normalizedType = section ? normalizeSectionType(section.section_type) : null
-  const defaults = normalizedType && isBuiltinSectionType(normalizedType) ? typeDefaults?.[normalizedType] : undefined
+  const normalizedType = useMemo(() => section ? normalizeSectionType(section.section_type) : null, [section])
+  const defaults = useMemo(() => normalizedType && isBuiltinSectionType(normalizedType) ? typeDefaults?.[normalizedType] : undefined, [normalizedType, typeDefaults])
   const isCustomComposedType = Boolean(normalizedType && !isBuiltinSectionType(normalizedType))
   const flattenedCustomBlocks = useMemo(
     () => flattenComposerSchemaBlocks(customComposerSchema),
     [customComposerSchema]
   )
 
-  const published = versions.find((v) => v.status === "published") ?? null
-  const drafts = versions.filter((v) => v.status === "draft").sort((a, b) => b.version - a.version)
+  const published = useMemo(() => versions.find((v) => v.status === "published") ?? null, [versions])
+  const drafts = useMemo(() => versions.filter((v) => v.status === "draft").sort((a, b) => b.version - a.version), [versions])
   const activeDraft = drafts[0] ?? null
   const editorBaseVersion = activeDraft ?? published
-  const formPayload: VersionPayload = {
+  const formPayload: VersionPayload = useMemo(() => ({
     title: textOrNull(title),
     subtitle: textOrNull(subtitle),
     cta_primary_label: textOrNull(ctaPrimaryLabel),
@@ -1308,9 +1402,11 @@ export function SectionEditorDrawer({
     background_media_url: textOrNull(backgroundMediaUrl),
     formatting: formattingToJsonb(formatting),
     content,
-  }
+  }), [title, subtitle, ctaPrimaryLabel, ctaPrimaryHref, ctaSecondaryLabel, ctaSecondaryHref, backgroundMediaUrl, formatting, content])
 
-  const isDirty = baseSnapshot ? stableStringify(formPayload) !== stableStringify(baseSnapshot) : false
+  const stringifiedPayload = useMemo(() => stableStringify(formPayload), [formPayload])
+  const stringifiedSnapshot = useMemo(() => baseSnapshot ? stableStringify(baseSnapshot) : null, [baseSnapshot])
+  const isDirty = stringifiedSnapshot !== null ? stringifiedPayload !== stringifiedSnapshot : false
 
   const ensureAnchorsLoaded = useCallback(
     async (pageId: string) => {
@@ -1864,26 +1960,17 @@ export function SectionEditorDrawer({
           </Group>
         }
         position="right"
-        size="xl"
+        size="100%"
         zIndex={1500}
-        styles={{
-          content: {
-            top: `${ADMIN_SHELL_HEADER_HEIGHT_PX}px`,
-            height: `calc(100dvh - ${ADMIN_SHELL_HEADER_HEIGHT_PX}px)`,
-          },
-          header: {
-            position: "sticky",
-            top: 0,
-            zIndex: 2,
-            backgroundColor: "var(--mantine-color-body)",
-          },
-        }}
-        classNames={{
-          content: "editor-drawer-content",
-          body: "editor-drawer-body",
-        }}
+        styles={DRAWER_STYLES}
+        classNames={DRAWER_CLASS_NAMES}
       >
-        <Stack gap="md">
+        {/* Skip rendering the entire body when drawer is closed — saves ~5000 lines of JSX evaluation */}
+        {opened ? (
+        <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
+          {/* Left column — settings (scrollable) */}
+          <div style={{ flex: "0 0 480px", maxWidth: 540, overflowY: "auto", padding: "var(--mantine-spacing-md)", overscrollBehavior: "contain" }}>
+          <Stack gap="md">
           {error ? (
             <Paper withBorder p="sm" radius="md">
               <Text c="red" size="sm">
@@ -2061,406 +2148,13 @@ export function SectionEditorDrawer({
             </Stack>
           </Paper>
 
-          <Paper withBorder p="md" radius="md">
-            <Stack gap="sm">
-              <Text fw={600} size="sm">
-                Formatting
-              </Text>
-              <Text fw={600} size="sm">Section preset</Text>
-              {(() => {
-                const presetOptions = Object.values(activePresets)
-                  .filter((p) => !normalizedType || p.sectionType === normalizedType || normalizedType === "composed")
-                  .map((p) => ({ value: p.key, label: p.name }))
-                if (presetOptions.length === 0) return <Text size="xs" c="dimmed">No presets for this section type.</Text>
-                return (
-                  <Select
-                    label="Apply preset"
-                    description="Prefills presentation and component tokens"
-                    comboboxProps={{ withinPortal: false }}
-                    value={formatting.sectionPresetKey || ""}
-                    onChange={(val: string) => {
-                      const preset = val ? activePresets[val] : undefined
-                      if (preset) {
-                        setFormatting((f) => ({
-                          ...f,
-                          sectionPresetKey: val,
-                          sectionRhythm: (preset.presentation.rhythm || f.sectionRhythm || "") as FormattingState["sectionRhythm"],
-                          sectionSurface: (preset.presentation.surface || f.sectionSurface || "") as FormattingState["sectionSurface"],
-                          contentDensity: (preset.presentation.density || f.contentDensity || "") as FormattingState["contentDensity"],
-                          gridGap: (preset.presentation.gridGap || f.gridGap || "") as FormattingState["gridGap"],
-                          headingTreatment: (preset.presentation.headingTreatment || f.headingTreatment || "") as FormattingState["headingTreatment"],
-                          labelStyle: (preset.presentation.labelStyle || f.labelStyle || "") as FormattingState["labelStyle"],
-                          dividerMode: (preset.presentation.dividerMode || f.dividerMode || "") as FormattingState["dividerMode"],
-                          cardFamily: (preset.component?.family || f.cardFamily || "") as FormattingState["cardFamily"],
-                          cardChrome: (preset.component?.chrome || f.cardChrome || "") as FormattingState["cardChrome"],
-                          accentRule: (preset.component?.accentRule || f.accentRule || "") as FormattingState["accentRule"],
-                        }))
-                      } else {
-                        setFormatting((f) => ({ ...f, sectionPresetKey: "" }))
-                      }
-                    }}
-                    data={[{ value: "", label: "None (manual)" }, ...presetOptions]}
-                    clearable
-                  />
-                )
-              })()}
-
-              <Divider style={{ marginTop: 4, marginBottom: 4 }} />
-
-              <Text fw={600} size="sm">Presentation</Text>
-              {(() => {
-                const has = (c: SemanticControl) => isControlSupportedActive(normalizedType ?? "", c)
-                const hasPresentationControls = has("sectionRhythm") || has("sectionSurface") || has("contentDensity") || has("gridGap") || has("headingTreatment") || has("labelStyle") || has("dividerMode")
-                const hasComponentControls = has("cardFamily") || has("cardChrome") || has("accentRule")
-                const anySupported = hasPresentationControls || hasComponentControls
-                if (!anySupported) return <Text size="xs" c="dimmed">No semantic controls for this section type.</Text>
-                return (
-                  <Stack gap="sm">
-                  {hasPresentationControls ? (
-                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-                    {has("sectionRhythm") ? (
-                      <Select
-                        label="Section rhythm"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.sectionRhythm || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, sectionRhythm: (val || "") as FormattingState["sectionRhythm"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "hero", label: "Hero" },
-                          { value: "statement", label: "Statement" },
-                          { value: "compact", label: "Compact" },
-                          { value: "standard", label: "Standard" },
-                          { value: "proof", label: "Proof" },
-                          { value: "cta", label: "CTA" },
-                          { value: "footer", label: "Footer" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("sectionSurface") ? (
-                      <Select
-                        label="Section surface"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.sectionSurface || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, sectionSurface: (val || "") as FormattingState["sectionSurface"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "none", label: "None" },
-                          { value: "panel", label: "Panel" },
-                          { value: "soft_band", label: "Soft band" },
-                          { value: "contrast_band", label: "Contrast band" },
-                          { value: "spotlight_stage", label: "Spotlight stage" },
-                          { value: "grid_stage", label: "Grid stage" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("contentDensity") ? (
-                      <Select
-                        label="Content density"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.contentDensity || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, contentDensity: (val || "") as FormattingState["contentDensity"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "tight", label: "Tight" },
-                          { value: "standard", label: "Standard" },
-                          { value: "airy", label: "Airy" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("gridGap") ? (
-                      <Select
-                        label="Grid gap"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.gridGap || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, gridGap: (val || "") as FormattingState["gridGap"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "tight", label: "Tight" },
-                          { value: "standard", label: "Standard" },
-                          { value: "wide", label: "Wide" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("headingTreatment") ? (
-                      <Select
-                        label="Heading treatment"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.headingTreatment || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, headingTreatment: (val || "") as FormattingState["headingTreatment"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "default", label: "Default (explicit)" },
-                          { value: "display", label: "Display" },
-                          { value: "mono", label: "Mono" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("labelStyle") ? (
-                      <Select
-                        label="Label style"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.labelStyle || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, labelStyle: (val || "") as FormattingState["labelStyle"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "default", label: "Default (explicit)" },
-                          { value: "mono", label: "Mono" },
-                          { value: "pill", label: "Pill" },
-                          { value: "micro", label: "Micro" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("dividerMode") ? (
-                      <Select
-                        label="Divider mode"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.dividerMode || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, dividerMode: (val || "") as FormattingState["dividerMode"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "none", label: "None" },
-                          { value: "subtle", label: "Subtle" },
-                          { value: "strong", label: "Strong" },
-                        ]}
-                      />
-                    ) : null}
-                  </SimpleGrid>
-                  ) : null}
-                  {hasComponentControls ? (
-                  <>
-                  <Text fw={500} size="xs" mt="sm">Component family</Text>
-                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-                    {has("cardFamily") ? (
-                      <Select
-                        label="Card family"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.cardFamily || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, cardFamily: (val || "") as FormattingState["cardFamily"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "quiet", label: "Quiet" },
-                          { value: "service", label: "Service" },
-                          { value: "metric", label: "Metric" },
-                          { value: "process", label: "Process" },
-                          { value: "proof", label: "Proof" },
-                          { value: "logo_tile", label: "Logo tile" },
-                          { value: "cta", label: "CTA" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("cardChrome") ? (
-                      <Select
-                        label="Card chrome"
-                        description="Modifies the card family base style"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.cardChrome || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, cardChrome: (val || "") as FormattingState["cardChrome"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "flat", label: "Flat" },
-                          { value: "outlined", label: "Outlined" },
-                          { value: "elevated", label: "Elevated" },
-                          { value: "inset", label: "Inset" },
-                        ]}
-                      />
-                    ) : null}
-                    {has("accentRule") ? (
-                      <Select
-                        label="Accent rule"
-                        comboboxProps={{ withinPortal: false }}
-                        value={formatting.accentRule || ""}
-                        onChange={(val: string) =>
-                          setFormatting((f) => ({ ...f, accentRule: (val || "") as FormattingState["accentRule"] }))
-                        }
-                        data={[
-                          { value: "", label: "Default" },
-                          { value: "none", label: "None" },
-                          { value: "top", label: "Top" },
-                          { value: "left", label: "Left" },
-                          { value: "inline", label: "Inline" },
-                        ]}
-                      />
-                    ) : null}
-                  </SimpleGrid>
-                  </>
-                  ) : null}
-                  </Stack>
-                )
-              })()}
-
-              <Divider style={{ marginTop: 4, marginBottom: 4 }} />
-
-              <Text fw={600} size="sm">Low-level overrides</Text>
-              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-                <Select
-                  label="Content spacing (inner)"
-                  comboboxProps={{ withinPortal: false }}
-                  data={["", "py-4", "py-6", "py-8", "py-10", "py-12"]}
-                  value={formatting.paddingY}
-                  onChange={(v: string) =>
-                    setFormatting((s) => ({
-                      ...s,
-                      paddingY: ((v ?? "") as FormattingState["paddingY"]) || "",
-                    }))
-                  }
-                />
-                <Select
-                  label="Max width"
-                  comboboxProps={{ withinPortal: false }}
-                  data={["", "max-w-3xl", "max-w-4xl", "max-w-5xl", "max-w-6xl"]}
-                  value={formatting.maxWidth}
-                  onChange={(v: string) =>
-                    setFormatting((s) => ({
-                      ...s,
-                      maxWidth: ((v ?? "") as FormattingState["maxWidth"]) || "",
-                    }))
-                  }
-                />
-                <Select
-                  label="Text align"
-                  comboboxProps={{ withinPortal: false }}
-                  data={[
-                    { value: "", label: "(default)" },
-                    { value: "left", label: "left" },
-                    { value: "center", label: "center" },
-                  ]}
-                  value={formatting.textAlign}
-                  onChange={(v: string) =>
-                    setFormatting((s) => ({
-                      ...s,
-                      textAlign: ((v ?? "") as FormattingState["textAlign"]) || "",
-                    }))
-                  }
-                />
-                {type === "hero_cta" ? (
-                  <>
-                    <Select
-                      label="Hero width mode"
-                      comboboxProps={{ withinPortal: false }}
-                      data={[
-                        { value: "content", label: "Contained" },
-                        { value: "full", label: "Full-bleed" },
-                      ]}
-                      value={formatting.widthMode}
-                      onChange={(v: string) =>
-                        setFormatting((s) => ({
-                          ...s,
-                          widthMode: v === "full" ? "full" : "content",
-                        }))
-                      }
-                    />
-                    <Select
-                      label="Hero min height"
-                      comboboxProps={{ withinPortal: false }}
-                      data={[
-                        { value: "auto", label: "Auto" },
-                        { value: "70svh", label: "70% viewport" },
-                        { value: "100svh", label: "100% viewport" },
-                      ]}
-                      value={formatting.heroMinHeight}
-                      onChange={(v: string) =>
-                        setFormatting((s) => ({
-                          ...s,
-                          heroMinHeight: v === "70svh" || v === "100svh" ? v : "auto",
-                        }))
-                      }
-                    />
-                  </>
-                ) : null}
-                <Select
-                  label="Section shadow"
-                  comboboxProps={{ withinPortal: false }}
-                  data={[
-                    { value: "inherit", label: "Inherit site setting" },
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                  value={formatting.shadowMode}
-                  onChange={(v: string) =>
-                    setFormatting((s) => ({
-                      ...s,
-                      shadowMode:
-                        v === "on" || v === "off" ? v : "inherit",
-                    }))
-                  }
-                />
-                <Select
-                  label="Inner bevel/glow"
-                  comboboxProps={{ withinPortal: false }}
-                  data={[
-                    { value: "inherit", label: "Inherit site setting" },
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                  value={formatting.innerShadowMode}
-                  onChange={(v: string) =>
-                    setFormatting((s) => ({
-                      ...s,
-                      innerShadowMode: v === "on" || v === "off" ? v : "inherit",
-                    }))
-                  }
-                />
-                <Select
-                  label="Section spacing (outer)"
-                  comboboxProps={{ withinPortal: false }}
-                  data={[
-                    { value: "", label: "(default)" },
-                    { value: "my-2", label: "my-2" },
-                    { value: "my-4", label: "my-4" },
-                    { value: "my-6", label: "my-6" },
-                    { value: "my-8", label: "my-8" },
-                    { value: "my-10", label: "my-10" },
-                    { value: "my-12", label: "my-12" },
-                  ]}
-                  value={formatting.outerSpacing}
-                  onChange={(v: string) =>
-                    setFormatting((s) => ({
-                      ...s,
-                      outerSpacing: ((v ?? "") as FormattingState["outerSpacing"]) || "",
-                    }))
-                  }
-                />
-              </SimpleGrid>
-
-              {formatting.innerShadowMode === "on" ? (
-                <Stack gap="xs">
-                  <Text size="sm" fw={500}>
-                    Inner bevel/glow scale ({formatting.innerShadowStrength.toFixed(2)}x)
-                  </Text>
-                  <Slider
-                    label={(v) => `${v.toFixed(2)}x`}
-                    min={0}
-                    max={1.8}
-                    step={0.05}
-                    value={formatting.innerShadowStrength}
-                    onChange={(v: number) =>
-                      setFormatting((s) => ({
-                        ...s,
-                        innerShadowStrength: Math.min(1.8, Math.max(0, v)),
-                      }))
-                    }
-                  />
-                </Stack>
-              ) : null}            </Stack>
-          </Paper>
+          <FormattingControls
+            formatting={formatting}
+            onFormattingChange={setFormatting}
+            isControlSupported={isControlSupportedActive}
+            activePresets={activePresets}
+            sectionType={normalizedType}
+          />
 
           <Paper withBorder p="md" radius="md">
             <Stack gap="sm">
@@ -2473,11 +2167,7 @@ export function SectionEditorDrawer({
                   <Select
                     label="Hero layout"
                     comboboxProps={{ withinPortal: false }}
-                    data={[
-                      { value: "centered", label: "Centered" },
-                      { value: "split", label: "Split (text left, proof right)" },
-                      { value: "split_reversed", label: "Split reversed (proof left, text right)" },
-                    ]}
+                    data={HERO_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
                     value={heroLayoutVariant}
                     onChange={(v: string) =>
                       setContent((c) => ({ ...c, layoutVariant: v || "centered" }))
@@ -2611,12 +2301,7 @@ export function SectionEditorDrawer({
                       <Select
                         label="Proof panel type"
                         comboboxProps={{ withinPortal: false }}
-                        data={[
-                          { value: "", label: "None" },
-                          { value: "stats", label: "Stats grid" },
-                          { value: "mockup", label: "Mockup / screenshot" },
-                          { value: "image", label: "Image" },
-                        ]}
+                        data={HERO_PROOF_PANEL_OPTIONS as unknown as { value: string; label: string }[]}
                         value={asString(heroProofPanel.type)}
                         onChange={(v: string) =>
                           setContent((c) => ({
@@ -2703,11 +2388,7 @@ export function SectionEditorDrawer({
                             <Select
                               label="Mockup variant"
                               comboboxProps={{ withinPortal: false }}
-                              data={[
-                                { value: "dashboard", label: "Dashboard" },
-                                { value: "workflow", label: "Workflow" },
-                                { value: "terminal", label: "Terminal" },
-                              ]}
+                              data={HERO_MOCKUP_VARIANT_OPTIONS as unknown as { value: string; label: string }[]}
                               value={asString(heroProofPanel.mockupVariant, "dashboard")}
                               onChange={(v: string) =>
                                 setContent((c) => ({
@@ -2741,14 +2422,7 @@ export function SectionEditorDrawer({
                   <Select
                     label="Section variant"
                     comboboxProps={{ withinPortal: false }}
-                    data={[
-                      { value: "default", label: "Default" },
-                      { value: "value_pillars", label: "Value pillars" },
-                      { value: "services", label: "Services" },
-                      { value: "problem_cards", label: "Problem cards" },
-                      { value: "proof_cards", label: "Proof cards" },
-                      { value: "logo_tiles", label: "Logo tiles" },
-                    ]}
+                    data={CARD_GRID_VARIANT_OPTIONS as unknown as { value: string; label: string }[]}
                     value={asString(content.sectionVariant, "default")}
                     onChange={(v: string) => setContent((c) => ({ ...c, sectionVariant: v || "default" }))}
                   />
@@ -2756,24 +2430,14 @@ export function SectionEditorDrawer({
                     <Select
                       label="Columns"
                       comboboxProps={{ withinPortal: false }}
-                      data={[
-                        { value: "", label: "Auto" },
-                        { value: "2", label: "2" },
-                        { value: "3", label: "3" },
-                        { value: "4", label: "4" },
-                      ]}
+                      data={CARD_GRID_COLUMNS_OPTIONS as unknown as { value: string; label: string }[]}
                       value={String(content.columns ?? "")}
                       onChange={(v: string) => setContent((c) => ({ ...c, columns: v ? Number(v) : undefined }))}
                     />
                     <Select
                       label="Card tone"
                       comboboxProps={{ withinPortal: false }}
-                      data={[
-                        { value: "default", label: "Default" },
-                        { value: "elevated", label: "Elevated" },
-                        { value: "muted", label: "Muted" },
-                        { value: "contrast", label: "Contrast" },
-                      ]}
+                      data={CARD_GRID_TONE_OPTIONS as unknown as { value: string; label: string }[]}
                       value={asString(content.cardTone, "default")}
                       onChange={(v: string) => setContent((c) => ({ ...c, cardTone: v || "default" }))}
                     />
@@ -2969,10 +2633,7 @@ export function SectionEditorDrawer({
                                   <SegmentedControl
                                     size="xs"
                                     value={cardDisplay.youGetMode}
-                                    data={[
-                                      { label: "Block", value: "block" },
-                                      { label: "List", value: "list" },
-                                    ]}
+                                    data={BLOCK_LIST_MODE_OPTIONS as unknown as { label: string; value: string }[]}
                                     onChange={(nextMode) =>
                                       setCardDisplayForCard(idx, {
                                         youGetMode: nextMode === "list" ? "list" : "block",
@@ -3001,10 +2662,7 @@ export function SectionEditorDrawer({
                                   <SegmentedControl
                                     size="xs"
                                     value={cardDisplay.bestForMode}
-                                    data={[
-                                      { label: "Block", value: "block" },
-                                      { label: "List", value: "list" },
-                                    ]}
+                                    data={BLOCK_LIST_MODE_OPTIONS as unknown as { label: string; value: string }[]}
                                     onChange={(nextMode) =>
                                       setCardDisplayForCard(idx, {
                                         bestForMode: nextMode === "list" ? "list" : "block",
@@ -3086,12 +2744,7 @@ export function SectionEditorDrawer({
                   <Select
                     label="Layout variant"
                     comboboxProps={{ withinPortal: false }}
-                    data={[
-                      { value: "grid", label: "Grid (default)" },
-                      { value: "timeline", label: "Timeline" },
-                      { value: "connected_flow", label: "Connected flow" },
-                      { value: "workflow_visual", label: "Workflow visual" },
-                    ]}
+                    data={STEPS_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
                     value={asString(content.layoutVariant, "grid")}
                     onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "grid" }))}
                   />
@@ -3196,12 +2849,7 @@ export function SectionEditorDrawer({
                   <Select
                     label="Layout variant"
                     comboboxProps={{ withinPortal: false }}
-                    data={[
-                      { value: "accordion", label: "Accordion (default)" },
-                      { value: "stacked", label: "Stacked list" },
-                      { value: "two_column", label: "Two-column grid" },
-                      { value: "cards", label: "Cards" },
-                    ]}
+                    data={TITLE_BODY_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
                     value={asString(content.layoutVariant, "accordion")}
                     onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "accordion" }))}
                   />
@@ -3293,13 +2941,7 @@ export function SectionEditorDrawer({
                   <Select
                     label="Layout variant"
                     comboboxProps={{ withinPortal: false }}
-                    data={[
-                      { value: "default", label: "Default (label/value tiles)" },
-                      { value: "metrics_grid", label: "Metrics grid" },
-                      { value: "trust_strip", label: "Trust strip (compact horizontal)" },
-                      { value: "tool_badges", label: "Tool badges" },
-                      { value: "logo_row", label: "Logo row" },
-                    ]}
+                    data={LABEL_VALUE_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
                     value={asString(content.layoutVariant, "default")}
                     onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "default" }))}
                   />
@@ -3480,12 +3122,7 @@ export function SectionEditorDrawer({
                   <Select
                     label="Layout variant"
                     comboboxProps={{ withinPortal: false }}
-                    data={[
-                      { value: "centered", label: "Centered (default)" },
-                      { value: "split", label: "Split (text left, CTAs right)" },
-                      { value: "compact", label: "Compact inline" },
-                      { value: "high_contrast", label: "High contrast" },
-                    ]}
+                    data={CTA_BLOCK_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
                     value={asString(content.layoutVariant, "centered")}
                     onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "centered" }))}
                   />
@@ -3596,10 +3233,7 @@ export function SectionEditorDrawer({
                             <SegmentedControl
                               size="xs"
                               value={linksMode}
-                              data={[
-                                { label: "Flat links", value: "flat" },
-                                { label: "Grouped links", value: "grouped" },
-                              ]}
+                              data={FOOTER_LINKS_MODE_OPTIONS as unknown as { label: string; value: string }[]}
                               onChange={(mode) => {
                                 const next = footerCards.slice()
                                 next[idx] = { ...r, linksMode: mode === "grouped" ? "grouped" : "flat" }
@@ -4147,11 +3781,7 @@ export function SectionEditorDrawer({
                   <Select
                     label="Layout variant"
                     comboboxProps={{ withinPortal: false }}
-                    data={[
-                      { value: "inline", label: "Inline (default)" },
-                      { value: "marquee", label: "Marquee / ticker" },
-                      { value: "grid", label: "Grid" },
-                    ]}
+                    data={SOCIAL_PROOF_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
                     value={asString(content.layoutVariant, "inline")}
                     onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "inline" }))}
                   />
@@ -4558,10 +4188,7 @@ export function SectionEditorDrawer({
                                 <SegmentedControl
                                   size="xs"
                                   value={listStyle}
-                                  data={[
-                                    { label: "Steps", value: "steps" },
-                                    { label: "Basic list", value: "basic" },
-                                  ]}
+                                  data={COMPOSER_LIST_STYLE_OPTIONS as unknown as { label: string; value: string }[]}
                                   onChange={(nextStyle) => setCustomBlockPatch(block.id, { listStyle: nextStyle === "basic" ? "basic" : "steps" })}
                                 />
 
@@ -5293,6 +4920,36 @@ export function SectionEditorDrawer({
             Publish and restore are done via secure RPC functions. Only admins can mutate content.
           </Text>
         </Stack>
+          </div>
+          {/* Right column — live preview (sticky, fills remaining width) */}
+          {normalizedType && normalizedType !== "nav_links" ? (
+            <div style={{ flex: 1, minWidth: 0, borderLeft: "1px solid var(--mantine-color-dark-4)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--mantine-color-dark-4)", flexShrink: 0 }}>
+                <Text size="xs" fw={500} c="dimmed">Live Preview</Text>
+              </div>
+              <div style={{ flex: 1, overflow: "auto", background: "oklch(0.145 0 0)" }}>
+                <SectionPreview
+                  sectionType={normalizedType}
+                  content={content}
+                  formatting={formatting as Record<string, unknown>}
+                  title={title}
+                  subtitle={subtitle}
+                  ctaPrimaryLabel={ctaPrimaryLabel}
+                  ctaPrimaryHref={ctaPrimaryHref}
+                  ctaSecondaryLabel={ctaSecondaryLabel}
+                  ctaSecondaryHref={ctaSecondaryHref}
+                  backgroundMediaUrl={backgroundMediaUrl}
+                  embedded
+                />
+              </div>
+            </div>
+          ) : (
+            <div style={{ flex: 1, minWidth: 0, borderLeft: "1px solid var(--mantine-color-dark-4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Text size="sm" c="dimmed">No preview for this section type</Text>
+            </div>
+          )}
+        </div>
+        ) : null}
       </Drawer>
 
       <Modal

@@ -64,7 +64,7 @@ export function SocialProofStripSection({
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
       containerStyle={containerStyle}
-      rhythm={ui?.rhythm ?? "compact"}
+      rhythm={ui?.rhythm}
       surface={ui?.surface}
       density={ui?.density}
     >
@@ -81,7 +81,7 @@ export function SocialProofStripSection({
                 <p
                   className={cn(
                     "text-sm font-medium tracking-wide text-muted-foreground",
-                    headingTreatment !== "default" ? HEADING_TREATMENT_CLASSES[headingTreatment] : ""
+                    HEADING_TREATMENT_CLASSES[headingTreatment]
                   )}
                 >
                   {title}
@@ -113,10 +113,10 @@ export function SocialProofStripSection({
                       <img
                         src={logo.imageUrl}
                         alt={logo.alt || logo.label}
-                        className="h-6 max-w-[100px] object-contain opacity-50 grayscale transition-all duration-300 hover:opacity-75 hover:grayscale-0"
+                        className="h-7 max-w-[110px] object-contain opacity-55 grayscale transition-all duration-300 hover:opacity-80 hover:grayscale-0"
                       />
                     ) : (
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/55">
                         {logo.label}
                       </span>
                     )}
@@ -125,7 +125,7 @@ export function SocialProofStripSection({
               </div>
             ) : (
               /* inline layout */
-              <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+              <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-5">
                 {logos.map((logo) =>
                   logo.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -133,12 +133,12 @@ export function SocialProofStripSection({
                       key={logo.label}
                       src={logo.imageUrl}
                       alt={logo.alt || logo.label}
-                      className="h-5 w-auto object-contain opacity-40 grayscale transition-all duration-300 hover:opacity-70 hover:grayscale-0"
+                      className="h-6 w-auto object-contain opacity-50 grayscale transition-all duration-300 hover:opacity-80 hover:grayscale-0"
                     />
                   ) : (
                     <span
                       key={logo.label}
-                      className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/40 transition-colors hover:text-muted-foreground/60"
+                      className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 transition-colors hover:text-muted-foreground/70"
                     >
                       {logo.label}
                     </span>

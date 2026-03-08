@@ -41,13 +41,14 @@ export function FaqSection({
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
   const labelStyle = ui?.labelStyle ?? "default"
+  const headingId = sectionId ? `${sectionId}-heading` : "faq-title"
   const dividerClass = ui?.dividerMode ? DIVIDER_CLASSES[ui.dividerMode] : ""
   const { cardClass, spacing } = resolveCardPresentation(ui, { mode: "accordion" })
 
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="faq-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
@@ -61,7 +62,7 @@ export function FaqSection({
           {hasEyebrow ? (
             <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
           ) : null}
-          <SectionHeading id="faq-title" title={title} headingTreatment={ui?.headingTreatment} />
+          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
           {hasSubtitle ? (
             <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
           ) : null}

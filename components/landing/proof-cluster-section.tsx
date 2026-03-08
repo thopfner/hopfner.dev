@@ -53,6 +53,9 @@ export function ProofClusterSection({
   const density = ui?.density ?? "standard"
   const gridGap = ui?.gridGap ?? "standard"
   const labelStyle = ui?.labelStyle ?? "default"
+  const dividerMode = ui?.dividerMode ?? "none"
+  const dividerBorder = dividerMode === "strong" ? "border-border/50" : dividerMode === "subtle" ? "border-border/25" : "border-border/25"
+  const headingId = sectionId ? `${sectionId}-heading` : "proof-cluster-title"
 
   // Differentiated card treatments per zone
   // Metrics: use metric family (data-forward, centered, crisp)
@@ -80,7 +83,7 @@ export function ProofClusterSection({
   return (
     <SectionShell
       id={sectionId}
-      labelledBy="proof-cluster-title"
+      labelledBy={headingId}
       sectionClassName={sectionClassName}
       sectionStyle={sectionStyle}
       containerClassName={containerClassName}
@@ -98,7 +101,7 @@ export function ProofClusterSection({
                 <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
               ) : null}
               {hasTitle ? (
-                <SectionHeading id="proof-cluster-title" title={title!} headingTreatment={ui?.headingTreatment} />
+                <SectionHeading id={headingId} title={title!} headingTreatment={ui?.headingTreatment} />
               ) : null}
               {hasSubtitle ? (
                 <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
@@ -112,12 +115,12 @@ export function ProofClusterSection({
           <StaggerContainer className={cn("grid grid-cols-2 sm:grid-cols-3", GRID_GAP_CLASSES[gridGap])}>
             {metrics.map((m) => (
               <StaggerItem key={m.label} className="h-full">
-                <div className={cn(metricCard.cardClass, metricCard.spacing.rootPadding, "h-full flex flex-col text-center")}>
+                <div className={cn(metricCard.cardClass, metricCard.spacing.rootPadding, "h-full flex flex-col items-center text-center")}>
                   {metricCard.isInlineAccent ? (
                     <div aria-hidden className="mx-auto mb-2 h-0.5 w-8 rounded-full bg-accent/50" />
                   ) : null}
-                  {m.icon ? <span className="mb-1 block text-xl">{m.icon}</span> : null}
-                  <p className="text-metric text-gradient text-2xl lg:text-3xl">
+                  {m.icon ? <span className="mb-1.5 block text-2xl">{m.icon}</span> : null}
+                  <p className="text-metric text-gradient text-3xl lg:text-4xl">
                     {(() => {
                       const match = m.value.match(/^([^0-9]*)([\d,.]+)(.*)$/)
                       if (match) {
@@ -148,7 +151,7 @@ export function ProofClusterSection({
                   <h3 className="text-base font-semibold tracking-tight">{proofCard!.title}</h3>
                   <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{proofCard!.body}</p>
                   {proofCard!.stats.length > 0 ? (
-                    <div className="mt-4 flex flex-wrap gap-6 border-t border-border/20 pt-4">
+                    <div className={cn("mt-5 flex flex-wrap gap-6 border-t pt-4", dividerBorder)}>
                       {proofCard!.stats.map((s) => (
                         <div key={s.label}>
                           <p className="text-metric text-xl font-semibold">{s.value}</p>
@@ -169,26 +172,26 @@ export function ProofClusterSection({
                     <div aria-hidden className="mb-2 h-0.5 w-6 rounded-full bg-accent/50" />
                   ) : null}
                   {/* Large quote mark — editorial treatment */}
-                  <span aria-hidden className="pointer-events-none select-none text-4xl leading-none text-accent/20">&ldquo;</span>
-                  <blockquote className="mt-1 flex-1 text-sm italic leading-relaxed text-muted-foreground">
+                  <span aria-hidden className="pointer-events-none select-none text-5xl leading-none text-accent/25">&ldquo;</span>
+                  <blockquote className="mt-2 flex-1 text-sm italic leading-relaxed text-muted-foreground/90">
                     {testimonial!.quote}
                   </blockquote>
-                  <div className="mt-4 flex items-center gap-3 border-t border-border/20 pt-3">
+                  <div className={cn("mt-5 flex items-center gap-3 border-t pt-4", dividerBorder)}>
                     {testimonial!.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={testimonial!.imageUrl}
                         alt={testimonial!.author}
-                        className="h-9 w-9 rounded-full object-cover ring-1 ring-border/20"
+                        className="h-10 w-10 rounded-full object-cover ring-1 ring-border/30"
                       />
                     ) : (
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
                         {testimonial!.author.charAt(0)}
                       </div>
                     )}
                     <div>
-                      <p className="text-xs font-semibold">{testimonial!.author}</p>
-                      <p className="text-[10px] tracking-wide text-muted-foreground/60">{testimonial!.role}</p>
+                      <p className="text-sm font-semibold tracking-tight">{testimonial!.author}</p>
+                      <p className="text-[11px] tracking-wide text-muted-foreground/60">{testimonial!.role}</p>
                     </div>
                   </div>
                 </div>
