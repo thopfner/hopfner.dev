@@ -11,8 +11,9 @@ import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import {
   DENSITY_ITEM_SPACING,
-  DENSITY_GAP,
+  GRID_GAP_CLASSES,
   DIVIDER_CLASSES,
+  LABEL_STYLE_CLASSES,
 } from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
@@ -49,6 +50,8 @@ export function WorkflowsSection({
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
   const density = ui?.density ?? "standard"
+  const gridGap = ui?.gridGap ?? "standard"
+  const labelStyle = ui?.labelStyle ?? "default"
   const dividerMode = ui?.dividerMode ?? "none"
   const dividerClass = dividerMode !== "none" ? DIVIDER_CLASSES[dividerMode] : ""
   const card = resolveCardPresentation(ui, { mode: "compact" })
@@ -57,9 +60,7 @@ export function WorkflowsSection({
   const headerBlock = (
     <div className="space-y-1">
       {hasEyebrow ? (
-        <p className="text-eyebrow text-muted-foreground">
-          {eyebrow}
-        </p>
+        <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
       ) : null}
       <SectionHeading id="examples-title" title={title} headingTreatment={ui?.headingTreatment} />
       {hasSubtitle ? (
@@ -89,6 +90,9 @@ export function WorkflowsSection({
                 className={cn(card.cardClass, card.spacing.rootPadding)}
                 style={panelStyle}
               >
+                {card.isInlineAccent ? (
+                  <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
+                ) : null}
                 <p className="text-sm font-semibold">{item.title}</p>
                 {item.bodyHtml?.trim() ? (
                   <div
@@ -120,21 +124,24 @@ export function WorkflowsSection({
         density={ui?.density}
       >
         <FadeIn>{headerBlock}</FadeIn>
-        <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2", DENSITY_GAP[density])}>
+        <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2", GRID_GAP_CLASSES[gridGap])}>
           {items.map((item, idx) => (
             <StaggerItem key={`${item.title}-${idx}`} className="h-full">
               <div
                 className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col")}
                 style={panelStyle}
               >
+                {card.isInlineAccent ? (
+                  <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
+                ) : null}
                 <p className="text-sm font-semibold">{item.title}</p>
                 {item.bodyHtml?.trim() ? (
                   <div
-                    className={cn(card.spacing.gap, "text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                    className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground", RICH_TEXT_CLASS)}
                     dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                   />
                 ) : item.body ? (
-                  <p className={cn(card.spacing.gap, "text-sm text-muted-foreground")}>{item.body}</p>
+                  <p className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground")}>{item.body}</p>
                 ) : null}
               </div>
             </StaggerItem>
@@ -158,21 +165,24 @@ export function WorkflowsSection({
         density={ui?.density}
       >
         <FadeIn>{headerBlock}</FadeIn>
-        <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3", DENSITY_GAP[density])}>
+        <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3", GRID_GAP_CLASSES[gridGap])}>
           {items.map((item, idx) => (
             <StaggerItem key={`${item.title}-${idx}`} className="h-full">
               <div
                 className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col")}
                 style={panelStyle}
               >
+                {card.isInlineAccent ? (
+                  <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
+                ) : null}
                 <p className="text-sm font-semibold">{item.title}</p>
                 {item.bodyHtml?.trim() ? (
                   <div
-                    className={cn(card.spacing.gap, "text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                    className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground", RICH_TEXT_CLASS)}
                     dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                   />
                 ) : item.body ? (
-                  <p className={cn(card.spacing.gap, "text-sm text-muted-foreground")}>{item.body}</p>
+                  <p className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground")}>{item.body}</p>
                 ) : null}
               </div>
             </StaggerItem>

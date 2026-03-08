@@ -3,7 +3,7 @@ import { FadeIn } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
-import { HEADING_TREATMENT_CLASSES } from "@/lib/design-system/presentation"
+import { HEADING_TREATMENT_CLASSES, LABEL_STYLE_CLASSES } from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -17,6 +17,7 @@ export function WhyThisApproachSection({
   title,
   heading,
   bodyHtml,
+  eyebrow,
   ui,
 }: {
   sectionId?: string
@@ -28,9 +29,12 @@ export function WhyThisApproachSection({
   title: string
   heading: string
   bodyHtml: string
+  eyebrow?: string
   ui?: ResolvedSectionUi
 }) {
-  const { cardClass, spacing } = resolveCardPresentation(ui)
+  const hasEyebrow = (eyebrow ?? "").trim().length > 0
+  const labelStyle = ui?.labelStyle ?? "default"
+  const { cardClass, isInlineAccent, spacing } = resolveCardPresentation(ui)
 
   return (
     <SectionShell
@@ -45,11 +49,19 @@ export function WhyThisApproachSection({
       density={ui?.density}
     >
         <FadeIn>
-          <SectionHeading id="why-title" title={title} headingTreatment={ui?.headingTreatment} />
+          <div className="space-y-1">
+            {hasEyebrow ? (
+              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+            ) : null}
+            <SectionHeading id="why-title" title={title} headingTreatment={ui?.headingTreatment} />
+          </div>
         </FadeIn>
 
         <FadeIn delay={0.1}>
         <div className={cn(cardClass, spacing.gap, spacing.rootPadding)} style={panelStyle}>
+          {isInlineAccent ? (
+            <div aria-hidden className="mb-1 h-0.5 w-6 rounded-full bg-accent/50" />
+          ) : null}
           <div className={cn("space-y-2", spacing.bodyPadding)}>
             <h3 className={cn("text-sm font-semibold", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{heading}</h3>
             <div

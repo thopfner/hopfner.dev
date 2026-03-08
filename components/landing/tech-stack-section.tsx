@@ -4,7 +4,7 @@ import { LogoTicker } from "@/components/landing/logo-ticker"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import {
-  DENSITY_GAP,
+  GRID_GAP_CLASSES,
   LABEL_STYLE_CLASSES,
 } from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
@@ -43,8 +43,8 @@ export function TechStackSection({
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
-  const density = ui?.density ?? "standard"
   const labelStyle = ui?.labelStyle ?? "default"
+  const gridGap = ui?.gridGap ?? "standard"
   const card = resolveCardPresentation(ui, { mode: "compact" })
 
   if (layoutVariant === "trust_strip") {
@@ -173,9 +173,7 @@ export function TechStackSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className="text-eyebrow text-muted-foreground">
-                {eyebrow}
-              </p>
+              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
             ) : null}
             <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
@@ -188,7 +186,7 @@ export function TechStackSection({
           {items.map((item) => (
             <span
               key={item.label}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/30 px-3 py-1.5 text-xs font-medium"
+              className={cn("inline-flex items-center gap-1.5", LABEL_STYLE_CLASSES[labelStyle])}
               style={panelStyle}
             >
               {item.icon ? <span>{item.icon}</span> : null}
@@ -223,9 +221,7 @@ export function TechStackSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className="text-eyebrow text-muted-foreground">
-                {eyebrow}
-              </p>
+              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
             ) : null}
             <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
@@ -236,7 +232,7 @@ export function TechStackSection({
 
         <StaggerContainer className={cn(
           "grid",
-          DENSITY_GAP[density],
+          GRID_GAP_CLASSES[gridGap],
           compact ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         )}>
           {items.map((item) => (
@@ -245,7 +241,10 @@ export function TechStackSection({
                 className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col text-center")}
                 style={panelStyle}
               >
-                {item.icon ? <span className={cn("block text-xl", density === "tight" ? "mb-0.5" : density === "airy" ? "mb-2" : "mb-1")}>{item.icon}</span> : null}
+                {card.isInlineAccent ? (
+                  <div aria-hidden className="mx-auto mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
+                ) : null}
+                {item.icon ? <span className={cn("block text-xl", gridGap === "tight" ? "mb-0.5" : gridGap === "wide" ? "mb-2" : "mb-1")}>{item.icon}</span> : null}
                 <p className={cn("text-metric text-gradient", compact ? "text-xl" : "text-2xl lg:text-3xl")}>
                   {(() => {
                     const match = item.value.match(/^([^0-9]*)([\d,.]+)(.*)$/)
@@ -288,9 +287,7 @@ export function TechStackSection({
       <FadeIn>
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-              {eyebrow}
-            </p>
+            <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
           ) : null}
           <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
           {hasSubtitle ? (
@@ -299,13 +296,16 @@ export function TechStackSection({
         </div>
       </FadeIn>
 
-      <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2", DENSITY_GAP[density])}>
+      <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2", GRID_GAP_CLASSES[gridGap])}>
         {items.map((item) => (
           <StaggerItem key={item.label} className="h-full">
             <div
               className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col")}
               style={panelStyle}
             >
+              {card.isInlineAccent ? (
+                <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
+              ) : null}
               {item.icon ? <span>{item.icon}</span> : undefined}
               <p className="text-muted-foreground">{item.value}</p>
               <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-0.5")}>{item.label}</p>

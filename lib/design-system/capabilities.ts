@@ -52,20 +52,20 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
     ],
   },
   title_body_list: {
-    supported: [...COMMON, "contentDensity", "dividerMode", "headingTreatment", "cardFamily", "cardChrome", "accentRule"],
+    supported: [...COMMON, "contentDensity", "gridGap", "dividerMode", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
   },
   rich_text_block: {
-    supported: [...COMMON, "contentDensity", "headingTreatment", "cardFamily", "cardChrome", "accentRule"],
+    supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
   },
   label_value_list: {
-    supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
+    supported: [...COMMON, "contentDensity", "gridGap", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
     notes: { cardFamily: "Only applies to default and metrics_grid layouts" },
   },
   faq_list: {
-    supported: [...COMMON, "contentDensity", "headingTreatment", "dividerMode", "cardFamily", "cardChrome", "accentRule"],
+    supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "dividerMode", "cardFamily", "cardChrome", "accentRule"],
   },
   cta_block: {
-    supported: [...COMMON, "contentDensity", "headingTreatment", "cardFamily", "cardChrome", "accentRule"],
+    supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
   },
   footer_grid: {
     supported: [],

@@ -7,7 +7,7 @@ import {
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { FadeIn } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
-import { DIVIDER_CLASSES } from "@/lib/design-system/presentation"
+import { DIVIDER_CLASSES, LABEL_STYLE_CLASSES } from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import { cn } from "@/lib/utils"
@@ -21,6 +21,8 @@ export function FaqSection({
   containerStyle,
   panelStyle,
   title,
+  subtitle,
+  eyebrow,
   items,
   ui,
 }: {
@@ -31,9 +33,14 @@ export function FaqSection({
   containerStyle?: CSSProperties
   panelStyle?: CSSProperties
   title: string
+  subtitle?: string
+  eyebrow?: string
   items: Array<{ question: string; answerHtml: string; answer?: string }>
   ui?: ResolvedSectionUi
 }) {
+  const hasEyebrow = (eyebrow ?? "").trim().length > 0
+  const hasSubtitle = (subtitle ?? "").trim().length > 0
+  const labelStyle = ui?.labelStyle ?? "default"
   const dividerClass = ui?.dividerMode ? DIVIDER_CLASSES[ui.dividerMode] : ""
   const { cardClass, spacing } = resolveCardPresentation(ui, { mode: "accordion" })
 
@@ -50,7 +57,15 @@ export function FaqSection({
       density={ui?.density}
     >
       <FadeIn>
-        <SectionHeading id="faq-title" title={title} headingTreatment={ui?.headingTreatment} />
+        <div className="space-y-1">
+          {hasEyebrow ? (
+            <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+          ) : null}
+          <SectionHeading id="faq-title" title={title} headingTreatment={ui?.headingTreatment} />
+          {hasSubtitle ? (
+            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+          ) : null}
+        </div>
       </FadeIn>
 
       <Accordion

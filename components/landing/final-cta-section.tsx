@@ -7,7 +7,7 @@ import { SectionHeading, SectionShell } from "@/components/landing/section-primi
 import { Button } from "@/components/ui/button"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
-import { HEADING_TREATMENT_CLASSES } from "@/lib/design-system/presentation"
+import { HEADING_TREATMENT_CLASSES, LABEL_STYLE_CLASSES } from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
 
 type LayoutVariant = "centered" | "split" | "compact" | "high_contrast"
@@ -48,6 +48,7 @@ export function FinalCtaSection({
     ? "justify-center"
     : "justify-start"
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
+  const labelStyle = ui?.labelStyle ?? "default"
 
   if (layoutVariant === "compact") {
     return (
@@ -69,7 +70,7 @@ export function FinalCtaSection({
           >
             <div>
               {hasEyebrow ? (
-                <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+                <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
               ) : null}
               <p className={cn("text-sm font-semibold sm:text-base", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</p>
             </div>
@@ -112,7 +113,7 @@ export function FinalCtaSection({
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   {hasEyebrow ? (
-                    <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+                    <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
                   ) : null}
                   <SectionHeading id="final-cta-title" title={headline} headingTreatment={ui?.headingTreatment} />
                   {bodyHtml?.trim() ? (
@@ -166,9 +167,9 @@ export function FinalCtaSection({
             />
             <div className="relative space-y-4">
               {hasEyebrow ? (
-                <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+                <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mx-auto")}>{eyebrow}</p>
               ) : null}
-              <h2 className={cn("text-balance text-2xl font-bold tracking-tight sm:text-3xl", ui?.headingTreatment === "display" && "text-display")}>{headline}</h2>
+              <h2 className={cn("text-balance text-2xl font-bold tracking-tight sm:text-3xl", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</h2>
               {bodyHtml?.trim() ? (
                 <div
                   className={cn("mx-auto max-w-xl text-sm text-muted-foreground", RICH_TEXT_CLASS)}
@@ -215,7 +216,7 @@ export function FinalCtaSection({
           />
           <div className="relative space-y-3">
             {hasEyebrow ? (
-              <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
             ) : null}
             <SectionHeading id="final-cta-title" title={headline} headingTreatment={ui?.headingTreatment} />
             {bodyHtml?.trim() ? (

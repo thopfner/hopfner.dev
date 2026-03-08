@@ -791,6 +791,7 @@ export default async function MarketingPage({
                   title={pickText(v.title, defaults?.default_title)}
                   heading={pickText(v.subtitle, defaults?.default_subtitle)}
                   bodyHtml={bodyHtml}
+                  eyebrow={asString(content.eyebrow)}
                 />
               )
             }
@@ -830,6 +831,8 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
+                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  eyebrow={asString(content.eyebrow)}
                   items={items}
                 />
               )
