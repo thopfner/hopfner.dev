@@ -683,7 +683,7 @@ export default async function MarketingPage({
                   proofPanel={heroProofPanel}
                   trustItems={heroTrustItems.length > 0 ? heroTrustItems : undefined}
                   heroStats={heroStatsArr.length > 0 ? heroStatsArr : undefined}
-                  headingTreatment={ui.headingTreatment}
+                  ui={ui}
                 />
               )
             }

@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { HeroEntrance, AnimatedCounter } from "@/components/landing/motion-primitives"
-import { HEADING_TREATMENT_CLASSES } from "@/lib/design-system/presentation"
-import type { HeadingTreatment } from "@/lib/design-system/tokens"
+import { HEADING_TREATMENT_CLASSES, LABEL_STYLE_CLASSES } from "@/lib/design-system/presentation"
+import { resolveCardPresentation } from "@/lib/design-system/component-families"
+import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 
 function renderMetricValue(value: string, className?: string) {
@@ -67,7 +68,9 @@ export function HeroSection({
   proofPanel,
   trustItems,
   heroStats,
-  headingTreatment,
+  ui,
+  // Legacy prop — prefer ui.headingTreatment
+  headingTreatment: headingTreatmentLegacy,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -97,7 +100,8 @@ export function HeroSection({
   proofPanel?: ProofPanelProps
   trustItems?: TrustItem[]
   heroStats?: HeroStat[]
-  headingTreatment?: HeadingTreatment
+  ui?: ResolvedSectionUi
+  headingTreatment?: ResolvedSectionUi["headingTreatment"]
 }) {
   const sectionStyleWithMinHeight: CSSProperties = {
     ...(sectionStyle ?? {}),
@@ -118,6 +122,23 @@ export function HeroSection({
   const blendStrengthRaw = Number(heroBlendStrength)
   const blendStrength = Number.isFinite(blendStrengthRaw) ? Math.min(1, Math.max(0, blendStrengthRaw)) : 0.72
 
+  // Design system tokens
+  const headingTreatment = ui?.headingTreatment ?? headingTreatmentLegacy ?? "default"
+  const labelStyle = ui?.labelStyle ?? "default"
+
+  // Proof panel stat cards use metric family internally
+  const proofStatCard = resolveCardPresentation(
+    ui?.componentFamily
+      ? ui
+      : {
+          rhythm: "standard", surface: "none", density: ui?.density ?? "standard",
+          gridGap: "standard", headingTreatment: "default", labelStyle: "default",
+          dividerMode: "none", componentFamily: "metric",
+          componentChrome: ui?.componentChrome, accentRule: ui?.accentRule,
+        },
+    { mode: "compact" }
+  )
+
   const isSplit = layoutVariant === "split" || layoutVariant === "split_reversed"
   const isReversed = layoutVariant === "split_reversed"
   const hasProofPanel = isSplit && proofPanel && (proofPanel.type === "stats" || proofPanel.type === "mockup" || proofPanel.type === "image")
@@ -129,7 +150,7 @@ export function HeroSection({
     <div className={cn("space-y-6", isSplit ? "text-left" : "text-center")}>
       {hasEyebrow ? (
         <HeroEntrance delay={0}>
-          <p className="text-eyebrow text-muted-foreground">
+          <p className={cn(LABEL_STYLE_CLASSES[labelStyle], isSplit ? "" : "mx-auto")}>
             {eyebrow}
           </p>
         </HeroEntrance>
@@ -141,7 +162,7 @@ export function HeroSection({
             className={cn(
               "text-display text-display-xl text-pretty leading-tight",
               isSplit ? "lg:text-6xl" : "",
-              HEADING_TREATMENT_CLASSES[headingTreatment ?? "default"]
+              HEADING_TREATMENT_CLASSES[headingTreatment]
             )}
           >
             {headline}
@@ -184,7 +205,7 @@ export function HeroSection({
             {heroStats!.map((stat, i) => (
               <div key={i} className="text-center">
                 <p className="text-metric text-2xl">{renderMetricValue(stat.value)}</p>
-                <p className="text-label-mono text-muted-foreground">{stat.label}</p>
+                <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{stat.label}</p>
               </div>
             ))}
           </div>
@@ -204,10 +225,13 @@ export function HeroSection({
             {(proofPanel!.items ?? []).map((item, i) => (
               <div
                 key={i}
-                className="rounded-lg border border-border/30 bg-card/20 p-4 text-center backdrop-blur-sm"
+                className={cn(proofStatCard.cardClass, proofStatCard.spacing.rootPadding, "text-center backdrop-blur-sm")}
               >
+                {proofStatCard.isInlineAccent ? (
+                  <div aria-hidden className="mx-auto mb-1 h-0.5 w-5 rounded-full bg-accent/50" />
+                ) : null}
                 <p className="text-metric text-xl">{renderMetricValue(item.value)}</p>
-                <p className="text-label-mono text-muted-foreground">{item.label}</p>
+                <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{item.label}</p>
               </div>
             ))}
           </div>
@@ -424,7 +448,8 @@ export function HeroSection({
                     <Separator className="bg-border/60" />
                     <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
                       {trustItems!.map((item, i) => (
-                        <span key={i} className="text-label-mono text-muted-foreground">
+                        <span key={i} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
+                          {item.icon ? <span className="mr-1">{item.icon}</span> : null}
                           {item.text}
                         </span>
                       ))}
@@ -448,7 +473,8 @@ export function HeroSection({
                   <HeroEntrance delay={0.6}>
                     <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1">
                       {trustItems!.map((item, i) => (
-                        <span key={i} className="text-label-mono text-muted-foreground">
+                        <span key={i} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
+                          {item.icon ? <span className="mr-1">{item.icon}</span> : null}
                           {item.text}
                         </span>
                       ))}

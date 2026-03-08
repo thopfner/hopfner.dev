@@ -23,7 +23,7 @@ const COMMON: SemanticControl[] = ["sectionRhythm", "sectionSurface"]
 
 export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
   hero_cta: {
-    supported: ["headingTreatment"],
+    supported: ["headingTreatment", "labelStyle"],
     notes: { sectionRhythm: "Hero uses bespoke layout; rhythm/surface not applicable" },
   },
   card_grid: {
