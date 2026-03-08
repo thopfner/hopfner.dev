@@ -1,7 +1,13 @@
 import { SectionShell } from "@/components/landing/section-primitives"
 import { FadeIn } from "@/components/landing/motion-primitives"
 import { LogoTicker } from "@/components/landing/logo-ticker"
-import { LABEL_STYLE_CLASSES } from "@/lib/design-system/presentation"
+import {
+  HEADING_TREATMENT_CLASSES,
+  LABEL_STYLE_CLASSES,
+  DENSITY_SECTION_GAP,
+  GRID_GAP_CLASSES,
+} from "@/lib/design-system/presentation"
+import { resolveCardClasses } from "@/lib/design-system/component-families"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
@@ -44,6 +50,12 @@ export function SocialProofStripSection({
   const hasLogos = logos.length > 0
   const hasTrustNote = (trustNote ?? "").trim().length > 0
   const labelStyle = ui?.labelStyle ?? "default"
+  const headingTreatment = ui?.headingTreatment ?? "default"
+  const density = ui?.density ?? "standard"
+  const gridGap = ui?.gridGap ?? "standard"
+
+  // Logo grid tiles use logo_tile family internally (not exposed as admin control)
+  const logoTile = resolveCardClasses("logo_tile")
 
   return (
     <SectionShell
@@ -57,44 +69,63 @@ export function SocialProofStripSection({
       density={ui?.density}
     >
       <FadeIn>
-        <div className="space-y-4 text-center">
-          {hasEyebrow ? (
-            <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+        <div className={cn("text-center", DENSITY_SECTION_GAP[density])}>
+          {/* Heading cluster */}
+          {(hasEyebrow || hasTitle || hasSubtitle) ? (
+            <div className="space-y-1.5">
+              {hasEyebrow ? (
+                <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mx-auto")}>{eyebrow}</p>
+              ) : null}
+
+              {hasTitle ? (
+                <p
+                  className={cn(
+                    "text-sm font-medium tracking-wide text-muted-foreground",
+                    headingTreatment !== "default" ? HEADING_TREATMENT_CLASSES[headingTreatment] : ""
+                  )}
+                >
+                  {title}
+                </p>
+              ) : null}
+
+              {hasSubtitle ? (
+                <p className="text-xs text-muted-foreground/60">{subtitle}</p>
+              ) : null}
+            </div>
           ) : null}
 
-          {hasTitle ? (
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          ) : null}
-
-          {hasSubtitle ? (
-            <p className="text-xs text-muted-foreground/70">{subtitle}</p>
-          ) : null}
-
+          {/* Logo display */}
           {hasLogos ? (
             layoutVariant === "marquee" ? (
               <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} />
             ) : layoutVariant === "grid" ? (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              <div className={cn(
+                "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
+                GRID_GAP_CLASSES[gridGap]
+              )}>
                 {logos.map((logo) => (
                   <div
                     key={logo.label}
-                    className="flex items-center justify-center rounded-lg border border-border/30 bg-card/20 px-4 py-3"
+                    className={cn(logoTile.cardClass, "px-5 py-3.5 transition-colors hover:bg-card/[0.08]")}
                   >
                     {logo.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={logo.imageUrl}
                         alt={logo.alt || logo.label}
-                        className="h-6 max-w-[100px] object-contain opacity-60 grayscale transition-opacity hover:opacity-80"
+                        className="h-6 max-w-[100px] object-contain opacity-50 grayscale transition-all duration-300 hover:opacity-75 hover:grayscale-0"
                       />
                     ) : (
-                      <span className="text-xs font-medium text-muted-foreground/60">{logo.label}</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                        {logo.label}
+                      </span>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+              /* inline layout */
+              <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
                 {logos.map((logo) =>
                   logo.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -102,12 +133,12 @@ export function SocialProofStripSection({
                       key={logo.label}
                       src={logo.imageUrl}
                       alt={logo.alt || logo.label}
-                      className="h-6 w-auto object-contain opacity-50 grayscale transition-opacity hover:opacity-80"
+                      className="h-5 w-auto object-contain opacity-40 grayscale transition-all duration-300 hover:opacity-70 hover:grayscale-0"
                     />
                   ) : (
                     <span
                       key={logo.label}
-                      className="text-xs font-medium text-muted-foreground/60"
+                      className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/40 transition-colors hover:text-muted-foreground/60"
                     >
                       {logo.label}
                     </span>
@@ -117,22 +148,24 @@ export function SocialProofStripSection({
             )
           ) : null}
 
+          {/* Trust badges */}
           {hasBadges ? (
-            <div className="flex flex-wrap items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
               {badges.map((badge) => (
                 <span
                   key={badge.text}
                   className={cn("inline-flex items-center gap-1.5", LABEL_STYLE_CLASSES[labelStyle])}
                 >
-                  {badge.icon ? <span>{badge.icon}</span> : null}
+                  {badge.icon ? <span className="text-xs">{badge.icon}</span> : null}
                   {badge.text}
                 </span>
               ))}
             </div>
           ) : null}
 
+          {/* Trust note */}
           {hasTrustNote ? (
-            <p className="text-xs text-muted-foreground/50">{trustNote}</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/40">{trustNote}</p>
           ) : null}
         </div>
       </FadeIn>

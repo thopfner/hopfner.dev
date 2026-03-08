@@ -42,6 +42,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
     supported: [
       ...COMMON,
       "contentDensity",
+      "gridGap",
       "headingTreatment",
       "cardFamily",
       "cardChrome",
@@ -80,6 +81,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
     supported: [
       ...COMMON,
       "contentDensity",
+      "gridGap",
       "headingTreatment",
       "labelStyle",
       "cardFamily",
@@ -91,7 +93,9 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
     supported: [
       ...COMMON,
       "contentDensity",
+      "gridGap",
       "headingTreatment",
+      "labelStyle",
       "cardFamily",
       "cardChrome",
       "accentRule",

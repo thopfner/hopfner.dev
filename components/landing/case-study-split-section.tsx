@@ -2,6 +2,11 @@ import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { FadeIn } from "@/components/landing/motion-primitives"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
+import {
+  DENSITY_SECTION_GAP,
+  GRID_GAP_CLASSES,
+  LABEL_STYLE_CLASSES,
+} from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
@@ -57,6 +62,9 @@ export function CaseStudySplitSection({
   const hasMedia = (mediaImageUrl ?? "").trim().length > 0 || (mediaTitle ?? "").trim().length > 0
   const hasStats = stats.length > 0
   const hasCta = (ctaLabel ?? "").trim().length > 0 && (ctaHref ?? "").trim().length > 0
+  const density = ui?.density ?? "standard"
+  const gridGap = ui?.gridGap ?? "standard"
+  const labelStyle = ui?.labelStyle ?? "default"
   const card = resolveCardPresentation(ui, { mode: "compact" })
   const bLabel = (beforeLabel ?? "").trim() || "Before"
   const aLabel = (afterLabel ?? "").trim() || "After"
@@ -73,14 +81,14 @@ export function CaseStudySplitSection({
       surface={ui?.surface}
       density={ui?.density}
     >
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+      <div className={cn("grid grid-cols-1 lg:grid-cols-2", GRID_GAP_CLASSES[gridGap === "tight" ? "standard" : "wide"])}>
         {/* Left column: narrative + comparison */}
-        <div className="space-y-5">
+        <div className={DENSITY_SECTION_GAP[density]}>
           {hasEyebrow || hasTitle || hasSubtitle ? (
             <FadeIn>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {hasEyebrow ? (
-                  <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+                  <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
                 ) : null}
                 {hasTitle ? (
                   <SectionHeading id="case-study-title" title={title!} headingTreatment={ui?.headingTreatment} />
@@ -95,32 +103,47 @@ export function CaseStudySplitSection({
           {hasNarrative ? (
             <FadeIn delay={0.05}>
               <div
-                className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                className={cn("text-sm leading-relaxed text-muted-foreground", RICH_TEXT_CLASS)}
                 dangerouslySetInnerHTML={{ __html: narrativeHtml! }}
               />
             </FadeIn>
           ) : null}
 
+          {/* Before / After comparison — editorial contrast */}
           {hasComparison ? (
             <FadeIn delay={0.1}>
-              <div className="grid grid-cols-2 gap-4">
-                <div className={cn(card.cardClass, card.spacing.rootPadding)} style={panelStyle}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-red-400/80">{bLabel}</p>
-                  <ul className="space-y-1.5">
+              <div className={cn("grid grid-cols-2", GRID_GAP_CLASSES[gridGap])}>
+                {/* Before: restrained, colder */}
+                <div className={cn(card.cardClass, card.spacing.rootPadding, "border-t-2 border-t-red-400/30")} style={panelStyle}>
+                  {card.isInlineAccent ? (
+                    <div aria-hidden className="mb-2 h-0.5 w-5 rounded-full bg-red-400/40" />
+                  ) : null}
+                  <p className={cn(
+                    LABEL_STYLE_CLASSES[labelStyle],
+                    "mb-2.5 !text-red-400/70"
+                  )}>{bLabel}</p>
+                  <ul className="space-y-2">
                     {beforeItems.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <span className="mt-0.5 text-red-400/60">✕</span>
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground/70">
+                        <span className="mt-0.5 shrink-0 text-red-400/50">✕</span>
                         {item}
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className={cn(card.cardClass, card.spacing.rootPadding)} style={panelStyle}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-green-400/80">{aLabel}</p>
-                  <ul className="space-y-1.5">
+                {/* After: resolved, brighter, accent-tinted */}
+                <div className={cn(card.cardClass, card.spacing.rootPadding, "border-t-2 border-t-green-400/40")} style={panelStyle}>
+                  {card.isInlineAccent ? (
+                    <div aria-hidden className="mb-2 h-0.5 w-5 rounded-full bg-green-400/40" />
+                  ) : null}
+                  <p className={cn(
+                    LABEL_STYLE_CLASSES[labelStyle],
+                    "mb-2.5 !text-green-400/80"
+                  )}>{aLabel}</p>
+                  <ul className="space-y-2">
                     {afterItems.map((item, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <span className="mt-0.5 text-green-400/60">✓</span>
+                        <span className="mt-0.5 shrink-0 text-green-400/60">✓</span>
                         {item}
                       </li>
                     ))}
@@ -140,13 +163,16 @@ export function CaseStudySplitSection({
         </div>
 
         {/* Right column: media + stats */}
-        <div className="space-y-5">
+        <div className={DENSITY_SECTION_GAP[density]}>
           {hasMedia ? (
             <FadeIn delay={0.1}>
               <div className={cn(card.cardClass, "overflow-hidden")} style={panelStyle}>
+                {card.isInlineAccent ? (
+                  <div aria-hidden className="mx-4 mt-4 h-0.5 w-8 rounded-full bg-accent/50" />
+                ) : null}
                 {mediaTitle ? (
                   <div className="px-4 pt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{mediaTitle}</p>
+                    <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{mediaTitle}</p>
                   </div>
                 ) : null}
                 {mediaImageUrl ? (
@@ -159,25 +185,29 @@ export function CaseStudySplitSection({
                     />
                   </div>
                 ) : (
-                  <div className="flex h-48 items-center justify-center bg-card/30 text-muted-foreground/40">
-                    <span className="text-sm">Media placeholder</span>
+                  <div className="flex h-48 items-center justify-center bg-card/30 text-muted-foreground/30">
+                    <span className="text-sm italic">Media placeholder</span>
                   </div>
                 )}
               </div>
             </FadeIn>
           ) : null}
 
+          {/* Stats — reinforce the "after" side */}
           {hasStats ? (
             <FadeIn delay={0.15}>
-              <div className="flex flex-wrap gap-4">
+              <div className={cn("grid", stats.length <= 2 ? "grid-cols-2" : "grid-cols-3", GRID_GAP_CLASSES[gridGap])}>
                 {stats.map((s) => (
                   <div
                     key={s.label}
-                    className={cn(card.cardClass, card.spacing.rootPadding, "flex-1 min-w-[100px] text-center")}
+                    className={cn(card.cardClass, card.spacing.rootPadding, "text-center")}
                     style={panelStyle}
                   >
-                    <p className="text-metric text-lg font-semibold">{s.value}</p>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</p>
+                    {card.isInlineAccent ? (
+                      <div aria-hidden className="mx-auto mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
+                    ) : null}
+                    <p className="text-metric text-xl font-semibold">{s.value}</p>
+                    <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-1")}>{s.label}</p>
                   </div>
                 ))}
               </div>
