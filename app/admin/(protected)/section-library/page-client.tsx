@@ -133,6 +133,9 @@ const BUILTIN_PREVIEWS = [
   { key: "faq_list", label: "FAQ", desc: "Accordion question/answer" },
   { key: "cta_block", label: "CTA Block", desc: "Closing CTA with actions" },
   { key: "footer_grid", label: "Footer Grid", desc: "Footer links/cards/legal" },
+  { key: "social_proof_strip", label: "Social Proof Strip", desc: "Logo strip with trust badges" },
+  { key: "proof_cluster", label: "Proof Cluster", desc: "Metrics, proof card, and testimonial" },
+  { key: "case_study_split", label: "Case Study Split", desc: "Narrative + before/after comparison" },
 ]
 
 type SegmentedItem = { label: string; value: string }
