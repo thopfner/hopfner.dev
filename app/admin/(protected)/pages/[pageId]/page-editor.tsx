@@ -626,6 +626,9 @@ type BuiltinCmsSectionType =
   | "faq_list"
   | "cta_block"
   | "footer_grid"
+  | "social_proof_strip"
+  | "proof_cluster"
+  | "case_study_split"
 
 type CmsSectionType = BuiltinCmsSectionType | string
 
@@ -658,6 +661,9 @@ const SECTION_TYPES: BuiltinCmsSectionType[] = [
   "faq_list",
   "cta_block",
   "footer_grid",
+  "social_proof_strip",
+  "proof_cluster",
+  "case_study_split",
 ]
 
 const BUILTIN_SECTION_TYPE_SET = new Set<string>(SECTION_TYPES)
@@ -674,7 +680,14 @@ function normalizeSectionType(raw: string): CmsSectionType | null {
     case "faq_list":
     case "cta_block":
     case "footer_grid":
+    case "social_proof_strip":
+    case "proof_cluster":
+    case "case_study_split":
       return raw
+    case "trust_strip":
+      return "social_proof_strip"
+    case "split_story":
+      return "case_study_split"
     case "header_nav":
       return "nav_links"
     case "hero":

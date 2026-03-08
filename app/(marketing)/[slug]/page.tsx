@@ -1,10 +1,13 @@
+import { CaseStudySplitSection } from "@/components/landing/case-study-split-section"
 import { ComposedSection } from "@/components/landing/composed-section"
 import { FaqSection } from "@/components/landing/faq-section"
 import { FinalCtaSection } from "@/components/landing/final-cta-section"
 import { FooterGridSection } from "@/components/landing/footer-grid-section"
 import { HeroSection } from "@/components/landing/hero-section"
 import { HowItWorksSection } from "@/components/landing/how-it-works-section"
+import { ProofClusterSection } from "@/components/landing/proof-cluster-section"
 import { SiteHeader, type HeaderNavLink } from "@/components/landing/site-header"
+import { SocialProofStripSection } from "@/components/landing/social-proof-strip-section"
 import { TechStackSection } from "@/components/landing/tech-stack-section"
 import { TopBackdrop } from "@/components/landing/top-backdrop"
 import { WhatIDeliverSection } from "@/components/landing/what-i-deliver-section"
@@ -737,10 +740,12 @@ export default async function MarketingPage({
                 title: asString(s.title),
                 body: asString(s.body),
                 bodyHtml: tiptapJsonToSanitizedHtml(s.bodyRichText),
+                icon: asString(s.icon),
+                stat: asString(s.stat),
               }))
               const stepsLayoutRaw = asString(content.layoutVariant)
-              const validStepsLayouts = ["grid", "timeline", "connected_flow"]
-              const stepsLayout = validStepsLayouts.includes(stepsLayoutRaw) ? stepsLayoutRaw as "grid" | "timeline" | "connected_flow" : "grid"
+              const validStepsLayouts = ["grid", "timeline", "connected_flow", "workflow_visual"]
+              const stepsLayout = validStepsLayouts.includes(stepsLayoutRaw) ? stepsLayoutRaw as "grid" | "timeline" | "connected_flow" | "workflow_visual" : "grid"
               return (
                 <HowItWorksSection
                   key={section.id}
@@ -923,6 +928,102 @@ export default async function MarketingPage({
                     copyright: asString(legal.copyright),
                     links: legalLinks,
                   }}
+                />
+              )
+            }
+            case "social_proof_strip": {
+              const logos = asRecordArray(content.logos).map((l) => ({
+                label: asString(l.label),
+                imageUrl: asString(l.imageUrl),
+                alt: asString(l.alt),
+                href: asString(l.href),
+              }))
+              const badges = asRecordArray(content.badges).map((b) => ({
+                text: asString(b.text),
+                icon: asString(b.icon),
+              }))
+              const spLayoutRaw = asString(content.layoutVariant)
+              const validSpLayouts = ["inline", "marquee", "grid"]
+              const spLayout = validSpLayouts.includes(spLayoutRaw) ? spLayoutRaw as "inline" | "marquee" | "grid" : "inline"
+              return (
+                <SocialProofStripSection
+                  key={section.id}
+                  {...adjustedProps}
+                  ui={ui}
+                  title={pickText(v.title, defaults?.default_title)}
+                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  eyebrow={asString(content.eyebrow)}
+                  logos={logos}
+                  badges={badges}
+                  trustNote={asString(content.trustNote)}
+                  layoutVariant={spLayout}
+                />
+              )
+            }
+            case "proof_cluster": {
+              const metrics = asRecordArray(content.metrics).map((m) => ({
+                value: asString(m.value),
+                label: asString(m.label),
+                icon: asString(m.icon),
+              }))
+              const proofCardRaw = asRecord(content.proofCard)
+              const proofCard = proofCardRaw.title ? {
+                title: asString(proofCardRaw.title),
+                body: asString(proofCardRaw.body),
+                stats: asRecordArray(proofCardRaw.stats).map((s) => ({
+                  value: asString(s.value),
+                  label: asString(s.label),
+                })),
+              } : undefined
+              const testimonialRaw = asRecord(content.testimonial)
+              const testimonial = testimonialRaw.quote ? {
+                quote: asString(testimonialRaw.quote),
+                author: asString(testimonialRaw.author),
+                role: asString(testimonialRaw.role),
+                imageUrl: asString(testimonialRaw.imageUrl),
+              } : undefined
+              return (
+                <ProofClusterSection
+                  key={section.id}
+                  {...adjustedProps}
+                  ui={ui}
+                  title={pickText(v.title, defaults?.default_title)}
+                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  eyebrow={asString(content.eyebrow)}
+                  metrics={metrics}
+                  proofCard={proofCard}
+                  testimonial={testimonial}
+                  ctaLabel={pickText(v.cta_primary_label, defaults?.default_cta_primary_label)}
+                  ctaHref={pickText(v.cta_primary_href, defaults?.default_cta_primary_href)}
+                />
+              )
+            }
+            case "case_study_split": {
+              const narrativeHtml = tiptapJsonToSanitizedHtml(content.narrativeRichText)
+              const beforeItems = asStringArray(content.beforeItems)
+              const afterItems = asStringArray(content.afterItems)
+              const stats = asRecordArray(content.stats).map((s) => ({
+                value: asString(s.value),
+                label: asString(s.label),
+              }))
+              return (
+                <CaseStudySplitSection
+                  key={section.id}
+                  {...adjustedProps}
+                  ui={ui}
+                  title={pickText(v.title, defaults?.default_title)}
+                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  eyebrow={asString(content.eyebrow)}
+                  narrativeHtml={narrativeHtml || asString(content.narrative)}
+                  beforeLabel={asString(content.beforeLabel)}
+                  afterLabel={asString(content.afterLabel)}
+                  beforeItems={beforeItems}
+                  afterItems={afterItems}
+                  mediaTitle={asString(content.mediaTitle)}
+                  mediaImageUrl={asString(content.mediaImageUrl)}
+                  stats={stats}
+                  ctaLabel={pickText(v.cta_primary_label, defaults?.default_cta_primary_label)}
+                  ctaHref={pickText(v.cta_primary_href, defaults?.default_cta_primary_href)}
                 />
               )
             }

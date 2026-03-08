@@ -13,7 +13,7 @@ import {
   DIVIDER_CLASSES,
 } from "@/lib/design-system/presentation"
 
-type LayoutVariant = "grid" | "timeline" | "connected_flow"
+type LayoutVariant = "grid" | "timeline" | "connected_flow" | "workflow_visual"
 
 export function HowItWorksSection({
   sectionId,
@@ -38,7 +38,7 @@ export function HowItWorksSection({
   title: string
   subtitle?: string
   eyebrow?: string
-  steps: Array<{ title: string; body?: string; bodyHtml?: string }>
+  steps: Array<{ title: string; body?: string; bodyHtml?: string; icon?: string; stat?: string }>
   layoutVariant?: LayoutVariant
   ui?: ResolvedSectionUi
 }) {
@@ -192,6 +192,78 @@ export function HowItWorksSection({
                   </span>
                 ) : (
                   /* default: preserve original mono style */
+                  <span className="text-label-mono mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    {idx + 1}
+                  </span>
+                )}
+                <p className="text-sm font-medium">{step.title}</p>
+                {step.bodyHtml?.trim() ? (
+                  <div
+                    className={cn("mt-1 text-xs text-muted-foreground", RICH_TEXT_CLASS)}
+                    dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
+                  />
+                ) : step.body ? (
+                  <p className="mt-1 text-xs text-muted-foreground">{step.body}</p>
+                ) : null}
+              </div>
+              {idx < steps.length - 1 ? (
+                <div aria-hidden className="flex items-center justify-center">
+                  <span className="block h-4 w-px bg-border/60 sm:h-px sm:w-6" />
+                  <span className="hidden text-muted-foreground/40 sm:block">&#8594;</span>
+                  <span className="block text-muted-foreground/40 sm:hidden">&#8595;</span>
+                  <span className="block h-4 w-px bg-border/60 sm:h-px sm:w-6" />
+                </div>
+              ) : null}
+            </StaggerItem>
+          ))}
+        </StaggerContainer>
+      </SectionShell>
+    )
+  }
+
+  if (layoutVariant === "workflow_visual") {
+    const flowCard = resolveCardPresentation(ui, { mode: "compact" })
+    return (
+      <SectionShell
+        id={sectionId}
+        labelledBy="how-it-works-title"
+        sectionClassName={sectionClassName}
+        sectionStyle={sectionStyle}
+        containerClassName={containerClassName}
+        containerStyle={containerStyle}
+        rhythm={ui?.rhythm}
+        surface={ui?.surface}
+        density={ui?.density}
+      >
+        <FadeIn>
+          <div className="space-y-1">
+            {hasEyebrow ? (
+              <p className="text-eyebrow text-muted-foreground">{eyebrow}</p>
+            ) : null}
+            <SectionHeading id="how-it-works-title" title={title} headingTreatment={ui?.headingTreatment} />
+            {hasSubtitle ? (
+              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
+        </FadeIn>
+
+        {/* Horizontal workflow diagram with arrows */}
+        <StaggerContainer className="flex flex-col gap-0 sm:flex-row sm:items-stretch sm:gap-0">
+          {steps.map((step, idx) => (
+            <StaggerItem key={`${idx}-${step.title}`} className="flex flex-1 flex-col items-center sm:flex-row">
+              <div
+                className={cn(
+                  "flex w-full flex-1 flex-col items-center text-center",
+                  flowCard.cardClass,
+                  flowCard.spacing.rootPadding
+                )}
+                style={panelStyle}
+              >
+                {step.icon ? (
+                  <span className="mb-2 block text-2xl">{step.icon}</span>
+                ) : step.stat ? (
+                  <span className="text-metric mb-1 text-xl font-semibold text-accent">{step.stat}</span>
+                ) : (
                   <span className="text-label-mono mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent">
                     {idx + 1}
                   </span>

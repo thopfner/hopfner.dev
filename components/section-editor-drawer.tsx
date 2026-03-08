@@ -69,6 +69,9 @@ type BuiltinCmsSectionType =
   | "faq_list"
   | "cta_block"
   | "footer_grid"
+  | "social_proof_strip"
+  | "proof_cluster"
+  | "case_study_split"
 
 type CmsSectionType = BuiltinCmsSectionType | string
 
@@ -383,6 +386,9 @@ const BUILTIN_SECTION_TYPES = new Set<BuiltinCmsSectionType>([
   "faq_list",
   "cta_block",
   "footer_grid",
+  "social_proof_strip",
+  "proof_cluster",
+  "case_study_split",
 ])
 
 function isBuiltinSectionType(type: string): type is BuiltinCmsSectionType {
@@ -401,7 +407,14 @@ function normalizeSectionType(raw: string): CmsSectionType | null {
     case "faq_list":
     case "cta_block":
     case "footer_grid":
+    case "social_proof_strip":
+    case "proof_cluster":
+    case "case_study_split":
       return raw
+    case "trust_strip":
+      return "social_proof_strip"
+    case "split_story":
+      return "case_study_split"
     case "header_nav":
       return "nav_links"
     case "hero":
@@ -3077,6 +3090,7 @@ export function SectionEditorDrawer({
                       { value: "grid", label: "Grid (default)" },
                       { value: "timeline", label: "Timeline" },
                       { value: "connected_flow", label: "Connected flow" },
+                      { value: "workflow_visual", label: "Workflow visual" },
                     ]}
                     value={asString(content.layoutVariant, "grid")}
                     onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "grid" }))}
@@ -3147,6 +3161,28 @@ export function SectionEditorDrawer({
                               }}
                               onError={setError}
                             />
+                            <Group grow>
+                              <TextInput
+                                label="Icon (emoji)"
+                                placeholder="e.g. 🔍"
+                                value={asString(r.icon)}
+                                onChange={(e) => {
+                                  const next = howSteps.slice()
+                                  next[idx] = { ...r, icon: inputValueFromEvent(e) }
+                                  setContent((c) => ({ ...c, steps: next }))
+                                }}
+                              />
+                              <TextInput
+                                label="Stat"
+                                placeholder="e.g. 3x"
+                                value={asString(r.stat)}
+                                onChange={(e) => {
+                                  const next = howSteps.slice()
+                                  next[idx] = { ...r, stat: inputValueFromEvent(e) }
+                                  setContent((c) => ({ ...c, steps: next }))
+                                }}
+                              />
+                            </Group>
                           </Stack>
                         </Paper>
                       )
@@ -4100,6 +4136,203 @@ export function SectionEditorDrawer({
                             </SimpleGrid>
                           </Stack>
                         </Paper>
+                      )
+                    })}
+                  </Stack>
+                </Stack>
+              ) : null}
+
+              {type === "social_proof_strip" ? (
+                <Stack gap="sm">
+                  <Select
+                    label="Layout variant"
+                    comboboxProps={{ withinPortal: false }}
+                    data={[
+                      { value: "inline", label: "Inline (default)" },
+                      { value: "marquee", label: "Marquee / ticker" },
+                      { value: "grid", label: "Grid" },
+                    ]}
+                    value={asString(content.layoutVariant, "inline")}
+                    onChange={(v: string) => setContent((c) => ({ ...c, layoutVariant: v || "inline" }))}
+                  />
+                  <TextInput
+                    label="Eyebrow"
+                    placeholder="e.g. Trusted by"
+                    value={asString(content.eyebrow)}
+                    onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
+                  />
+                  <TextInput
+                    label="Trust note"
+                    placeholder="e.g. SOC 2 compliant"
+                    value={asString(content.trustNote)}
+                    onChange={(e) => setContent((c) => ({ ...c, trustNote: inputValueFromEvent(e) }))}
+                  />
+                  <Group justify="space-between">
+                    <Text size="sm" fw={600}>Logos</Text>
+                    <Button size="xs" variant="default" leftSection={<IconPlus size={14} />}
+                      onClick={() => setContent((c) => ({ ...c, logos: [...asArray<Record<string, unknown>>(c.logos), { label: "", imageUrl: "", alt: "" }] }))}
+                    >Add logo</Button>
+                  </Group>
+                  <Stack gap="xs">
+                    {asArray<Record<string, unknown>>(content.logos).map((logo, idx) => {
+                      const l = asRecord(logo)
+                      return (
+                        <Paper key={idx} withBorder p="sm" radius="md">
+                          <Stack gap="xs">
+                            <Group justify="space-between">
+                              <Badge size="sm" variant="default">Logo {idx + 1}</Badge>
+                              <ActionIcon variant="default" aria-label="Remove" onClick={() => setContent((c) => ({ ...c, logos: asArray<Record<string, unknown>>(c.logos).filter((_, i) => i !== idx) }))}>
+                                <IconX size={16} />
+                              </ActionIcon>
+                            </Group>
+                            <TextInput label="Label" value={asString(l.label)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.logos).slice(); next[idx] = { ...l, label: inputValueFromEvent(e) }; setContent((c) => ({ ...c, logos: next })) }} />
+                            <TextInput label="Image URL" value={asString(l.imageUrl)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.logos).slice(); next[idx] = { ...l, imageUrl: inputValueFromEvent(e) }; setContent((c) => ({ ...c, logos: next })) }} />
+                            <TextInput label="Alt text" value={asString(l.alt)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.logos).slice(); next[idx] = { ...l, alt: inputValueFromEvent(e) }; setContent((c) => ({ ...c, logos: next })) }} />
+                          </Stack>
+                        </Paper>
+                      )
+                    })}
+                  </Stack>
+                  <Group justify="space-between">
+                    <Text size="sm" fw={600}>Trust Badges</Text>
+                    <Button size="xs" variant="default" leftSection={<IconPlus size={14} />}
+                      onClick={() => setContent((c) => ({ ...c, badges: [...asArray<Record<string, unknown>>(c.badges), { text: "", icon: "" }] }))}
+                    >Add badge</Button>
+                  </Group>
+                  <Stack gap="xs">
+                    {asArray<Record<string, unknown>>(content.badges).map((badge, idx) => {
+                      const b = asRecord(badge)
+                      return (
+                        <Paper key={idx} withBorder p="xs" radius="md">
+                          <Group>
+                            <TextInput style={{ flex: 1 }} label="Text" value={asString(b.text)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.badges).slice(); next[idx] = { ...b, text: inputValueFromEvent(e) }; setContent((c) => ({ ...c, badges: next })) }} />
+                            <TextInput label="Icon" placeholder="emoji" style={{ width: 70 }} value={asString(b.icon)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.badges).slice(); next[idx] = { ...b, icon: inputValueFromEvent(e) }; setContent((c) => ({ ...c, badges: next })) }} />
+                            <ActionIcon variant="default" aria-label="Remove" mt={22} onClick={() => setContent((c) => ({ ...c, badges: asArray<Record<string, unknown>>(c.badges).filter((_, i) => i !== idx) }))}>
+                              <IconX size={16} />
+                            </ActionIcon>
+                          </Group>
+                        </Paper>
+                      )
+                    })}
+                  </Stack>
+                </Stack>
+              ) : null}
+
+              {type === "proof_cluster" ? (
+                <Stack gap="sm">
+                  <TextInput label="Eyebrow" value={asString(content.eyebrow)} onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))} />
+                  <Group justify="space-between">
+                    <Text size="sm" fw={600}>Metrics</Text>
+                    <Button size="xs" variant="default" leftSection={<IconPlus size={14} />}
+                      onClick={() => setContent((c) => ({ ...c, metrics: [...asArray<Record<string, unknown>>(c.metrics), { value: "", label: "", icon: "" }] }))}
+                    >Add metric</Button>
+                  </Group>
+                  <Stack gap="xs">
+                    {asArray<Record<string, unknown>>(content.metrics).map((m, idx) => {
+                      const r = asRecord(m)
+                      return (
+                        <Paper key={idx} withBorder p="xs" radius="md">
+                          <Group>
+                            <TextInput style={{ flex: 1 }} label="Value" placeholder="e.g. 10x" value={asString(r.value)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.metrics).slice(); next[idx] = { ...r, value: inputValueFromEvent(e) }; setContent((c) => ({ ...c, metrics: next })) }} />
+                            <TextInput style={{ flex: 1 }} label="Label" value={asString(r.label)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.metrics).slice(); next[idx] = { ...r, label: inputValueFromEvent(e) }; setContent((c) => ({ ...c, metrics: next })) }} />
+                            <TextInput label="Icon" placeholder="emoji" style={{ width: 60 }} value={asString(r.icon)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.metrics).slice(); next[idx] = { ...r, icon: inputValueFromEvent(e) }; setContent((c) => ({ ...c, metrics: next })) }} />
+                            <ActionIcon variant="default" aria-label="Remove" mt={22} onClick={() => setContent((c) => ({ ...c, metrics: asArray<Record<string, unknown>>(c.metrics).filter((_, i) => i !== idx) }))}>
+                              <IconX size={16} />
+                            </ActionIcon>
+                          </Group>
+                        </Paper>
+                      )
+                    })}
+                  </Stack>
+                  <Text size="sm" fw={600}>Proof Card</Text>
+                  <Paper withBorder p="sm" radius="md">
+                    <Stack gap="xs">
+                      <TextInput label="Title" value={asString(asRecord(content.proofCard).title)} onChange={(e) => setContent((c) => ({ ...c, proofCard: { ...asRecord(c.proofCard), title: inputValueFromEvent(e) } }))} />
+                      <Textarea label="Body" autosize minRows={2} value={asString(asRecord(content.proofCard).body)} onChange={(e) => setContent((c) => ({ ...c, proofCard: { ...asRecord(c.proofCard), body: inputValueFromEvent(e) } }))} />
+                      <Group justify="space-between">
+                        <Text size="xs" fw={500}>Stats</Text>
+                        <Button size="xs" variant="default" leftSection={<IconPlus size={14} />}
+                          onClick={() => { const pc = asRecord(content.proofCard); setContent((c) => ({ ...c, proofCard: { ...pc, stats: [...asArray<Record<string, unknown>>(pc.stats), { value: "", label: "" }] } })) }}
+                        >Add</Button>
+                      </Group>
+                      {asArray<Record<string, unknown>>(asRecord(content.proofCard).stats).map((s, si) => {
+                        const sr = asRecord(s)
+                        return (
+                          <Group key={si}>
+                            <TextInput style={{ flex: 1 }} label="Value" value={asString(sr.value)} onChange={(e) => { const pc = asRecord(content.proofCard); const stats = asArray<Record<string, unknown>>(pc.stats).slice(); stats[si] = { ...sr, value: inputValueFromEvent(e) }; setContent((c) => ({ ...c, proofCard: { ...pc, stats } })) }} />
+                            <TextInput style={{ flex: 1 }} label="Label" value={asString(sr.label)} onChange={(e) => { const pc = asRecord(content.proofCard); const stats = asArray<Record<string, unknown>>(pc.stats).slice(); stats[si] = { ...sr, label: inputValueFromEvent(e) }; setContent((c) => ({ ...c, proofCard: { ...pc, stats } })) }} />
+                            <ActionIcon variant="default" mt={22} onClick={() => { const pc = asRecord(content.proofCard); setContent((c) => ({ ...c, proofCard: { ...pc, stats: asArray<Record<string, unknown>>(pc.stats).filter((_, i) => i !== si) } })) }}><IconX size={16} /></ActionIcon>
+                          </Group>
+                        )
+                      })}
+                    </Stack>
+                  </Paper>
+                  <Text size="sm" fw={600}>Testimonial</Text>
+                  <Paper withBorder p="sm" radius="md">
+                    <Stack gap="xs">
+                      <Textarea label="Quote" autosize minRows={2} value={asString(asRecord(content.testimonial).quote)} onChange={(e) => setContent((c) => ({ ...c, testimonial: { ...asRecord(c.testimonial), quote: inputValueFromEvent(e) } }))} />
+                      <Group grow>
+                        <TextInput label="Author" value={asString(asRecord(content.testimonial).author)} onChange={(e) => setContent((c) => ({ ...c, testimonial: { ...asRecord(c.testimonial), author: inputValueFromEvent(e) } }))} />
+                        <TextInput label="Role" value={asString(asRecord(content.testimonial).role)} onChange={(e) => setContent((c) => ({ ...c, testimonial: { ...asRecord(c.testimonial), role: inputValueFromEvent(e) } }))} />
+                      </Group>
+                      <TextInput label="Image URL" value={asString(asRecord(content.testimonial).imageUrl)} onChange={(e) => setContent((c) => ({ ...c, testimonial: { ...asRecord(c.testimonial), imageUrl: inputValueFromEvent(e) } }))} />
+                    </Stack>
+                  </Paper>
+                </Stack>
+              ) : null}
+
+              {type === "case_study_split" ? (
+                <Stack gap="sm">
+                  <TextInput label="Eyebrow" value={asString(content.eyebrow)} onChange={(e) => setContent((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))} />
+                  <Textarea label="Narrative" autosize minRows={3} value={asString(content.narrative)} onChange={(e) => setContent((c) => ({ ...c, narrative: inputValueFromEvent(e) }))} />
+                  <Group grow>
+                    <TextInput label="Before label" placeholder="Before" value={asString(content.beforeLabel)} onChange={(e) => setContent((c) => ({ ...c, beforeLabel: inputValueFromEvent(e) }))} />
+                    <TextInput label="After label" placeholder="After" value={asString(content.afterLabel)} onChange={(e) => setContent((c) => ({ ...c, afterLabel: inputValueFromEvent(e) }))} />
+                  </Group>
+                  <Text size="sm" fw={600}>Before items</Text>
+                  <Stack gap="xs">
+                    {asStringArray(content.beforeItems).map((item, idx) => (
+                      <Group key={idx}>
+                        <TextInput style={{ flex: 1 }} value={item} onChange={(e) => { const next = asStringArray(content.beforeItems).slice(); next[idx] = inputValueFromEvent(e); setContent((c) => ({ ...c, beforeItems: next })) }} />
+                        <ActionIcon variant="default" onClick={() => setContent((c) => ({ ...c, beforeItems: asStringArray(c.beforeItems).filter((_, i) => i !== idx) }))}><IconX size={16} /></ActionIcon>
+                      </Group>
+                    ))}
+                    <Button size="xs" variant="default" leftSection={<IconPlus size={14} />}
+                      onClick={() => setContent((c) => ({ ...c, beforeItems: [...asStringArray(c.beforeItems), ""] }))}
+                    >Add</Button>
+                  </Stack>
+                  <Text size="sm" fw={600}>After items</Text>
+                  <Stack gap="xs">
+                    {asStringArray(content.afterItems).map((item, idx) => (
+                      <Group key={idx}>
+                        <TextInput style={{ flex: 1 }} value={item} onChange={(e) => { const next = asStringArray(content.afterItems).slice(); next[idx] = inputValueFromEvent(e); setContent((c) => ({ ...c, afterItems: next })) }} />
+                        <ActionIcon variant="default" onClick={() => setContent((c) => ({ ...c, afterItems: asStringArray(c.afterItems).filter((_, i) => i !== idx) }))}><IconX size={16} /></ActionIcon>
+                      </Group>
+                    ))}
+                    <Button size="xs" variant="default" leftSection={<IconPlus size={14} />}
+                      onClick={() => setContent((c) => ({ ...c, afterItems: [...asStringArray(c.afterItems), ""] }))}
+                    >Add</Button>
+                  </Stack>
+                  <Text size="sm" fw={600}>Media</Text>
+                  <Group grow>
+                    <TextInput label="Media title" value={asString(content.mediaTitle)} onChange={(e) => setContent((c) => ({ ...c, mediaTitle: inputValueFromEvent(e) }))} />
+                    <TextInput label="Image URL" value={asString(content.mediaImageUrl)} onChange={(e) => setContent((c) => ({ ...c, mediaImageUrl: inputValueFromEvent(e) }))} />
+                  </Group>
+                  <Group justify="space-between">
+                    <Text size="sm" fw={600}>Stats</Text>
+                    <Button size="xs" variant="default" leftSection={<IconPlus size={14} />}
+                      onClick={() => setContent((c) => ({ ...c, stats: [...asArray<Record<string, unknown>>(c.stats), { value: "", label: "" }] }))}
+                    >Add stat</Button>
+                  </Group>
+                  <Stack gap="xs">
+                    {asArray<Record<string, unknown>>(content.stats).map((s, idx) => {
+                      const sr = asRecord(s)
+                      return (
+                        <Group key={idx}>
+                          <TextInput style={{ flex: 1 }} label="Value" value={asString(sr.value)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.stats).slice(); next[idx] = { ...sr, value: inputValueFromEvent(e) }; setContent((c) => ({ ...c, stats: next })) }} />
+                          <TextInput style={{ flex: 1 }} label="Label" value={asString(sr.label)} onChange={(e) => { const next = asArray<Record<string, unknown>>(content.stats).slice(); next[idx] = { ...sr, label: inputValueFromEvent(e) }; setContent((c) => ({ ...c, stats: next })) }} />
+                          <ActionIcon variant="default" mt={22} onClick={() => setContent((c) => ({ ...c, stats: asArray<Record<string, unknown>>(c.stats).filter((_, i) => i !== idx) }))}><IconX size={16} /></ActionIcon>
+                        </Group>
                       )
                     })}
                   </Stack>

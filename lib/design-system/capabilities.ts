@@ -73,6 +73,30 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
   nav_links: {
     supported: [],
   },
+  social_proof_strip: {
+    supported: [...COMMON, "headingTreatment", "labelStyle"],
+  },
+  proof_cluster: {
+    supported: [
+      ...COMMON,
+      "contentDensity",
+      "headingTreatment",
+      "labelStyle",
+      "cardFamily",
+      "cardChrome",
+      "accentRule",
+    ],
+  },
+  case_study_split: {
+    supported: [
+      ...COMMON,
+      "contentDensity",
+      "headingTreatment",
+      "cardFamily",
+      "cardChrome",
+      "accentRule",
+    ],
+  },
   composed: {
     supported: [
       ...COMMON,
