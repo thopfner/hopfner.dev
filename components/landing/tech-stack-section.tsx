@@ -1,10 +1,16 @@
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import { FadeIn, StaggerContainer, StaggerItem, AnimatedCounter } from "@/components/landing/motion-primitives"
+import { LogoTicker } from "@/components/landing/logo-ticker"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
-import { Metric } from "@/components/ui/metric"
+import { resolveCardPresentation } from "@/lib/design-system/component-families"
+import {
+  DENSITY_GAP,
+  LABEL_STYLE_CLASSES,
+} from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
-type LayoutVariant = "default" | "metrics_grid" | "trust_strip" | "tool_badges" | "logo_row"
+type LayoutVariant = "default" | "metrics_grid" | "trust_strip" | "tool_badges" | "logo_row" | "marquee"
 
 export function TechStackSection({
   sectionId,
@@ -37,6 +43,9 @@ export function TechStackSection({
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
+  const density = ui?.density ?? "standard"
+  const labelStyle = ui?.labelStyle ?? "default"
+  const card = resolveCardPresentation(ui, { mode: "compact" })
 
   if (layoutVariant === "trust_strip") {
     return (
@@ -48,11 +57,14 @@ export function TechStackSection({
         containerStyle={containerStyle}
         rhythm={ui?.rhythm ?? "compact"}
         surface={ui?.surface}
+        density={ui?.density}
       >
           {title ? (
-            <p className="text-eyebrow mb-3 text-center text-muted-foreground">
-              {title}
-            </p>
+            <FadeIn>
+              <p className="text-eyebrow mb-3 text-center text-muted-foreground">
+                {title}
+              </p>
+            </FadeIn>
           ) : null}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             {items.map((item) => (
@@ -88,11 +100,14 @@ export function TechStackSection({
         containerStyle={containerStyle}
         rhythm={ui?.rhythm ?? "compact"}
         surface={ui?.surface}
+        density={ui?.density}
       >
           {title ? (
-            <p className="text-eyebrow mb-3 text-center text-muted-foreground">
-              {title}
-            </p>
+            <FadeIn>
+              <p className="text-eyebrow mb-3 text-center text-muted-foreground">
+                {title}
+              </p>
+            </FadeIn>
           ) : null}
           <div className="flex flex-wrap items-center justify-center gap-6">
             {items.map((item) =>
@@ -118,6 +133,30 @@ export function TechStackSection({
     )
   }
 
+  if (layoutVariant === "marquee") {
+    return (
+      <SectionShell
+        id={sectionId}
+        sectionClassName={sectionClassName}
+        sectionStyle={sectionStyle}
+        containerClassName={containerClassName}
+        containerStyle={containerStyle}
+        rhythm={ui?.rhythm ?? "compact"}
+        surface={ui?.surface}
+        density={ui?.density}
+      >
+        {title ? (
+          <FadeIn>
+            <p className="text-eyebrow mb-3 text-center text-muted-foreground">
+              {title}
+            </p>
+          </FadeIn>
+        ) : null}
+        <LogoTicker items={items} />
+      </SectionShell>
+    )
+  }
+
   if (layoutVariant === "tool_badges") {
     return (
       <SectionShell
@@ -129,18 +168,21 @@ export function TechStackSection({
         containerStyle={containerStyle}
         rhythm={ui?.rhythm}
         surface={ui?.surface}
+        density={ui?.density}
       >
-        <div className="space-y-1">
-          {hasEyebrow ? (
-            <p className="text-eyebrow text-muted-foreground">
-              {eyebrow}
-            </p>
-          ) : null}
-          <SectionHeading id="tech-title" title={title} />
-          {hasSubtitle ? (
-            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
-          ) : null}
-        </div>
+        <FadeIn>
+          <div className="space-y-1">
+            {hasEyebrow ? (
+              <p className="text-eyebrow text-muted-foreground">
+                {eyebrow}
+              </p>
+            ) : null}
+            <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
+            {hasSubtitle ? (
+              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
+        </FadeIn>
 
         <div className="flex flex-wrap gap-2">
           {items.map((item) => (
@@ -176,40 +218,56 @@ export function TechStackSection({
         containerStyle={containerStyle}
         rhythm={ui?.rhythm}
         surface={ui?.surface}
+        density={ui?.density}
       >
-        <div className="space-y-1">
-          {hasEyebrow ? (
-            <p className="text-eyebrow text-muted-foreground">
-              {eyebrow}
-            </p>
-          ) : null}
-          <SectionHeading id="tech-title" title={title} />
-          {hasSubtitle ? (
-            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
-          ) : null}
-        </div>
+        <FadeIn>
+          <div className="space-y-1">
+            {hasEyebrow ? (
+              <p className="text-eyebrow text-muted-foreground">
+                {eyebrow}
+              </p>
+            ) : null}
+            <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
+            {hasSubtitle ? (
+              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
+        </FadeIn>
 
-        <div className={cn(
-          "grid gap-3",
+        <StaggerContainer className={cn(
+          "grid",
+          DENSITY_GAP[density],
           compact ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         )}>
           {items.map((item) => (
-            <div
-              key={item.label}
-              className={cn(
-                "rounded-xl border border-border/50 bg-card/30 p-4 text-center",
-                !compact && "interactive-lift"
-              )}
-              style={panelStyle}
-            >
-              {item.icon ? <span className="mb-1 block text-xl">{item.icon}</span> : null}
-              <p className={cn("text-metric", compact ? "text-xl" : "text-2xl lg:text-3xl")}>
-                {item.value}
-              </p>
-              <p className="text-label-mono mt-0.5 text-muted-foreground">{item.label}</p>
-            </div>
+            <StaggerItem key={item.label} className="h-full">
+              <div
+                className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col text-center")}
+                style={panelStyle}
+              >
+                {item.icon ? <span className={cn("block text-xl", density === "tight" ? "mb-0.5" : density === "airy" ? "mb-2" : "mb-1")}>{item.icon}</span> : null}
+                <p className={cn("text-metric text-gradient", compact ? "text-xl" : "text-2xl lg:text-3xl")}>
+                  {(() => {
+                    const match = item.value.match(/^([^0-9]*)([\d,.]+)(.*)$/)
+                    if (match) {
+                      const [, pre, numStr, suf] = match
+                      const num = parseFloat(numStr.replace(/,/g, ""))
+                      return (
+                        <AnimatedCounter
+                          target={num}
+                          prefix={pre}
+                          suffix={suf}
+                        />
+                      )
+                    }
+                    return item.value
+                  })()}
+                </p>
+                <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-0.5")}>{item.label}</p>
+              </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </SectionShell>
     )
   }
@@ -225,31 +283,36 @@ export function TechStackSection({
       containerStyle={containerStyle}
       rhythm={ui?.rhythm}
       surface={ui?.surface}
+      density={ui?.density}
     >
-      <div className="space-y-1">
-        {hasEyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-            {eyebrow}
-          </p>
-        ) : null}
-        <SectionHeading id="tech-title" title={title} />
-        {hasSubtitle ? (
-          <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
-        ) : null}
-      </div>
+      <FadeIn>
+        <div className="space-y-1">
+          {hasEyebrow ? (
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+              {eyebrow}
+            </p>
+          ) : null}
+          <SectionHeading id="tech-title" title={title} headingTreatment={ui?.headingTreatment} />
+          {hasSubtitle ? (
+            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+          ) : null}
+        </div>
+      </FadeIn>
 
-      <div className={cn("grid grid-cols-1 sm:grid-cols-2", ui?.density === "tight" ? "gap-2" : "gap-3")}>
+      <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2", DENSITY_GAP[density])}>
         {items.map((item) => (
-          <Metric
-            key={item.label}
-            label={item.label}
-            value={<p className="text-muted-foreground">{item.value}</p>}
-            icon={item.icon ? <span>{item.icon}</span> : undefined}
-            className={cn("interactive-lift")}
-            style={panelStyle}
-          />
+          <StaggerItem key={item.label} className="h-full">
+            <div
+              className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col")}
+              style={panelStyle}
+            >
+              {item.icon ? <span>{item.icon}</span> : undefined}
+              <p className="text-muted-foreground">{item.value}</p>
+              <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-0.5")}>{item.label}</p>
+            </div>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerContainer>
     </SectionShell>
   )
 }

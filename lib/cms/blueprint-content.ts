@@ -7,6 +7,8 @@ export type SectionType =
   | "label_value_list"
   | "faq_list"
   | "cta_block"
+  | "nav_links"
+  | "footer_grid"
 
 export type SectionInput = {
   key: string | null
@@ -33,14 +35,22 @@ export type PageInput = {
   sections: SectionInput[]
 }
 
-const F_HERO = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "center", sectionRhythm: "hero", sectionSurface: "spotlight_stage", headingTreatment: "display" }
+const F_NAV = { maxWidth: "max-w-5xl", paddingY: "py-4", textAlign: "left", widthMode: "content" }
+const F_HERO = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "center", sectionRhythm: "hero", sectionSurface: "spotlight_stage", headingTreatment: "display", widthMode: "full" }
 const F_PROOF = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "proof", cardFamily: "proof", cardChrome: "outlined", contentDensity: "tight" }
-const F_SERVICE = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "standard", cardFamily: "service", cardChrome: "outlined" }
-const F_PROCESS = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "standard", cardFamily: "process", accentRule: "left", labelStyle: "mono" }
+const F_SERVICE = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "standard", cardFamily: "service", cardChrome: "elevated", contentDensity: "airy", sectionSurface: "spotlight_stage", accentRule: "left", gridGap: "wide" }
+const F_PROCESS = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "standard", cardFamily: "process", cardChrome: "outlined", accentRule: "left", labelStyle: "mono" }
 const F_COMPACT = { maxWidth: "max-w-5xl", paddingY: "py-4", textAlign: "left", sectionRhythm: "compact", contentDensity: "tight", labelStyle: "mono" }
 const F_CTA = { maxWidth: "max-w-5xl", paddingY: "py-8", textAlign: "center", sectionRhythm: "cta", sectionSurface: "contrast_band", headingTreatment: "display" }
 const F_LEFT = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left" }
 const F_CENTER = { maxWidth: "max-w-5xl", paddingY: "py-8", textAlign: "center" }
+
+// Elite formatting presets for home page sections
+const F_WHO = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "standard", sectionSurface: "soft_band", headingTreatment: "gradient", cardFamily: "quiet", cardChrome: "outlined", contentDensity: "standard", accentRule: "top" }
+const F_OUTCOMES = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "proof", sectionSurface: "soft_band", cardFamily: "proof", cardChrome: "outlined", contentDensity: "standard", labelStyle: "pill", accentRule: "inline", gridGap: "wide" }
+const F_TIMELINE = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "left", sectionRhythm: "standard", sectionSurface: "none", cardFamily: "process", cardChrome: "outlined", accentRule: "left", labelStyle: "mono", headingTreatment: "mono" }
+const F_METRICS = { maxWidth: "max-w-5xl", paddingY: "py-6", textAlign: "center", sectionRhythm: "proof", sectionSurface: "accent_glow", headingTreatment: "gradient_accent", cardFamily: "metric", cardChrome: "flat", contentDensity: "standard" }
+const F_FINAL_CTA = { maxWidth: "max-w-5xl", paddingY: "py-8", textAlign: "center", sectionRhythm: "cta", sectionSurface: "contrast_band", headingTreatment: "display", cardFamily: "cta", cardChrome: "glow" }
 
 export const BLUEPRINT_SOURCE_PATH =
   "/var/www/html/claw.hopfner.dev/data/openclaw-workspace/public/hopfner-dev-website-blueprint.md"
@@ -50,16 +60,45 @@ export const BLUEPRINT_PAGES: PageInput[] = [
     slug: "home",
     title: "Home",
     sections: [
+      // ── Navigation ──
       {
-        key: "hero",
-        section_type: "hero_cta",
+        key: "nav",
+        section_type: "nav_links",
         enabled: true,
         position: 0,
         version: {
           status: "published",
+          title: null,
+          subtitle: null,
+          cta_primary_label: null,
+          cta_primary_href: null,
+          cta_secondary_label: null,
+          cta_secondary_href: null,
+          background_media_url: null,
+          formatting: F_NAV,
+          content: {
+            logo: { alt: "Site logo", url: "", widthPx: 140 },
+            links: [
+              { href: "/home", label: "Home", anchorId: "services" },
+              { href: "/services", label: "Services", anchorId: "examples" },
+              { href: "/process", label: "Processes", anchorId: "faq" },
+              { href: "/contact", label: "Contact", anchorId: "contact" },
+              { href: "/blog", label: "Blog", anchorId: "" },
+            ],
+          },
+        },
+      },
+      // ── Hero ── (HIGH energy: spotlight_stage + display heading + terminal mockup)
+      {
+        key: "hero",
+        section_type: "hero_cta",
+        enabled: true,
+        position: 1,
+        version: {
+          status: "published",
           title: "Turn AI and Automation Into Measurable Business Efficiency",
           subtitle:
-            "I help teams map, redesign, and automate business workflows so you reduce operational drag, increase speed, and get more output from the same headcount.",
+            "I help teams map, redesign, and automate business workflows — reducing operational drag, increasing speed, and getting more output from the same headcount.",
           cta_primary_label: "Book a Workflow Mapping Call",
           cta_primary_href: "/book-a-call",
           cta_secondary_label: "See Services",
@@ -67,46 +106,77 @@ export const BLUEPRINT_PAGES: PageInput[] = [
           background_media_url: null,
           formatting: F_HERO,
           content: {
-            bullets: ["20–30 minutes.", "Practical review.", "No fluff."],
-            trustLine: "Built for English-speaking SMEs and startups in the Western hemisphere.",
+            eyebrow: "AI & Automation Consulting",
             layoutVariant: "split",
-            proofPanel: { type: "stats", headline: "Proven Results", items: [{ label: "Workflows automated", value: "50+" }, { label: "Avg time saved", value: "40%" }, { label: "Client retention", value: "95%" }, { label: "Platforms integrated", value: "30+" }] },
-            heroStats: [{ value: "50+", label: "Workflows" }, { value: "40%", label: "Time saved" }, { value: "95%", label: "Retention" }],
+            proofPanel: {
+              type: "mockup",
+              headline: "",
+              mockupVariant: "terminal",
+              items: [
+                { label: "hopfner analyze --workflows", value: "\u2192 Scanning 47 business processes..." },
+                { label: "", value: "\u2192 Found 12 automation opportunities" },
+                { label: "", value: "\u2192 Estimated efficiency gain: 340 hrs/quarter" },
+                { label: "hopfner deploy --priority high", value: "\u2713 Workflow automation deployed" },
+                { label: "", value: "\u2713 Integration tests passed" },
+                { label: "", value: "\u2713 Monitoring active" },
+              ],
+            },
+            heroStats: [
+              { value: "50+", label: "Workflows" },
+              { value: "40%", label: "Time saved" },
+              { value: "95%", label: "Retention" },
+            ],
+            trustItems: [
+              { text: "No long-term contracts" },
+              { text: "ROI-focused delivery" },
+              { text: "SME & startup specialists" },
+            ],
+            trustLine: "Built for teams who need execution, not theory.",
+            bullets: [],
           },
         },
       },
+      // ── Who It’s For ── (LOW energy: soft_band + gradient heading + cards layout)
       {
         key: "who-its-for",
         section_type: "title_body_list",
         enabled: true,
-        position: 1,
+        position: 2,
         version: {
           status: "published",
           title: "Who It’s For",
-          subtitle: null,
+          subtitle: "Teams that need operational leverage, not slide decks.",
           cta_primary_label: null,
           cta_primary_href: null,
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_LEFT,
+          formatting: F_WHO,
           content: {
+            layoutVariant: "cards",
             items: [
-              { title: "SMEs scaling faster than operations can handle", body: "" },
-              { title: "Startup teams buried in manual handoffs", body: "" },
               {
-                title: "Leaders who need AI adoption to create operational gains",
-                body: "Not just demos—repeatable execution.",
+                title: "SMEs Scaling Faster Than Operations Can Handle",
+                body: "Your team is growing but your processes haven’t kept up. Manual handoffs, context switching, and tribal knowledge are creating bottlenecks that compound every quarter.",
+              },
+              {
+                title: "Startup Teams Buried in Manual Handoffs",
+                body: "You’re spending engineering hours on repeatable tasks that should be automated. Every manual step is a risk to speed and quality.",
+              },
+              {
+                title: "Leaders Driving AI Adoption for Real Gains",
+                body: "You’ve seen the demos — now you need repeatable execution. Practical AI integration that your team actually uses, with measurable outcomes tied to business KPIs.",
               },
             ],
           },
         },
       },
+      // ── Core Outcomes ── (MEDIUM energy: soft_band + proof/outlined cards + pill labels)
       {
         key: "core-outcomes",
         section_type: "card_grid",
         enabled: true,
-        position: 2,
+        position: 3,
         version: {
           status: "published",
           title: "Core Outcomes",
@@ -116,145 +186,170 @@ export const BLUEPRINT_PAGES: PageInput[] = [
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_PROOF,
+          formatting: F_OUTCOMES,
           content: {
+            eyebrow: "What You Get",
+            sectionVariant: "value_pillars",
             cards: [
               {
                 title: "Reduce Process Friction",
-                text: "Remove repetitive manual steps across sales, ops, and delivery workflows.",
+                text: "Remove repetitive manual steps across sales, ops, and delivery workflows. Fewer touches per transaction, fewer errors per cycle.",
+                icon: "⚡",
                 image: { url: "", alt: "", widthPx: 240 },
-                display: {
-                  showTitle: true,
-                  showText: true,
-                  showImage: false,
-                  showYouGet: false,
-                  showBestFor: false,
-                  youGetMode: "block",
-                  bestForMode: "block",
-                },
+                display: { showTitle: true, showText: true, showImage: false, showYouGet: false, showBestFor: false, youGetMode: "block", bestForMode: "block" },
               },
               {
                 title: "Accelerate Decision Cycles",
-                text: "Turn fragmented data and tasks into automated flows and clearer execution.",
+                text: "Turn fragmented data and tasks into automated flows and clearer execution paths. Decisions that took days now take hours.",
+                icon: "📈",
                 image: { url: "", alt: "", widthPx: 240 },
-                display: {
-                  showTitle: true,
-                  showText: true,
-                  showImage: false,
-                  showYouGet: false,
-                  showBestFor: false,
-                  youGetMode: "block",
-                  bestForMode: "block",
-                },
+                display: { showTitle: true, showText: true, showImage: false, showYouGet: false, showBestFor: false, youGetMode: "block", bestForMode: "block" },
               },
               {
                 title: "Increase Team Leverage",
-                text: "Free your team from admin work so they focus on high-value tasks.",
+                text: "Free your team from admin work so they focus on high-value tasks. Same headcount, measurably more output.",
+                icon: "🔧",
                 image: { url: "", alt: "", widthPx: 240 },
-                display: {
-                  showTitle: true,
-                  showText: true,
-                  showImage: false,
-                  showYouGet: false,
-                  showBestFor: false,
-                  youGetMode: "block",
-                  bestForMode: "block",
-                },
+                display: { showTitle: true, showText: true, showImage: false, showYouGet: false, showBestFor: false, youGetMode: "block", bestForMode: "block" },
               },
             ],
           },
         },
       },
+      // ── Service Snapshot ── (HIGH energy: spotlight_stage + service/elevated + airy + youGet)
       {
         key: "service-snapshot",
         section_type: "card_grid",
         enabled: true,
-        position: 3,
+        position: 4,
         version: {
           status: "published",
-          title: "Service Snapshot",
-          subtitle: null,
-          cta_primary_label: "See Services",
+          title: "Services",
+          subtitle: "Practical AI and automation systems — scoped, built, and deployed.",
+          cta_primary_label: "Explore Services",
           cta_primary_href: "/services",
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
           formatting: F_SERVICE,
           content: {
+            eyebrow: "What I Do",
+            sectionVariant: "services",
             cards: [
-              { title: "Workflow Automation", text: "End-to-end automation of repetitive business workflows.", image: { url: "", alt: "", widthPx: 240 }, display: { showTitle: true, showText: true, showImage: false, showYouGet: false, showBestFor: false, youGetMode: "block", bestForMode: "block" } },
-              { title: "Enterprise AI & Automation Adoption", text: "Strategic rollout support so AI and automation are actually used by teams.", image: { url: "", alt: "", widthPx: 240 }, display: { showTitle: true, showText: true, showImage: false, showYouGet: false, showBestFor: false, youGetMode: "block", bestForMode: "block" } },
-              { title: "Enterprise Efficiency Programs", text: "Efficiency-focused transformation across key operational workflows.", image: { url: "", alt: "", widthPx: 240 }, display: { showTitle: true, showText: true, showImage: false, showYouGet: false, showBestFor: false, youGetMode: "block", bestForMode: "block" } },
+              {
+                title: "Workflow Automation",
+                text: "End-to-end automation of repetitive, cross-functional workflows. Less manual work, fewer errors, faster cycle times.",
+                youGet: ["Process mapping & redesign", "Automation build & deploy", "Integration with existing tools", "Monitoring & optimization"],
+                bestFor: "Teams with repeatable processes that consume 10+ hours/week",
+                image: { url: "", alt: "", widthPx: 240 },
+                display: { showTitle: true, showText: true, showImage: false, showYouGet: true, showBestFor: true, youGetMode: "list", bestForMode: "block" },
+              },
+              {
+                title: "AI & Automation Adoption",
+                text: "Strategic rollout support so AI and automation tools are actually used by teams — not just purchased.",
+                youGet: ["Readiness assessment", "Governance framework", "Role-based enablement", "Adoption tracking"],
+                bestFor: "Organizations with AI tools but inconsistent usage",
+                image: { url: "", alt: "", widthPx: 240 },
+                display: { showTitle: true, showText: true, showImage: false, showYouGet: true, showBestFor: true, youGetMode: "list", bestForMode: "block" },
+              },
+              {
+                title: "Enterprise Efficiency Programs",
+                text: "Efficiency-focused transformation across key operational workflows. Measurable gains in speed, quality, and capacity.",
+                youGet: ["Bottleneck analysis", "Process redesign", "Automation roadmap", "KPI framework"],
+                bestFor: "Operations teams tracking cycle time, throughput, or error rates",
+                image: { url: "", alt: "", widthPx: 240 },
+                display: { showTitle: true, showText: true, showImage: false, showYouGet: true, showBestFor: true, youGetMode: "list", bestForMode: "block" },
+              },
             ],
           },
         },
       },
+      // ── How Engagements Work ── (LOW energy: none surface + timeline + mono heading)
       {
         key: "how-engagements-work",
         section_type: "steps_list",
         enabled: true,
-        position: 4,
+        position: 5,
         version: {
           status: "published",
           title: "How Engagements Work",
-          subtitle: null,
+          subtitle: "A structured path from diagnosis to measurable operational gains.",
           cta_primary_label: "Book Your Optimization Review",
           cta_primary_href: "/book-a-call",
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_PROCESS,
+          formatting: F_TIMELINE,
           content: {
+            layoutVariant: "timeline",
             steps: [
-              { title: "Workflow Mapping", body: "" },
-              { title: "Opportunity Prioritization", body: "" },
-              { title: "Build + Integrate", body: "" },
-              { title: "Optimize + Scale", body: "" },
+              {
+                title: "Workflow Mapping",
+                body: "Map current-state processes, identify bottlenecks, and document where time and quality are being lost. You get a clear operational baseline.",
+              },
+              {
+                title: "Opportunity Prioritization",
+                body: "Rank automation and redesign opportunities by ROI, complexity, and speed-to-impact. Focus resources on the highest-leverage changes first.",
+              },
+              {
+                title: "Build + Integrate",
+                body: "Implement practical automations and AI-enabled workflows. Test, validate edge cases, and deploy with your existing tool stack.",
+              },
+              {
+                title: "Optimize + Scale",
+                body: "Run a tuning cadence to improve workflows, resolve drift, and expand automation scope. Track KPIs to prove and compound gains.",
+              },
             ],
           },
         },
       },
+      // ── Trust Proof ── (MEDIUM-HIGH energy: accent_glow + gradient_accent heading + metrics_grid)
       {
         key: "trust-proof",
         section_type: "label_value_list",
         enabled: true,
-        position: 5,
+        position: 6,
         version: {
           status: "published",
-          title: "Proof Metrics (Placeholder)",
+          title: "Proven Track Record",
           subtitle: null,
           cta_primary_label: null,
           cta_primary_href: null,
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
-          formatting: F_COMPACT,
+          formatting: F_METRICS,
           content: {
+            layoutVariant: "metrics_grid",
             items: [
-              { label: "Workflows built", value: "Add your metric" },
-              { label: "Average time saved per process", value: "Add your metric" },
-              { label: "Tools/platforms integrated", value: "Add your metric" },
-              { label: "Industries served", value: "Add your metric" },
+              { label: "Workflows automated", value: "50+" },
+              { label: "Avg time saved per process", value: "40%" },
+              { label: "Client retention rate", value: "95%" },
+              { label: "Platforms integrated", value: "30+" },
             ],
           },
         },
       },
+      // ── Final CTA ── (HIGH energy: contrast_band + display heading + high_contrast layout)
       {
         key: "final-cta",
         section_type: "cta_block",
         enabled: true,
-        position: 6,
+        position: 7,
         version: {
           status: "published",
-          title: "Ready to find your highest-ROI automation opportunities?",
+          title: "Ready to Find Your Highest-ROI Automation Opportunities?",
           subtitle: null,
           cta_primary_label: "Book a Workflow Mapping Call",
           cta_primary_href: "/book-a-call",
-          cta_secondary_label: null,
-          cta_secondary_href: null,
+          cta_secondary_label: "See Services",
+          cta_secondary_href: "/services",
           background_media_url: null,
-          formatting: F_CTA,
-          content: { body: "Practical recommendations you can implement fast." },
+          formatting: F_FINAL_CTA,
+          content: {
+            layoutVariant: "high_contrast",
+            body: "In one focused call, we’ll identify bottlenecks, shortlist automation opportunities, and define practical next steps. No generic strategy deck — you leave with concrete actions.",
+          },
         },
       },
     ],

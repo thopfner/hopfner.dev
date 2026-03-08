@@ -1,37 +1,60 @@
 // Shared class maps for component family tokens.
 // One authoritative definition of each family's visual identity.
 
-import type { CardFamily, CardChrome, AccentRule } from "./tokens"
+import type { CardFamily, CardChrome, AccentRule, ContentDensity, ResolvedSectionUi } from "./tokens"
+import {
+  DENSITY_PADDING,
+  DENSITY_GAP,
+  DENSITY_HEADER_PADDING,
+  DENSITY_BODY_PADDING,
+  DENSITY_COMPACT_PADDING,
+} from "./presentation"
 import { cn } from "@/lib/utils"
 
-/** Base styling per card family — the family's visual identity. */
+/** Base styling per card family — the family's visual identity.
+ *
+ * Each family is intentionally distinct in border, bg, shadow, radius, and emphasis strategy:
+ * - quiet: minimal, matte, restrained
+ * - service: premium, accent-tinted, elevated, ring
+ * - proof: editorial, matte gradient, no ring/glow
+ * - process: structural, directional left rail, flat
+ * - metric: data-forward, centered, crisp border
+ * - logo_tile: utility, minimal, centered
+ * - cta: action-oriented, strongest accent
+ */
 export const FAMILY_CLASSES: Record<CardFamily, string> = {
-  quiet: "border border-border/30 bg-card/15 rounded-xl",
+  quiet:
+    "border border-border/20 bg-card/[0.06] rounded-xl",
   service:
-    "border border-accent/20 bg-gradient-to-b from-accent/[0.06] via-card/20 to-card/5 shadow-sm ring-1 ring-accent/[0.07] rounded-xl",
-  metric: "border border-border/40 bg-card/25 text-center rounded-xl",
+    "border border-accent/25 bg-gradient-to-b from-accent/[0.10] via-card/[0.14] to-card/[0.03] shadow-lg ring-1 ring-accent/[0.12] rounded-2xl",
+  metric:
+    "border-2 border-border/40 bg-card/[0.08] text-center rounded-lg shadow-sm",
   process:
-    "border-l-[3px] border-l-accent/50 border border-border/30 bg-card/15 rounded-lg rounded-l-none",
-  proof: "border border-border/40 bg-gradient-to-b from-card/15 to-card/5 rounded-xl",
+    "border-l-[3px] border-l-accent/60 border border-border/25 bg-card/[0.05] rounded-lg rounded-l-none",
+  proof:
+    "border border-border/35 bg-gradient-to-b from-card/[0.14] to-card/[0.04] rounded-xl",
   logo_tile:
-    "border border-border/20 bg-card/10 flex items-center justify-center rounded-lg",
-  cta: "border border-accent/30 bg-accent/[0.06] rounded-xl shadow-sm",
+    "border border-border/15 bg-card/[0.04] flex items-center justify-center rounded-lg",
+  cta:
+    "border-2 border-accent/35 bg-gradient-to-br from-accent/[0.10] to-accent/[0.03] rounded-2xl shadow-lg ring-1 ring-accent/[0.10]",
 }
 
 /** Chrome modifiers layer on top of a family — never used standalone. */
 export const CHROME_MODIFIERS: Record<CardChrome, string> = {
-  flat: "border-transparent shadow-none",
-  outlined: "ring-1 ring-border/20",
-  elevated: "shadow-md shadow-black/20",
-  inset: "shadow-[inset_0_1px_4px_rgba(0,0,0,0.25)] bg-card/10",
+  flat: "border-transparent shadow-none ring-0",
+  outlined: "ring-1 ring-border/30 shadow-none",
+  elevated: "shadow-lg shadow-black/25 ring-1 ring-white/[0.04]",
+  inset: "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] bg-card/[0.06]",
+  glow: "card-glow-hover shadow-lg",
 }
 
 /** Full chrome replacements for legacy mode (no family set). */
 export const CHROME_STANDALONE: Record<CardChrome, string> = {
   flat: "border-transparent bg-card/20",
-  outlined: "border border-border/50 bg-card/20 ring-1 ring-border/15",
-  elevated: "border border-border/40 bg-card/30 shadow-md shadow-black/20",
-  inset: "border border-border/30 bg-card/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.25)]",
+  outlined: "border border-border/50 bg-card/20 ring-1 ring-border/20",
+  elevated: "border border-border/40 bg-card/30 shadow-lg shadow-black/25",
+  inset: "border border-border/30 bg-card/[0.06] shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)]",
+  glow: "border border-border/40 bg-card/20 card-glow-hover shadow-lg",
 }
 
 /** Accent rule classes applied to cards. */
@@ -47,7 +70,7 @@ export const DEFAULT_CARD_CLASS = "surface-panel interactive-lift"
 
 /** Service-family internal structure classes — applied inside the card for enhanced hierarchy. */
 export const SERVICE_CARD_INNER = {
-  headerClass: "relative pb-3 mb-1 border-b border-accent/10",
+  headerClass: "relative pb-3 mb-2 border-b border-accent/15",
   titleClass: "text-base font-semibold tracking-tight",
   bodyClass: "text-sm text-muted-foreground leading-relaxed",
   tagClass: "text-[10px] font-semibold uppercase tracking-widest text-accent/70",
@@ -77,4 +100,103 @@ export function resolveCardClasses(
     cardClass: cn(base, chromeModifier, accent),
     isInlineAccent: accentRule === "inline",
   }
+}
+
+// ---------------------------------------------------------------------------
+// Structural spacing helpers — centralized so renderers don't re-derive
+// ---------------------------------------------------------------------------
+
+export type CardStructuralMode = "standard" | "compact" | "accordion" | "cta"
+
+export type CardSpacing = {
+  /** Root-level padding class for the card container. */
+  rootPadding: string
+  /** Header area padding (for cards with distinct header/body). */
+  headerPadding: string
+  /** Body area padding. */
+  bodyPadding: string
+  /** Internal gap between children. */
+  gap: string
+}
+
+/** Accordion-specific padding recipes per density level. */
+const ACCORDION_ROOT_PADDING: Record<ContentDensity, string> = {
+  tight: "px-3",
+  standard: "px-4",
+  airy: "px-6",
+}
+const ACCORDION_TRIGGER_PADDING: Record<ContentDensity, string> = {
+  tight: "py-2.5",
+  standard: "py-3.5",
+  airy: "py-5",
+}
+const ACCORDION_CONTENT_PADDING: Record<ContentDensity, string> = {
+  tight: "pb-3",
+  standard: "pb-4",
+  airy: "pb-6",
+}
+
+/** CTA card padding recipes per density level. */
+const CTA_ROOT_PADDING: Record<ContentDensity, string> = {
+  tight: "px-4 py-4",
+  standard: "px-6 py-6",
+  airy: "px-8 py-8 sm:px-10 sm:py-10",
+}
+
+/**
+ * Resolves card-internal spacing from density + structural mode.
+ * Centralizes the padding/gap recipes so renderers don't invent their own.
+ */
+export function resolveCardSpacing(density: ContentDensity = "standard", mode: CardStructuralMode = "standard"): CardSpacing {
+  switch (mode) {
+    case "compact":
+      return {
+        rootPadding: DENSITY_COMPACT_PADDING[density],
+        headerPadding: DENSITY_COMPACT_PADDING[density],
+        bodyPadding: DENSITY_COMPACT_PADDING[density],
+        gap: DENSITY_GAP[density],
+      }
+    case "accordion":
+      return {
+        rootPadding: ACCORDION_ROOT_PADDING[density],
+        headerPadding: ACCORDION_TRIGGER_PADDING[density],
+        bodyPadding: ACCORDION_CONTENT_PADDING[density],
+        gap: DENSITY_GAP[density],
+      }
+    case "cta":
+      return {
+        rootPadding: CTA_ROOT_PADDING[density],
+        headerPadding: "",
+        bodyPadding: "",
+        gap: DENSITY_GAP[density],
+      }
+    default: // "standard"
+      return {
+        rootPadding: DENSITY_PADDING[density],
+        headerPadding: DENSITY_HEADER_PADDING[density],
+        bodyPadding: DENSITY_BODY_PADDING[density],
+        gap: DENSITY_GAP[density],
+      }
+  }
+}
+
+/**
+ * Convenience: resolves both card classes and spacing from the full UI object.
+ * This is the recommended entry point for section renderers.
+ */
+export function resolveCardPresentation(
+  ui: ResolvedSectionUi | undefined,
+  options?: { mode?: CardStructuralMode }
+): {
+  cardClass: string
+  isInlineAccent: boolean
+  spacing: CardSpacing
+} {
+  const { cardClass, isInlineAccent } = ui?.componentFamily
+    ? resolveCardClasses(ui.componentFamily, ui.componentChrome, ui.accentRule)
+    : { cardClass: DEFAULT_CARD_CLASS, isInlineAccent: false }
+
+  const spacing = resolveCardSpacing(ui?.density ?? "standard", options?.mode ?? "standard")
+
+  return { cardClass, isInlineAccent, spacing }
 }

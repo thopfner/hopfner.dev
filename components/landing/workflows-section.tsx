@@ -4,10 +4,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { Card, CardContent } from "@/components/ui/card"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
+import { resolveCardPresentation } from "@/lib/design-system/component-families"
+import {
+  DENSITY_ITEM_SPACING,
+  DENSITY_GAP,
+  DIVIDER_CLASSES,
+} from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -42,6 +48,11 @@ export function WorkflowsSection({
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
+  const density = ui?.density ?? "standard"
+  const dividerMode = ui?.dividerMode ?? "none"
+  const dividerClass = dividerMode !== "none" ? DIVIDER_CLASSES[dividerMode] : ""
+  const card = resolveCardPresentation(ui, { mode: "compact" })
+  const accordionCard = resolveCardPresentation(ui, { mode: "accordion" })
 
   const headerBlock = (
     <div className="space-y-1">
@@ -50,7 +61,7 @@ export function WorkflowsSection({
           {eyebrow}
         </p>
       ) : null}
-      <SectionHeading id="examples-title" title={title} />
+      <SectionHeading id="examples-title" title={title} headingTreatment={ui?.headingTreatment} />
       {hasSubtitle ? (
         <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
       ) : null}
@@ -68,27 +79,29 @@ export function WorkflowsSection({
         containerStyle={containerStyle}
         rhythm={ui?.rhythm}
         surface={ui?.surface}
+        density={ui?.density}
       >
-        {headerBlock}
-        <div className="space-y-3">
+        <FadeIn>{headerBlock}</FadeIn>
+        <StaggerContainer className={cn(DENSITY_ITEM_SPACING[density], dividerClass)}>
           {items.map((item, idx) => (
-            <div
-              key={`${item.title}-${idx}`}
-              className="rounded-xl border border-border/50 bg-card/30 px-4 py-3"
-              style={panelStyle}
-            >
-              <p className="text-sm font-semibold">{item.title}</p>
-              {item.bodyHtml?.trim() ? (
-                <div
-                  className={cn("mt-1 text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                  dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
-                />
-              ) : item.body ? (
-                <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
-              ) : null}
-            </div>
+            <StaggerItem key={`${item.title}-${idx}`}>
+              <div
+                className={cn(card.cardClass, card.spacing.rootPadding)}
+                style={panelStyle}
+              >
+                <p className="text-sm font-semibold">{item.title}</p>
+                {item.bodyHtml?.trim() ? (
+                  <div
+                    className={cn(card.spacing.gap, "text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                    dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
+                  />
+                ) : item.body ? (
+                  <p className={cn(card.spacing.gap, "text-sm text-muted-foreground")}>{item.body}</p>
+                ) : null}
+              </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </SectionShell>
     )
   }
@@ -104,27 +117,29 @@ export function WorkflowsSection({
         containerStyle={containerStyle}
         rhythm={ui?.rhythm}
         surface={ui?.surface}
+        density={ui?.density}
       >
-        {headerBlock}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <FadeIn>{headerBlock}</FadeIn>
+        <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2", DENSITY_GAP[density])}>
           {items.map((item, idx) => (
-            <div
-              key={`${item.title}-${idx}`}
-              className="rounded-xl border border-border/50 bg-card/30 px-4 py-3"
-              style={panelStyle}
-            >
-              <p className="text-sm font-semibold">{item.title}</p>
-              {item.bodyHtml?.trim() ? (
-                <div
-                  className={cn("mt-1 text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                  dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
-                />
-              ) : item.body ? (
-                <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
-              ) : null}
-            </div>
+            <StaggerItem key={`${item.title}-${idx}`} className="h-full">
+              <div
+                className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col")}
+                style={panelStyle}
+              >
+                <p className="text-sm font-semibold">{item.title}</p>
+                {item.bodyHtml?.trim() ? (
+                  <div
+                    className={cn(card.spacing.gap, "text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                    dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
+                  />
+                ) : item.body ? (
+                  <p className={cn(card.spacing.gap, "text-sm text-muted-foreground")}>{item.body}</p>
+                ) : null}
+              </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </SectionShell>
     )
   }
@@ -140,29 +155,29 @@ export function WorkflowsSection({
         containerStyle={containerStyle}
         rhythm={ui?.rhythm}
         surface={ui?.surface}
+        density={ui?.density}
       >
-        {headerBlock}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <FadeIn>{headerBlock}</FadeIn>
+        <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3", DENSITY_GAP[density])}>
           {items.map((item, idx) => (
-            <Card
-              key={`${item.title}-${idx}`}
-              className="surface-panel interactive-lift gap-2 py-4"
-              style={panelStyle}
-            >
-              <CardContent className="space-y-1 px-4">
+            <StaggerItem key={`${item.title}-${idx}`} className="h-full">
+              <div
+                className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col")}
+                style={panelStyle}
+              >
                 <p className="text-sm font-semibold">{item.title}</p>
                 {item.bodyHtml?.trim() ? (
                   <div
-                    className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                    className={cn(card.spacing.gap, "text-sm text-muted-foreground", RICH_TEXT_CLASS)}
                     dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                   />
                 ) : item.body ? (
-                  <p className="text-sm text-muted-foreground">{item.body}</p>
+                  <p className={cn(card.spacing.gap, "text-sm text-muted-foreground")}>{item.body}</p>
                 ) : null}
-              </CardContent>
-            </Card>
+              </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </SectionShell>
     )
   }
@@ -178,21 +193,22 @@ export function WorkflowsSection({
       containerStyle={containerStyle}
       rhythm={ui?.rhythm}
       surface={ui?.surface}
+      density={ui?.density}
     >
-      {headerBlock}
+      <FadeIn>{headerBlock}</FadeIn>
 
       <Accordion
         type="single"
         collapsible
-        className="surface-panel px-4"
+        className={cn(accordionCard.cardClass, accordionCard.spacing.rootPadding, dividerClass)}
         style={panelStyle}
       >
         {items.map((item) => (
           <AccordionItem key={item.title} value={item.title}>
-            <AccordionTrigger className="py-3.5 text-sm sm:text-base">
+            <AccordionTrigger className={cn("text-sm sm:text-base", accordionCard.spacing.headerPadding)}>
               {item.title}
             </AccordionTrigger>
-            <AccordionContent className="pb-4 text-muted-foreground">
+            <AccordionContent className={cn("text-muted-foreground", accordionCard.spacing.bodyPadding)}>
               {item.bodyHtml?.trim() ? (
                 <div
                   className={cn("text-sm", RICH_TEXT_CLASS)}

@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/landing/motion-primitives"
+import { SectionIcon } from "@/components/landing/section-icon"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
@@ -143,20 +145,23 @@ export function WhatIDeliverSection({
       containerStyle={containerStyle}
       rhythm={ui?.rhythm}
       surface={ui?.surface}
+      density={ui?.density}
     >
-        <div className="space-y-1">
-          {hasEyebrow ? (
-            <p className="text-eyebrow text-muted-foreground">
-              {eyebrow}
-            </p>
-          ) : null}
-          <SectionHeading id="services-title" title={title} />
-          {hasSubtitle ? (
-            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
-          ) : null}
-        </div>
+        <FadeIn>
+          <div className="space-y-1">
+            {hasEyebrow ? (
+              <p className="text-eyebrow text-muted-foreground">
+                {eyebrow}
+              </p>
+            ) : null}
+            <SectionHeading id="services-title" title={title} headingTreatment={ui?.headingTreatment} />
+            {hasSubtitle ? (
+              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
+        </FadeIn>
 
-        <div className={cn("grid", GRID_GAP_CLASSES[ui?.gridGap ?? "standard"], gridCols)}>
+        <StaggerContainer className={cn("grid", GRID_GAP_CLASSES[ui?.gridGap ?? "standard"], gridCols)}>
           {cards.map((item, idx) => {
             const hasYouGetBlock =
               item.display.showYouGet &&
@@ -184,36 +189,37 @@ export function WhatIDeliverSection({
 
             if (sectionVariant === "logo_tiles") {
               return (
-                <div
-                  key={`${item.title}-${idx}`}
-                  className={cn(
-                    "rounded-xl border border-border/40 bg-card/20 p-4",
-                    "flex items-center justify-center",
-                    resolved ? resolved.cardClass : toneClasses[cardTone]
-                  )}
-                  style={panelStyle}
-                >
-                  {item.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.imageUrl}
-                      alt={item.imageAlt || item.title}
-                      className="h-8 max-w-[120px] object-contain opacity-70 grayscale"
-                    />
-                  ) : (
-                    <span className="text-sm font-medium text-muted-foreground">{item.title}</span>
-                  )}
-                </div>
+                <StaggerItem key={`${item.title}-${idx}`} className="h-full">
+                  <div
+                    className={cn(
+                      "h-full rounded-xl border border-border/40 bg-card/20 p-4",
+                      "flex items-center justify-center",
+                      resolved ? resolved.cardClass : toneClasses[cardTone]
+                    )}
+                    style={panelStyle}
+                  >
+                    {item.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.imageUrl}
+                        alt={item.imageAlt || item.title}
+                        className="h-8 max-w-[120px] object-contain opacity-70 grayscale"
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-muted-foreground">{item.title}</span>
+                    )}
+                  </div>
+                </StaggerItem>
               )
             }
 
             // Service family: enhanced internal structure
             if (isServiceFamily) {
               return (
+                <StaggerItem key={`${item.title}-${idx}`} className="h-full">
                 <Card
-                  key={`${item.title}-${idx}`}
                   className={cn(
-                    "gap-0 overflow-hidden",
+                    "h-full gap-0 overflow-hidden",
                     DENSITY_PADDING[density],
                     resolved?.cardClass
                   )}
@@ -233,7 +239,7 @@ export function WhatIDeliverSection({
                       </span>
                     ) : null}
                     {hasIcon ? (
-                      <span className="text-xl">{item.icon}</span>
+                      <SectionIcon icon={item.icon} size={density === "tight" ? "sm" : "md"} />
                     ) : null}
                     {hasStat ? (
                       <p className="text-metric text-2xl">{item.stat}</p>
@@ -246,6 +252,7 @@ export function WhatIDeliverSection({
                   </CardHeader>
 
                   <CardContent className={cn(
+                    "flex-1",
                     DENSITY_BODY_PADDING[density],
                     density === "airy" ? "space-y-4" : density === "tight" ? "space-y-1.5" : "space-y-3"
                   )}>
@@ -316,14 +323,16 @@ export function WhatIDeliverSection({
                     ) : null}
                   </CardContent>
                 </Card>
+                </StaggerItem>
               )
             }
 
             // Default / other families
             return (
+              <StaggerItem key={`${item.title}-${idx}`} className="h-full">
               <Card
-                key={`${item.title}-${idx}`}
                 className={cn(
+                  "h-full",
                   DENSITY_GAP[density],
                   DENSITY_PADDING[density],
                   resolved
@@ -351,14 +360,14 @@ export function WhatIDeliverSection({
                     </div>
                   </div>
                 ) : null}
-                <CardHeader className={cn(DENSITY_HEADER_PADDING[density], DENSITY_GAP[density])}>
+                <CardHeader className={cn("flex-1", DENSITY_HEADER_PADDING[density], DENSITY_GAP[density])}>
                   {hasTag ? (
                     <span className={cn("w-fit", LABEL_STYLE_CLASSES[labelStyle])}>
                       {item.tag}
                     </span>
                   ) : null}
                   {hasIcon ? (
-                    <span className="text-lg">{item.icon}</span>
+                    <SectionIcon icon={item.icon} size={density === "tight" ? "sm" : "md"} />
                   ) : null}
                   {hasStat ? (
                     <p className="text-metric text-2xl">{item.stat}</p>
@@ -422,9 +431,10 @@ export function WhatIDeliverSection({
                   </CardContent>
                 ) : null}
               </Card>
+              </StaggerItem>
             )
           })}
-        </div>
+        </StaggerContainer>
     </SectionShell>
   )
 }

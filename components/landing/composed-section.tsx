@@ -2,13 +2,15 @@ import type { CSSProperties } from "react"
 import Link from "next/link"
 
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import { SectionIcon } from "@/components/landing/section-icon"
+import { AnimatedCounter } from "@/components/landing/motion-primitives"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GRID_GAP_CLASSES } from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
+import { resolveCardPresentation, resolveCardSpacing, type CardSpacing } from "@/lib/design-system/component-families"
 import { cn } from "@/lib/utils"
 import { tiptapJsonToSanitizedHtml } from "@/lib/cms/rich-text"
 
@@ -81,7 +83,19 @@ type SemanticContext = {
   contentDensity?: string
 }
 
-function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: SemanticContext) {
+type CardPres = { cardClass: string; isInlineAccent: boolean; spacing: CardSpacing; accordionSpacing: CardSpacing }
+
+function renderMetricValue(value: string, className?: string) {
+  const match = value.match(/^([^0-9]*)([\d,.]+)(.*)$/)
+  if (match) {
+    const [, prefix, numStr, suffix] = match
+    const num = parseFloat(numStr.replace(/,/g, ""))
+    return <AnimatedCounter target={num} prefix={prefix} suffix={suffix} className={className} />
+  }
+  return <span className={className}>{value}</span>
+}
+
+function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: SemanticContext, cp?: CardPres) {
   // --- Original block types ---
 
   if (b.type === "heading") {
@@ -163,8 +177,8 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
       <ol key={b.id} className="grid grid-cols-1 gap-4">
         {items.map((step, idx) => (
           <li key={`${b.id}-${idx}`} className="relative">
-            <Card className="surface-panel interactive-lift gap-3 py-4" style={panelStyle}>
-              <CardContent className="space-y-2 px-4">
+            <div className={cn(cp?.cardClass, cp?.spacing.gap, cp?.spacing.rootPadding)} style={panelStyle}>
+              <div className={cn("space-y-2", cp?.spacing.bodyPadding)}>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="min-w-7 justify-center rounded-full">
                     {idx + 1}
@@ -175,8 +189,8 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
                   <p className="text-sm font-medium sm:text-base">{step.title}</p>
                   {step.body ? <p className="text-sm text-muted-foreground">{step.body}</p> : null}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </li>
         ))}
       </ol>
@@ -188,13 +202,12 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
     return (
       <div key={b.id} className="space-y-2">
         {(cards.length ? cards : [{ title: "Card", body: "Card body" }]).map((card, i) => (
-          <Card key={`${b.id}-${i}`} className="surface-panel interactive-lift gap-3 py-4" style={panelStyle}>
-            <CardHeader className="gap-1 px-4 pb-0">
+          <div key={`${b.id}-${i}`} className={cn(cp?.cardClass, cp?.spacing.gap, cp?.spacing.rootPadding)} style={panelStyle}>
+            <div className={cn(cp?.spacing.headerPadding)}>
               <h3 className="text-sm font-semibold leading-none">{card.title}</h3>
-              {card.body ? <p className="text-sm text-muted-foreground">{card.body}</p> : null}
-            </CardHeader>
-            {!card.body ? <CardContent className="px-4" /> : null}
-          </Card>
+              {card.body ? <p className="mt-1 text-sm text-muted-foreground">{card.body}</p> : null}
+            </div>
+          </div>
         ))}
       </div>
     )
@@ -204,7 +217,7 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
     const faqs = Array.isArray(b.faqs) ? b.faqs : []
     const entries = faqs.length ? faqs : [{ q: "Question", a: "Answer" }]
     return (
-      <Accordion key={b.id} type="single" collapsible className="surface-panel px-3" style={panelStyle}>
+      <Accordion key={b.id} type="single" collapsible className={cn(cp?.cardClass, cp?.accordionSpacing.rootPadding)} style={panelStyle}>
         {entries.map((faq, i) => (
           <AccordionItem key={`${b.id}-${i}`} value={`${b.id}-${i}`}>
             <AccordionTrigger>{faq.q}</AccordionTrigger>
@@ -286,11 +299,11 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
         {metrics.map((m, i) => (
           <div
             key={`${b.id}-${i}`}
-            className="rounded-xl border border-border/50 bg-card/30 p-4 text-center"
+            className={cn(cp?.cardClass, cp?.spacing.rootPadding, "text-center")}
             style={panelStyle}
           >
-            {m.icon ? <span className="mb-1 block text-xl">{m.icon}</span> : null}
-            <p className="text-2xl font-bold tracking-tight">{m.value}</p>
+            {m.icon ? <SectionIcon icon={m.icon} size="sm" className="mx-auto mb-1" /> : null}
+            <p className="text-2xl font-bold tracking-tight">{renderMetricValue(m.value)}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{m.label}</p>
           </div>
         ))}
@@ -318,8 +331,8 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
 
   if (b.type === "proof_card") {
     return (
-      <Card key={b.id} className="surface-panel gap-2 py-4" style={panelStyle}>
-        <CardContent className="space-y-2 px-4">
+      <div key={b.id} className={cn(cp?.cardClass, cp?.spacing.gap, cp?.spacing.rootPadding)} style={panelStyle}>
+        <div className={cn("space-y-2", cp?.spacing.bodyPadding)}>
           {b.title ? <p className="text-sm font-semibold">{b.title}</p> : null}
           {b.body ? <p className="text-sm text-muted-foreground">{b.body}</p> : null}
           {b.stats && b.stats.length > 0 ? (
@@ -332,8 +345,8 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
               ))}
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
@@ -341,22 +354,25 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
     return (
       <div
         key={b.id}
-        className="rounded-xl border border-border/50 bg-card/30 px-5 py-4"
+        className={cn(cp?.cardClass, cp?.spacing.rootPadding)}
         style={panelStyle}
       >
         {b.quote ? (
-          <blockquote className="text-sm italic text-muted-foreground">
-            &ldquo;{b.quote}&rdquo;
-          </blockquote>
+          <div className="border-l-2 border-accent/30 pl-4">
+            <span className="block text-4xl leading-none text-accent/20" aria-hidden>&ldquo;</span>
+            <blockquote className="mt-1 text-base leading-relaxed italic text-muted-foreground">
+              {b.quote}
+            </blockquote>
+          </div>
         ) : null}
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-4 flex items-center gap-3">
           {b.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={b.imageUrl} alt={b.author || ""} className="h-8 w-8 rounded-full object-cover" />
           ) : null}
           <div>
-            {b.author ? <p className="text-sm font-medium">{b.author}</p> : null}
-            {b.role ? <p className="text-xs text-muted-foreground">{b.role}</p> : null}
+            {b.author ? <p className="text-sm font-semibold">{b.author}</p> : null}
+            {b.role ? <p className="text-sm text-muted-foreground">{b.role}</p> : null}
           </div>
         </div>
       </div>
@@ -390,7 +406,7 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
         <div className="flex flex-col gap-0 sm:flex-row sm:items-center sm:gap-0">
           {flowSteps.map((step, idx) => (
             <div key={`${b.id}-${idx}`} className="flex flex-1 flex-col items-center sm:flex-row">
-              <div className="flex w-full flex-1 flex-col rounded-lg border border-border/50 bg-card/30 p-3 text-center">
+              <div className={cn("flex w-full flex-1 flex-col text-center", cp?.cardClass, cp?.spacing.rootPadding)}>
                 <p className="text-sm font-medium">{step.label}</p>
                 {step.description ? (
                   <p className="mt-0.5 text-xs text-muted-foreground">{step.description}</p>
@@ -416,7 +432,7 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
     const afterItems = Array.isArray(b.afterItems) ? b.afterItems : []
     return (
       <div key={b.id} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-border/50 bg-card/20 p-4" style={panelStyle}>
+        <div className={cn(cp?.cardClass, cp?.spacing.rootPadding)} style={panelStyle}>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {b.beforeLabel || "Before"}
           </p>
@@ -429,7 +445,7 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
             ))}
           </ul>
         </div>
-        <div className="rounded-xl border border-accent/30 bg-accent/[0.04] p-4" style={panelStyle}>
+        <div className={cn(cp?.cardClass, cp?.spacing.rootPadding, "border-accent/30")} style={panelStyle}>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-accent/80">
             {b.afterLabel || "After"}
           </p>
@@ -453,10 +469,10 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
         {stats.map((s, i) => (
           <div
             key={`${b.id}-${i}`}
-            className="rounded-lg border border-border/40 bg-card/20 px-4 py-2 text-center"
+            className={cn(cp?.cardClass, cp?.spacing.rootPadding, "text-center")}
             style={panelStyle}
           >
-            <p className="text-lg font-bold tracking-tight">{s.value}</p>
+            <p className="text-lg font-bold tracking-tight">{renderMetricValue(s.value)}</p>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</p>
           </div>
         ))}
@@ -524,6 +540,11 @@ export function ComposedSection({
   // Semantic context passed to renderBlock
   const semantics: SemanticContext = { headingTreatment: ui?.headingTreatment, labelStyle: ui?.labelStyle, contentDensity: ui?.density }
 
+  // Shared card presentation for all card-like blocks
+  const { cardClass, isInlineAccent, spacing } = resolveCardPresentation(ui, { mode: "compact" })
+  const accordionSpacing = resolveCardSpacing(ui?.density ?? "standard", "accordion")
+  const cp: CardPres = { cardClass, isInlineAccent, spacing, accordionSpacing }
+
   return (
     <SectionShell
       id={sectionId}
@@ -534,6 +555,7 @@ export function ComposedSection({
       widthMode={s.tokens?.widthMode}
       rhythm={ui?.rhythm}
       surface={ui?.surface}
+      density={ui?.density}
     >
       {title?.trim() ? <SectionHeading id={`${sectionId ?? "composed"}-title`} title={title.trim()} /> : null}
       {subtitle?.trim() ? <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">{subtitle.trim()}</p> : null}
@@ -559,7 +581,7 @@ export function ComposedSection({
                 <div key={col.id} className={densityClass}>
                   {(Array.isArray(col.blocks) ? col.blocks : []).map((rawBlock) => {
                     const b = withCustomContent(rawBlock, customBlocks)
-                    return renderBlock(b, panelStyle, semantics)
+                    return renderBlock(b, panelStyle, semantics, cp)
                   })}
                 </div>
               ))}

@@ -23,7 +23,8 @@ const COMMON: SemanticControl[] = ["sectionRhythm", "sectionSurface"]
 
 export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
   hero_cta: {
-    supported: [...COMMON, "headingTreatment"],
+    supported: ["headingTreatment"],
+    notes: { sectionRhythm: "Hero uses bespoke layout; rhythm/surface not applicable" },
   },
   card_grid: {
     supported: [
@@ -40,29 +41,34 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
   steps_list: {
     supported: [
       ...COMMON,
+      "contentDensity",
+      "headingTreatment",
       "cardFamily",
+      "cardChrome",
       "accentRule",
       "labelStyle",
       "dividerMode",
     ],
   },
   title_body_list: {
-    supported: [...COMMON, "contentDensity", "dividerMode", "headingTreatment"],
+    supported: [...COMMON, "contentDensity", "dividerMode", "headingTreatment", "cardFamily", "cardChrome", "accentRule"],
   },
   rich_text_block: {
-    supported: [...COMMON, "headingTreatment"],
+    supported: [...COMMON, "contentDensity", "headingTreatment", "cardFamily", "cardChrome", "accentRule"],
   },
   label_value_list: {
-    supported: [...COMMON, "contentDensity", "labelStyle"],
+    supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
+    notes: { cardFamily: "Only applies to default and metrics_grid layouts" },
   },
   faq_list: {
-    supported: [...COMMON, "dividerMode"],
+    supported: [...COMMON, "contentDensity", "headingTreatment", "dividerMode", "cardFamily", "cardChrome", "accentRule"],
   },
   cta_block: {
-    supported: [...COMMON, "headingTreatment"],
+    supported: [...COMMON, "contentDensity", "headingTreatment", "cardFamily", "cardChrome", "accentRule"],
   },
   footer_grid: {
-    supported: ["sectionRhythm"],
+    supported: [],
+    notes: { sectionRhythm: "Footer renderer has no design-system integration" },
   },
   nav_links: {
     supported: [],
@@ -75,6 +81,9 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "headingTreatment",
       "labelStyle",
       "dividerMode",
+      "cardFamily",
+      "cardChrome",
+      "accentRule",
     ],
   },
 }

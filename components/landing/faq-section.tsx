@@ -5,9 +5,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
+import { FadeIn } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { DIVIDER_CLASSES } from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
+import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -33,6 +35,8 @@ export function FaqSection({
   ui?: ResolvedSectionUi
 }) {
   const dividerClass = ui?.dividerMode ? DIVIDER_CLASSES[ui.dividerMode] : ""
+  const { cardClass, spacing } = resolveCardPresentation(ui, { mode: "accordion" })
+
   return (
     <SectionShell
       id={sectionId}
@@ -43,21 +47,24 @@ export function FaqSection({
       containerStyle={containerStyle}
       rhythm={ui?.rhythm}
       surface={ui?.surface}
+      density={ui?.density}
     >
-      <SectionHeading id="faq-title" title={title} />
+      <FadeIn>
+        <SectionHeading id="faq-title" title={title} headingTreatment={ui?.headingTreatment} />
+      </FadeIn>
 
       <Accordion
         type="single"
         collapsible
-        className={cn("surface-panel px-4", dividerClass)}
+        className={cn(cardClass, spacing.rootPadding, dividerClass)}
         style={panelStyle}
       >
         {items.map((item) => (
           <AccordionItem key={item.question} value={item.question}>
-            <AccordionTrigger className="py-3.5 text-sm sm:text-base">
+            <AccordionTrigger className={cn("text-sm sm:text-base", spacing.headerPadding)}>
               {item.question}
             </AccordionTrigger>
-            <AccordionContent className="pb-4 text-muted-foreground">
+            <AccordionContent className={cn("text-muted-foreground", spacing.bodyPadding)}>
               {item.answerHtml.trim() ? (
                 <div
                   className={cn("text-sm", RICH_TEXT_CLASS)}

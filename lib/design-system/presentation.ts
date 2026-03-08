@@ -4,22 +4,26 @@
 import type { Rhythm, Surface, ContentDensity, GridGap, DividerMode, HeadingTreatment, LabelStyle } from "./tokens"
 
 export const RHYTHM_CLASSES: Record<Rhythm, string> = {
-  hero: "py-12 sm:py-20",
-  statement: "py-10 sm:py-14",
-  compact: "py-3 sm:py-5",
-  standard: "py-8 sm:py-12",
-  proof: "py-6 sm:py-9",
-  cta: "py-10 sm:py-16",
-  footer: "py-6 sm:py-8",
+  hero: "py-16 sm:py-24 lg:py-28",
+  statement: "py-12 sm:py-16",
+  compact: "py-6 sm:py-8",
+  standard: "py-10 sm:py-14 lg:py-16",
+  proof: "py-8 sm:py-12 lg:py-14",
+  cta: "py-14 sm:py-20 lg:py-24",
+  footer: "py-8 sm:py-10",
 }
 
 export const SURFACE_CLASSES: Record<Surface, string> = {
   none: "",
   panel: "surface-panel",
-  soft_band: "bg-card/[0.05] border-y border-border/25",
-  contrast_band: "bg-card/[0.12] border-y border-border/50",
-  spotlight_stage: "relative bg-gradient-to-b from-accent/[0.04] to-transparent border-y border-accent/[0.10]",
-  grid_stage: "relative bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--accent)/0.06),transparent_70%)]",
+  soft_band: "bg-card/[0.07] border-y border-border/35",
+  contrast_band: "bg-card/[0.16] border-y border-border/60",
+  spotlight_stage: "relative bg-gradient-to-b from-accent/[0.07] to-transparent border-y border-accent/[0.15]",
+  grid_stage: "relative bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,color-mix(in_oklch,var(--accent)_9%,transparent),transparent_70%)]",
+  gradient_mesh: "surface-gradient-mesh",
+  accent_glow: "surface-accent-glow",
+  dark_elevated: "surface-dark-elevated",
+  dot_grid: "surface-dot-grid",
 }
 
 /** Card internal padding per density level. */
@@ -40,27 +44,41 @@ export const DENSITY_GAP: Record<ContentDensity, string> = {
 export const DENSITY_HEADER_PADDING: Record<ContentDensity, string> = {
   tight: "px-3 pt-3 pb-0",
   standard: "px-4 pt-4 pb-0",
-  airy: "px-5 pt-5 pb-0",
+  airy: "px-6 pt-6 pb-0",
 }
 
 /** Card body padding per density level. */
 export const DENSITY_BODY_PADDING: Record<ContentDensity, string> = {
   tight: "px-3 pb-3",
   standard: "px-4 pb-4",
-  airy: "px-5 pb-5",
+  airy: "px-6 pb-6",
 }
 
 /** Section content gap per density level — between heading block and content grid. */
 export const DENSITY_SECTION_GAP: Record<ContentDensity, string> = {
-  tight: "space-y-3",
-  standard: "space-y-5 sm:space-y-6",
-  airy: "space-y-6 sm:space-y-8",
+  tight: "space-y-4 sm:space-y-5",
+  standard: "space-y-6 sm:space-y-7",
+  airy: "space-y-8 sm:space-y-10",
+}
+
+/** Compact panel padding per density — for simple items without header/body split. */
+export const DENSITY_COMPACT_PADDING: Record<ContentDensity, string> = {
+  tight: "px-3 py-2.5",
+  standard: "px-4 py-3.5",
+  airy: "px-6 py-5",
+}
+
+/** Spacing between stacked items per density level. */
+export const DENSITY_ITEM_SPACING: Record<ContentDensity, string> = {
+  tight: "space-y-2",
+  standard: "space-y-3 sm:space-y-4",
+  airy: "space-y-5 sm:space-y-6",
 }
 
 export const GRID_GAP_CLASSES: Record<GridGap, string> = {
-  tight: "gap-2",
-  standard: "gap-4",
-  wide: "gap-6",
+  tight: "gap-3",
+  standard: "gap-5",
+  wide: "gap-8",
 }
 
 export const DIVIDER_CLASSES: Record<DividerMode, string> = {
@@ -74,6 +92,10 @@ export const HEADING_TREATMENT_CLASSES: Record<HeadingTreatment, string> = {
   default: "",
   display: "text-display",
   mono: "text-label-mono uppercase tracking-widest",
+  gradient: "text-gradient",
+  gradient_accent: "text-gradient-accent",
+  display_xl: "text-display-xl",
+  display_lg: "text-display-lg",
 }
 
 /** Label style classes — applied to tags, badges, eyebrows, micro-labels. */

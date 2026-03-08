@@ -1,7 +1,9 @@
-import { Card, CardContent } from "@/components/ui/card"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
+import { FadeIn } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
+import { resolveCardPresentation } from "@/lib/design-system/component-families"
+import { HEADING_TREATMENT_CLASSES } from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
@@ -28,6 +30,8 @@ export function WhyThisApproachSection({
   bodyHtml: string
   ui?: ResolvedSectionUi
 }) {
+  const { cardClass, spacing } = resolveCardPresentation(ui)
+
   return (
     <SectionShell
       id={sectionId}
@@ -38,18 +42,23 @@ export function WhyThisApproachSection({
       containerStyle={containerStyle}
       rhythm={ui?.rhythm}
       surface={ui?.surface}
+      density={ui?.density}
     >
-        <SectionHeading id="why-title" title={title} headingTreatment={ui?.headingTreatment} />
+        <FadeIn>
+          <SectionHeading id="why-title" title={title} headingTreatment={ui?.headingTreatment} />
+        </FadeIn>
 
-        <Card className="surface-panel gap-3 py-4" style={panelStyle}>
-          <CardContent className="space-y-2 px-4">
-            <h3 className={cn("text-sm font-semibold", ui?.headingTreatment === "display" && "text-display text-base", ui?.headingTreatment === "mono" && "text-label-mono")}>{heading}</h3>
+        <FadeIn delay={0.1}>
+        <div className={cn(cardClass, spacing.gap, spacing.rootPadding)} style={panelStyle}>
+          <div className={cn("space-y-2", spacing.bodyPadding)}>
+            <h3 className={cn("text-sm font-semibold", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{heading}</h3>
             <div
               className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+        </FadeIn>
     </SectionShell>
   )
 }

@@ -214,15 +214,15 @@ INSERT INTO public.section_control_capabilities
    supports_card_family, supports_card_chrome, supports_accent_rule, supports_divider_mode,
    supports_heading_treatment, supports_label_style)
 VALUES
-  ('hero_cta',        true, true, false, false, false, false, false, false, true,  false),
-  ('card_grid',       true, true, true,  true,  true,  true,  true,  true,  false,  true),
-  ('steps_list',      true, true, false, false, true,  false, true,  true,  false, true),
+  ('hero_cta',        false,false,false, false, false, false, false, false, false, false),
+  ('card_grid',       true, true, true,  true,  true,  true,  true,  true,  false, true),
+  ('steps_list',      true, true, true,  false, true,  true,  true,  true,  true,  true),
   ('title_body_list', true, true, true,  false, false, false, false, true,  true,  false),
-  ('rich_text_block', true, true, false, false, false, false, false, false, true,  false),
-  ('label_value_list',true, true, true,  false, false, false, false, false, false, true),
-  ('faq_list',        true, true, false, false, false, false, false, true,  false, false),
-  ('cta_block',       true, true, false, false, false, false, false, false, true,  false),
-  ('footer_grid',     true, false,false, false, false, false, false, false, false, false),
+  ('rich_text_block', true, true, true,  false, false, false, false, false, true,  false),
+  ('label_value_list',true, true, true,  false, false, false, false, false, true,  true),
+  ('faq_list',        true, true, true,  false, false, false, false, true,  true,  false),
+  ('cta_block',       true, true, true,  false, false, false, false, false, true,  false),
+  ('footer_grid',     false,false,false, false, false, false, false, false, false, false),
   ('nav_links',       false,false,false, false, false, false, false, false, false, false)
 ON CONFLICT (section_type, variant_key) DO UPDATE SET
   supports_rhythm = EXCLUDED.supports_rhythm,

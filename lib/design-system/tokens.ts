@@ -4,7 +4,7 @@
 export const RHYTHMS = ["hero", "statement", "compact", "standard", "proof", "cta", "footer"] as const
 export type Rhythm = (typeof RHYTHMS)[number]
 
-export const SURFACES = ["none", "panel", "soft_band", "contrast_band", "spotlight_stage", "grid_stage"] as const
+export const SURFACES = ["none", "panel", "soft_band", "contrast_band", "spotlight_stage", "grid_stage", "gradient_mesh", "accent_glow", "dark_elevated", "dot_grid"] as const
 export type Surface = (typeof SURFACES)[number]
 
 export const DENSITIES = ["tight", "standard", "airy"] as const
@@ -13,7 +13,7 @@ export type ContentDensity = (typeof DENSITIES)[number]
 export const GRID_GAPS = ["tight", "standard", "wide"] as const
 export type GridGap = (typeof GRID_GAPS)[number]
 
-export const HEADING_TREATMENTS = ["default", "display", "mono"] as const
+export const HEADING_TREATMENTS = ["default", "display", "mono", "gradient", "gradient_accent", "display_xl", "display_lg"] as const
 export type HeadingTreatment = (typeof HEADING_TREATMENTS)[number]
 
 export const LABEL_STYLES = ["default", "mono", "pill", "micro"] as const
@@ -25,7 +25,7 @@ export type DividerMode = (typeof DIVIDER_MODES)[number]
 export const CARD_FAMILIES = ["quiet", "service", "metric", "process", "proof", "logo_tile", "cta"] as const
 export type CardFamily = (typeof CARD_FAMILIES)[number]
 
-export const CARD_CHROMES = ["flat", "outlined", "elevated", "inset"] as const
+export const CARD_CHROMES = ["flat", "outlined", "elevated", "inset", "glow"] as const
 export type CardChrome = (typeof CARD_CHROMES)[number]
 
 export const ACCENT_RULES = ["none", "top", "left", "inline"] as const

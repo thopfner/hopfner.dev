@@ -286,13 +286,17 @@ function sectionContainerProps(
     asString(formatting.shadowColorToken) || "var(--section-shadow-color)"
 
   const panelOpacity = clampNumber(formatting.pagePanelOpacity, 0, 1, 1)
-  ;(panelStyle as CSSProperties & Record<string, string>)["--page-panel-opacity"] = String(panelOpacity)
-  panelStyle.backgroundColor = `color-mix(in srgb, var(--card) ${Math.round(panelOpacity * 100)}%, transparent)`
+  const panelVars = panelStyle as CSSProperties & Record<string, string>
+  panelVars["--page-panel-opacity"] = String(panelOpacity)
+  // Pass bg and shadow as CSS custom properties — never as direct inline styles.
+  // This lets class-based card family/chrome styles control the visual result,
+  // while surface-panel and other defaults can read these vars as fallback.
+  panelVars["--panel-bg"] = `color-mix(in srgb, var(--card) ${Math.round(panelOpacity * 100)}%, transparent)`
 
   const boxShadowLayers: string[] = []
   if (outerShadowOn) boxShadowLayers.push("var(--section-shadow-ambient)", "var(--section-shadow-lift)")
   if (innerShadowOn) boxShadowLayers.push("var(--section-inner-shadow)")
-  panelStyle.boxShadow = boxShadowLayers.length ? boxShadowLayers.join(", ") : "var(--shadow-sm)"
+  panelVars["--panel-shadow"] = boxShadowLayers.length ? boxShadowLayers.join(", ") : "var(--shadow-sm)"
 
   const widthMode = asString(formatting.widthMode)
   const align = asString(formatting.alignment)
@@ -522,7 +526,7 @@ export default async function MarketingPage({
       {signatureNoiseOpacity > 0 ? <div aria-hidden className="sig-noise-layer" /> : null}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_50%_0%,hsl(var(--foreground)/0.10),transparent_55%),radial-gradient(700px_circle_at_50%_100%,hsl(var(--foreground)/0.06),transparent_50%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_50%_0%,color-mix(in_oklch,var(--foreground)_10%,transparent),transparent_55%),radial-gradient(700px_circle_at_50%_100%,color-mix(in_oklch,var(--foreground)_6%,transparent),transparent_50%)]"
       />
       <TopBackdrop imageUrl={pageBackdropEnabled ? pageBgImageUrl : null} imageOpacity={topBgImageOpacity} navOverlayOpacity={topNavOverlayOpacity} scope={topBackdropScope}>
         {header ? (
@@ -581,7 +585,7 @@ export default async function MarketingPage({
 
           const previousSection = index > 0 ? orderedBodySections[index - 1] : null
           const isImmediatelyAfterHero = previousSection?.section_type === "hero_cta"
-          const sectionBgColor = resolveSectionBackgroundColor(formatting, rootBackgroundColor || "hsl(var(--background))")
+          const sectionBgColor = resolveSectionBackgroundColor(formatting, rootBackgroundColor || "var(--background)")
           const shouldForceAfterHeroBg = isImmediatelyAfterHero && !fullPageBackdropMode
           const adjustedProps = shouldForceAfterHeroBg
             ? {
@@ -596,7 +600,7 @@ export default async function MarketingPage({
           switch (section.section_type) {
             case "hero_cta": {
               const nextSection = index < orderedBodySections.length - 1 ? orderedBodySections[index + 1] : null
-              let nextSectionBgColor = rootBackgroundColor || "hsl(var(--background))"
+              let nextSectionBgColor = rootBackgroundColor || "var(--background)"
               if (nextSection) {
                 const nextDefaults = defaultsFor(nextSection.section_type)
                 const nextFormatting = deepMerge(
@@ -611,7 +615,7 @@ export default async function MarketingPage({
                 )
                 nextSectionBgColor = resolveSectionBackgroundColor(
                   nextFormatting,
-                  rootBackgroundColor || "hsl(var(--background))"
+                  rootBackgroundColor || "var(--background)"
                 )
               }
 
@@ -676,6 +680,7 @@ export default async function MarketingPage({
                   proofPanel={heroProofPanel}
                   trustItems={heroTrustItems.length > 0 ? heroTrustItems : undefined}
                   heroStats={heroStatsArr.length > 0 ? heroStatsArr : undefined}
+                  headingTreatment={ui.headingTreatment}
                 />
               )
             }

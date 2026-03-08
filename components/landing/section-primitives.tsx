@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react"
 
-import { RHYTHM_CLASSES, SURFACE_CLASSES, HEADING_TREATMENT_CLASSES } from "@/lib/design-system/presentation"
-import type { Rhythm, Surface, HeadingTreatment } from "@/lib/design-system/tokens"
+import { RHYTHM_CLASSES, SURFACE_CLASSES, HEADING_TREATMENT_CLASSES, DENSITY_SECTION_GAP } from "@/lib/design-system/presentation"
+import type { Rhythm, Surface, HeadingTreatment, ContentDensity } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
 
 export function SectionShell({
@@ -15,6 +15,7 @@ export function SectionShell({
   widthMode,
   rhythm,
   surface,
+  density,
   children,
 }: {
   id?: string
@@ -27,9 +28,11 @@ export function SectionShell({
   widthMode?: "content" | "full"
   rhythm?: Rhythm
   surface?: Surface
+  density?: ContentDensity
   children: ReactNode
 }) {
   const maxW = widthMode === "full" ? "max-w-7xl" : "max-w-5xl"
+  const stackGap = density ? DENSITY_SECTION_GAP[density] : "space-y-6 sm:space-y-7"
 
   return (
     <section
@@ -44,9 +47,9 @@ export function SectionShell({
         sectionClassName,
         className
       )}
-      style={sectionStyle}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 500px", ...sectionStyle }}
     >
-      <div className={cn("mx-auto space-y-5 px-4 sm:space-y-6", maxW, containerClassName)} style={containerStyle}>
+      <div className={cn("mx-auto px-4", stackGap, maxW, containerClassName)} style={containerStyle}>
         {children}
       </div>
     </section>
@@ -54,6 +57,7 @@ export function SectionShell({
 }
 
 export function SectionHeading({ id, title, headingTreatment }: { id: string; title: string; headingTreatment?: HeadingTreatment }) {
+  const isGradient = headingTreatment === "gradient" || headingTreatment === "gradient_accent"
   return (
     <h2
       id={id}
@@ -61,7 +65,7 @@ export function SectionHeading({ id, title, headingTreatment }: { id: string; ti
         "text-heading text-balance text-xl sm:text-2xl",
         headingTreatment ? HEADING_TREATMENT_CLASSES[headingTreatment] : ""
       )}
-      style={{ color: "var(--foreground)" }}
+      style={isGradient ? undefined : { color: "var(--foreground)" }}
     >
       {title}
     </h2>
