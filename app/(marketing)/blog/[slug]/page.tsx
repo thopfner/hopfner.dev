@@ -10,7 +10,7 @@ type Params = {
 }
 
 function absoluteUrl(path: string): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://hopfner.dev"
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:3010"
   return `${siteUrl}${path}`
 }
 
@@ -24,7 +24,7 @@ export async function generateMetadata({
 
   if (!post) {
     return {
-      title: "Blog post not found | hopfner.dev",
+      title: `Blog post not found | ${process.env.NEXT_PUBLIC_SITE_NAME || "Site"}`,
     }
   }
 

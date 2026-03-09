@@ -11,7 +11,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Next.js inlines NEXT_PUBLIC_* at build time — source them from .env.local
-RUN set -a && . ./.env.local && set +a && npm run build
+RUN set -a && . ./.env.local && npm run build
 
 # Stage 3: Production runner
 FROM node:20-alpine AS runner

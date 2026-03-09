@@ -11,7 +11,7 @@ import { BlogFilterBar } from "@/components/blog/blog-filter-bar"
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "Blog | hopfner.dev",
+  title: `Blog | ${process.env.NEXT_PUBLIC_SITE_NAME || "Site"}`,
   description: "Automation and AI insights, case-driven practical guides, and execution playbooks.",
 }
 
