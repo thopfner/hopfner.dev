@@ -150,6 +150,7 @@ function accentDerivedVars(accentColor: string): Record<string, string> {
   if (!accentColor) return {}
   return {
     "--accent": accentColor,
+    "--accent-glow": accentColor,
     "--border": `color-mix(in srgb, ${accentColor} 45%, transparent)`,
     "--input": `color-mix(in srgb, ${accentColor} 38%, transparent)`,
     "--ring": `color-mix(in srgb, ${accentColor} 72%, white 8%)`,
@@ -418,6 +419,8 @@ export default async function MarketingPage({
   const siteTokens = asRecord(siteFormattingSettings.tokens)
   const pageTokens = asRecord(pageFormattingOverride.tokens)
   const mergedTokens = deepMerge(siteTokens, pageTokens)
+  const colorMode = asString(mergedTokens.colorMode) || "dark"
+  const isLightMode = colorMode === "light"
   const rootFontFamily = asString(mergedTokens.fontFamily) || asString(siteFormattingSettings.fontFamily)
   const rootFontScale = clampNumber(mergedTokens.fontScale ?? siteFormattingSettings.fontScale ?? 1, 0.8, 1.4, 1)
   const rootRadiusScale = clampNumber(mergedTokens.radiusScale ?? 1, 0, 1.8, 1)
@@ -522,10 +525,14 @@ export default async function MarketingPage({
   return (
     <div className={cn(
       "relative min-h-dvh bg-background",
+      isLightMode ? "light" : "dark",
       signatureStyle === "obsidian_signal" && "sig-obsidian-signal",
       signatureStyle === "grid_rays" && "sig-grid-rays",
       signatureStyle === "topographic_dark" && "sig-topographic-dark"
-    )} style={rootStyle}>
+    )} style={{
+      colorScheme: isLightMode ? "light" : "dark",
+      ...rootStyle,
+    }}>
       {signatureNoiseOpacity > 0 ? <div aria-hidden className="sig-noise-layer" /> : null}
       <div
         aria-hidden

@@ -19,7 +19,7 @@ export const SURFACE_CLASSES: Record<Surface, string> = {
   soft_band: "bg-[color-mix(in_oklch,var(--foreground)_6%,var(--background))]",
   contrast_band: "bg-[color-mix(in_oklch,var(--foreground)_12%,var(--background))]",
   spotlight_stage: "relative bg-[linear-gradient(to_bottom,color-mix(in_oklch,var(--accent-glow)_16%,transparent),transparent_65%)]",
-  grid_stage: "relative bg-[radial-gradient(ellipse_90%_55%_at_50%_-20%,color-mix(in_oklch,var(--accent-glow)_20%,transparent),transparent_70%)]",
+  grid_stage: "relative bg-[radial-gradient(ellipse_100%_60%_at_50%_-5%,color-mix(in_oklch,var(--accent-glow)_35%,transparent),transparent_75%)]",
   gradient_mesh: "surface-gradient-mesh",
   accent_glow: "surface-accent-glow",
   dark_elevated: "surface-dark-elevated",

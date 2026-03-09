@@ -61,8 +61,8 @@
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: oklch(0.50 0.16 264);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
@@ -80,6 +80,27 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+.light {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.50 0.16 264);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
 }
 
 .dark {
@@ -257,15 +278,22 @@
 
   .surface-accent-glow {
     position: relative;
+    border-top: 1px solid color-mix(in oklch, var(--accent-glow) 30%, transparent);
+    border-bottom: 1px solid color-mix(in oklch, var(--accent-glow) 20%, transparent);
+    border-left: 1px solid color-mix(in oklch, var(--accent-glow) 12%, transparent);
+    border-right: 1px solid color-mix(in oklch, var(--accent-glow) 12%, transparent);
   }
   .surface-accent-glow::before {
     content: '';
     position: absolute;
     inset: 0;
-    background:
-      radial-gradient(800px circle at 50% 0%, color-mix(in oklch, var(--accent-glow) 18%, transparent), transparent 70%),
-      radial-gradient(600px circle at 50% 100%, color-mix(in oklch, var(--accent-glow) 12%, transparent), transparent 60%);
     pointer-events: none;
+    z-index: 0;
+    background:
+      linear-gradient(to bottom, color-mix(in oklch, var(--accent-glow) 14%, transparent) 0%, transparent 25%),
+      linear-gradient(to top, color-mix(in oklch, var(--accent-glow) 10%, transparent) 0%, transparent 25%),
+      linear-gradient(to right, color-mix(in oklch, var(--accent-glow) 7%, transparent) 0%, transparent 12%),
+      linear-gradient(to left, color-mix(in oklch, var(--accent-glow) 7%, transparent) 0%, transparent 12%);
   }
 
   .surface-dark-elevated {
@@ -411,12 +439,12 @@
       90deg,
       transparent,
       transparent 79px,
-      var(--sig-color, rgba(120,140,255,0.03)) 79px,
-      var(--sig-color, rgba(120,140,255,0.03)) 80px
+      var(--sig-color, rgba(120,140,255,0.06)) 79px,
+      var(--sig-color, rgba(120,140,255,0.06)) 80px
     );
-  opacity: var(--sig-grid-opacity, 0.06);
-  mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+  opacity: var(--sig-grid-opacity, 0.3);
+  mask-image: linear-gradient(to bottom, black 0%, transparent 85%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 85%);
 }
 
 .sig-topographic-dark::before {

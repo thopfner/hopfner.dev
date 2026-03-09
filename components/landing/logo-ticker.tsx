@@ -34,27 +34,14 @@ export function LogoTicker({
         <img
           src={item.imageUrl}
           alt={item.label}
-          className="h-6 w-auto object-contain transition-[filter] duration-300"
-          style={{
-            filter: "grayscale(1) brightness(0.7)",
-          }}
+          className="h-8 w-auto object-contain opacity-70 transition-opacity duration-300"
         />
       ) : item.icon ? (
-        <span
-          className="text-lg transition-[filter] duration-300"
-          style={{
-            filter: "grayscale(1) brightness(0.7)",
-          }}
-        >
+        <span className="text-lg opacity-70 transition-opacity duration-300">
           {item.icon}
         </span>
       ) : null}
-      <span
-        className="whitespace-nowrap text-xs font-medium text-muted-foreground transition-[filter] duration-300"
-        style={{
-          filter: "grayscale(1) brightness(0.7)",
-        }}
-      >
+      <span className="whitespace-nowrap text-xs font-medium text-muted-foreground/70 transition-opacity duration-300">
         {item.label}
       </span>
     </div>

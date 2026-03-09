@@ -148,7 +148,7 @@ export function ProofClusterSection({
                   {proofCardStyle.isInlineAccent ? (
                     <div aria-hidden className="mb-2 h-0.5 w-6 rounded-full bg-accent/50" />
                   ) : null}
-                  <h3 className="text-base font-semibold tracking-tight">{proofCard!.title}</h3>
+                  <h3 className="text-base font-semibold tracking-tight text-foreground">{proofCard!.title}</h3>
                   <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{proofCard!.body}</p>
                   {proofCard!.stats.length > 0 ? (
                     <div className={cn("mt-5 flex flex-wrap gap-6 border-t pt-4", dividerBorder)}>
@@ -190,7 +190,7 @@ export function ProofClusterSection({
                       </div>
                     )}
                     <div>
-                      <p className="text-sm font-semibold tracking-tight">{testimonial!.author}</p>
+                      <p className="text-sm font-semibold tracking-tight text-foreground">{testimonial!.author}</p>
                       <p className="text-[11px] tracking-wide text-muted-foreground/60">{testimonial!.role}</p>
                     </div>
                   </div>

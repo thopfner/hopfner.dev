@@ -73,7 +73,7 @@ export function FinalCtaSection({
               {hasEyebrow ? (
                 <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
               ) : null}
-              <p className={cn("text-sm font-semibold sm:text-base", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</p>
+              <p className={cn("text-sm font-semibold text-foreground sm:text-base", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</p>
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
               <Button size="sm" variant="secondary" asChild>
@@ -170,7 +170,7 @@ export function FinalCtaSection({
               {hasEyebrow ? (
                 <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mx-auto")}>{eyebrow}</p>
               ) : null}
-              <h2 className={cn("text-balance text-2xl font-bold tracking-tight sm:text-3xl", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</h2>
+              <h2 className={cn("text-balance text-2xl font-bold tracking-tight text-foreground sm:text-3xl", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</h2>
               {bodyHtml?.trim() ? (
                 <div
                   className={cn("mx-auto max-w-xl text-sm text-muted-foreground", RICH_TEXT_CLASS)}

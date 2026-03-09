@@ -652,6 +652,7 @@ function settingsFingerprint(input: Record<string, unknown>) {
   const s = asRecord(input)
   const t = asRecord(s.tokens)
   const picked = {
+    colorMode: String(t.colorMode ?? "dark"),
     fontFamily: String(t.fontFamily ?? s.fontFamily ?? ""),
     fontScale: Number(t.fontScale ?? s.fontScale ?? 1),
     spaceScale: Number(t.spaceScale ?? t.spacingScale ?? 1),
@@ -689,6 +690,7 @@ export function GlobalSectionsPage() {
   const [shadowScale, setShadowScale] = useState(1)
   const [innerShadowScale, setInnerShadowScale] = useState(0)
   const [shadowColor, setShadowColor] = useState("")
+  const [colorMode, setColorMode] = useState("dark")
   const [textColor, setTextColor] = useState("")
   const [mutedTextColor, setMutedTextColor] = useState("")
   const [accentColor, setAccentColor] = useState("")
@@ -1136,6 +1138,7 @@ export function GlobalSectionsPage() {
       fontFamily: effectiveFontFamily.trim() || "Inter, system-ui, sans-serif",
       fontScale,
       tokens: {
+        colorMode,
         fontFamily: effectiveFontFamily.trim() || "Inter, system-ui, sans-serif",
         fontScale,
         spaceScale,
@@ -1199,6 +1202,7 @@ export function GlobalSectionsPage() {
     setShadowScale(parseNum(String(tokens.shadowScale ?? 1), 1))
     setInnerShadowScale(parseNum(String(tokens.innerShadowScale ?? 0), 0))
     setShadowColor(String(tokens.shadowColor ?? ""))
+    setColorMode(String(tokens.colorMode ?? "dark"))
     setTextColor(String(tokens.textColor ?? ""))
     setMutedTextColor(String(tokens.mutedTextColor ?? ""))
     setAccentColor(String(tokens.accentColor ?? ""))
@@ -1450,6 +1454,15 @@ export function GlobalSectionsPage() {
                     <TextInput label="Eyebrow tracking" value={eyebrowTracking} onChange={(e) => setEyebrowTracking(e.currentTarget.value)} placeholder="0.12em" />
                     <TextInput label="Metric tracking" value={metricTracking} onChange={(e) => setMetricTracking(e.currentTarget.value)} placeholder="-0.02em" />
                   </div>
+                  <Select
+                    label="Color mode"
+                    value={colorMode}
+                    onChange={(v) => setColorMode(v || "dark")}
+                    data={[
+                      { value: "dark", label: "Dark" },
+                      { value: "light", label: "Light" },
+                    ]}
+                  />
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
                     <ColorInput label="Text color" value={textColor} onChange={setTextColor} placeholder="#111827" />
                     <ColorInput label="Muted text color" value={mutedTextColor} onChange={setMutedTextColor} placeholder="#6b7280" />

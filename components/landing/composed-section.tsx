@@ -204,7 +204,7 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
         {(cards.length ? cards : [{ title: "Card", body: "Card body" }]).map((card, i) => (
           <div key={`${b.id}-${i}`} className={cn(cp?.cardClass, cp?.spacing.gap, cp?.spacing.rootPadding)} style={panelStyle}>
             <div className={cn(cp?.spacing.headerPadding)}>
-              <h3 className="text-sm font-semibold leading-none">{card.title}</h3>
+              <h3 className="text-sm font-semibold leading-none text-foreground">{card.title}</h3>
               {card.body ? <p className="mt-1 text-sm text-muted-foreground">{card.body}</p> : null}
             </div>
           </div>
@@ -333,13 +333,13 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
     return (
       <div key={b.id} className={cn(cp?.cardClass, cp?.spacing.gap, cp?.spacing.rootPadding)} style={panelStyle}>
         <div className={cn("space-y-2", cp?.spacing.bodyPadding)}>
-          {b.title ? <p className="text-sm font-semibold">{b.title}</p> : null}
+          {b.title ? <p className="text-sm font-semibold text-foreground">{b.title}</p> : null}
           {b.body ? <p className="text-sm text-muted-foreground">{b.body}</p> : null}
           {b.stats && b.stats.length > 0 ? (
             <div className="flex flex-wrap gap-4 pt-1">
               {b.stats.map((s, i) => (
                 <div key={`${b.id}-s-${i}`}>
-                  <p className="text-lg font-bold">{s.value}</p>
+                  <p className="text-lg font-bold text-foreground">{s.value}</p>
                   <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
               ))}
@@ -371,7 +371,7 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
             <img src={b.imageUrl} alt={b.author || ""} className="h-8 w-8 rounded-full object-cover" />
           ) : null}
           <div>
-            {b.author ? <p className="text-sm font-semibold">{b.author}</p> : null}
+            {b.author ? <p className="text-sm font-semibold text-foreground">{b.author}</p> : null}
             {b.role ? <p className="text-sm text-muted-foreground">{b.role}</p> : null}
           </div>
         </div>

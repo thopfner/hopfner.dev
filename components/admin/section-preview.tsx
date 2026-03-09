@@ -130,10 +130,121 @@ const FooterGridSection = dynamic(
 )
 
 // ---------------------------------------------------------------------------
+// Site token → CSS custom property computation (mirrors page.tsx rootStyle)
+// ---------------------------------------------------------------------------
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return fallback
+  return Math.min(max, Math.max(min, n))
+}
+
+function fontScaleVars(scale: number): Record<string, string> {
+  const base: Record<string, number> = {
+    "--text-xs": 0.75, "--text-sm": 0.875, "--text-base": 1, "--text-lg": 1.125,
+    "--text-xl": 1.25, "--text-2xl": 1.5, "--text-3xl": 1.875, "--text-4xl": 2.25,
+  }
+  return Object.fromEntries(Object.entries(base).map(([k, rem]) => [k, `${(rem * scale).toFixed(3)}rem`]))
+}
+
+function accentDerivedVars(accentColor: string): Record<string, string> {
+  if (!accentColor) return {}
+  return {
+    "--accent": accentColor, "--accent-glow": accentColor,
+    "--border": `color-mix(in srgb, ${accentColor} 45%, transparent)`,
+    "--input": `color-mix(in srgb, ${accentColor} 38%, transparent)`,
+    "--ring": `color-mix(in srgb, ${accentColor} 72%, white 8%)`,
+  }
+}
+
+function buildInnerShadow(strength: number): string {
+  if (strength <= 0) return "none"
+  const topPx = Math.max(1, Math.round(2 * strength))
+  const spreadY = Math.max(2, Math.round(12 * strength))
+  const blur = Math.max(6, Math.round(20 * strength))
+  const spread = Math.max(2, Math.round(10 * strength))
+  return `inset 0 1px ${topPx}px color-mix(in srgb, white 24%, transparent), inset 0 ${spreadY}px ${blur}px -${spread}px color-mix(in srgb, var(--section-shadow-color) 34%, transparent)`
+}
+
+function siteTokensToCssVars(tokens: Record<string, unknown>): React.CSSProperties {
+  if (!tokens || Object.keys(tokens).length === 0) return {}
+  const t = tokens
+
+  const fontScale = clampNumber(t.fontScale, 0.8, 1.4, 1)
+  const radiusScale = clampNumber(t.radiusScale, 0, 1.8, 1)
+  const spacingScale = clampNumber(t.spaceScale ?? t.spacingScale, 0.75, 1.8, 1)
+  const shadowScale = clampNumber(t.shadowScale, 0, 1.8, 1)
+  const innerShadowScale = clampNumber(t.innerShadowScale, 0, 1.8, 0)
+  const accentColor = s(t.accentColor)
+  const shadowColor = s(t.shadowColor) || (accentColor ? `color-mix(in srgb, ${accentColor} 28%, black)` : "#000")
+  const textColor = s(t.textColor)
+  const mutedTextColor = s(t.mutedTextColor)
+  const bgColor = s(t.backgroundColor)
+  const cardBgColor = s(t.cardBackgroundColor)
+
+  const displayFontFamily = s(t.displayFontFamily)
+  const bodyFontFamily = s(t.bodyFontFamily)
+  const rootFontFamily = s(t.fontFamily)
+  const monoFontFamily = s(t.monoFontFamily)
+
+  const vars: Record<string, string> = {
+    ...fontScaleVars(fontScale),
+    "--radius": `${(0.625 * radiusScale).toFixed(3)}rem`,
+    "--spacing": `${(0.25 * spacingScale).toFixed(4)}rem`,
+    "--section-shadow-color": shadowColor,
+    "--section-shadow-ambient": shadowScale <= 0 ? "none" : `0 0 ${Math.round(14 * shadowScale)}px color-mix(in srgb, var(--section-shadow-color) 20%, transparent)`,
+    "--section-shadow-lift": shadowScale <= 0 ? "none" : `0 ${Math.round(10 * shadowScale)}px ${Math.round(26 * shadowScale)}px -${Math.round(8 * shadowScale)}px color-mix(in srgb, var(--section-shadow-color) 42%, transparent)`,
+    "--section-inner-shadow": buildInnerShadow(innerShadowScale),
+    "--shadow-sm": shadowScale <= 0 ? "none" : `0 ${Math.round(1 * shadowScale)}px ${Math.round(3 * shadowScale)}px color-mix(in srgb, var(--section-shadow-color) 32%, transparent)`,
+    "--shadow": shadowScale <= 0 ? "none" : `0 ${Math.round(6 * shadowScale)}px ${Math.round(18 * shadowScale)}px -${Math.round(6 * shadowScale)}px color-mix(in srgb, var(--section-shadow-color) 36%, transparent)`,
+    "--shadow-lg": shadowScale <= 0 ? "none" : `0 ${Math.round(14 * shadowScale)}px ${Math.round(32 * shadowScale)}px -${Math.round(10 * shadowScale)}px color-mix(in srgb, var(--section-shadow-color) 40%, transparent)`,
+    ...accentDerivedVars(accentColor),
+    "--font-display": displayFontFamily || rootFontFamily || "var(--font-space-grotesk), var(--font-inter), system-ui, sans-serif",
+    "--font-body": bodyFontFamily || rootFontFamily || "var(--font-ibm-plex-sans), var(--font-inter), system-ui, sans-serif",
+    "--font-mono": monoFontFamily || "var(--font-ibm-plex-mono), var(--font-jetbrains-mono), monospace",
+    "--display-weight": String(clampNumber(t.displayWeight, 300, 900, 700)),
+    "--heading-weight": String(clampNumber(t.headingWeight, 300, 900, 600)),
+    "--body-weight": String(clampNumber(t.bodyWeight, 300, 700, 400)),
+    "--display-tracking": s(t.displayTracking) || "-0.035em",
+    "--eyebrow-tracking": s(t.eyebrowTracking) || "0.12em",
+    "--metric-tracking": s(t.metricTracking) || "-0.02em",
+    "--display-scale": String(clampNumber(t.displayScale, 0.8, 1.6, 1)),
+    "--heading-scale": String(clampNumber(t.headingScale, 0.8, 1.4, 1)),
+    "--body-scale": String(clampNumber(t.bodyScale, 0.8, 1.4, 1)),
+    "--eyebrow-scale": String(clampNumber(t.eyebrowScale, 0.6, 1.4, 0.8)),
+    "--metric-scale": String(clampNumber(t.metricScale, 0.8, 1.6, 1)),
+    "--sig-style": s(t.signatureStyle) || "off",
+    "--sig-intensity": String(clampNumber(t.signatureIntensity, 0, 1, 0.5)),
+    "--sig-color": s(t.signatureColor) || "rgba(120,140,255,0.08)",
+    "--sig-grid-opacity": String(clampNumber(t.signatureGridOpacity, 0, 0.5, 0.06)),
+    "--sig-glow-opacity": String(clampNumber(t.signatureGlowOpacity, 0, 0.5, 0.08)),
+    "--sig-noise-opacity": String(clampNumber(t.signatureNoiseOpacity, 0, 0.3, 0)),
+  }
+
+  if (textColor) {
+    vars["--foreground"] = textColor
+    vars["--card-foreground"] = textColor
+    vars["--muted-foreground"] = mutedTextColor || `color-mix(in srgb, ${textColor} 72%, transparent)`
+  } else if (mutedTextColor) {
+    vars["--muted-foreground"] = mutedTextColor
+  }
+  if (bgColor) vars["--background"] = bgColor
+  if (cardBgColor) vars["--card"] = cardBgColor
+
+  const style: React.CSSProperties = {
+    fontFamily: rootFontFamily || undefined,
+    fontSize: `${fontScale}rem`,
+  }
+  Object.entries(vars).forEach(([k, v]) => {
+    ;(style as Record<string, string>)[k] = v
+  })
+  return style
+}
+
+// ---------------------------------------------------------------------------
 // Preview scale factor
 // ---------------------------------------------------------------------------
 const PREVIEW_SCALE = 0.4
-const PREVIEW_SCALE_EMBEDDED = 0.55
+const PREVIEW_SCALE_EMBEDDED = 0.75
 
 // ---------------------------------------------------------------------------
 // Loading fallback
@@ -162,6 +273,10 @@ type SectionPreviewProps = {
   backgroundMediaUrl: string
   /** When true, renders directly without collapsible wrapper (for side-by-side layout). */
   embedded?: boolean
+  /** Site color mode — applies light/dark class to isolate preview from admin shell theme. */
+  colorMode?: "light" | "dark"
+  /** Site-level design tokens — used to compute CSS custom properties matching the frontend. */
+  siteTokens?: Record<string, unknown>
 }
 
 // ---------------------------------------------------------------------------
@@ -239,29 +354,35 @@ function SectionRenderer({
     }
 
     case "card_grid": {
-      const cards = asRecordArray(content.cards).map((c) => ({
-        title: s(c.title),
-        text: s(c.text),
-        textHtml: s(c.textHtml),
-        icon: s(c.icon),
-        tag: s(c.tag),
-        stat: s(c.stat),
-        imageUrl: s(asRecord(c.image).url),
-        imageAlt: s(asRecord(c.image).alt) || s(c.title),
-        imageWidthPx: 240,
-        youGet: asStringArray(c.youGet),
-        bestFor: s(c.bestFor),
-        bestForList: asStringArray(c.bestForList),
-        display: {
-          showTitle: true,
-          showText: true,
-          showImage: false,
-          showYouGet: false,
-          showBestFor: false,
-          youGetMode: "block" as const,
-          bestForMode: "block" as const,
-        },
-      }))
+      const globalDisplay = asRecord(content.cardDisplay)
+      const cards = asRecordArray(content.cards).map((c) => {
+        const cardDisplay = asRecord(c.display)
+        const img = asRecord(c.image)
+        const hasImage = Boolean(s(img.url))
+        return {
+          title: s(c.title),
+          text: s(c.text),
+          textHtml: s(c.textHtml),
+          icon: s(c.icon),
+          tag: s(c.tag),
+          stat: s(c.stat),
+          imageUrl: s(img.url),
+          imageAlt: s(img.alt) || s(c.title),
+          imageWidthPx: Number(img.widthPx) || 240,
+          youGet: asStringArray(c.youGet),
+          bestFor: s(c.bestFor),
+          bestForList: asStringArray(c.bestForList),
+          display: {
+            showTitle: cardDisplay.showTitle === false ? false : globalDisplay.showTitle === false ? false : true,
+            showText: cardDisplay.showText === false ? false : globalDisplay.showText === false ? false : true,
+            showImage: typeof cardDisplay.showImage === "boolean" ? cardDisplay.showImage : typeof globalDisplay.showImage === "boolean" ? (globalDisplay.showImage as boolean) : hasImage,
+            showYouGet: cardDisplay.showYouGet === true || globalDisplay.showYouGet === true,
+            showBestFor: cardDisplay.showBestFor === true || globalDisplay.showBestFor === true,
+            youGetMode: (cardDisplay.youGetMode === "list" || globalDisplay.youGetMode === "list" ? "list" : "block") as "block" | "list",
+            bestForMode: (cardDisplay.bestForMode === "list" || globalDisplay.bestForMode === "list" ? "list" : "block") as "block" | "list",
+          },
+        }
+      })
       const sectionVariantRaw = s(content.sectionVariant)
       const validVariants = [
         "default",
@@ -620,20 +741,6 @@ function SectionRenderer({
 }
 
 // ---------------------------------------------------------------------------
-// Debounce hook — delays updates so rapid keystrokes batch into one render.
-// ---------------------------------------------------------------------------
-const DEBOUNCE_MS = 300
-
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(id)
-  }, [value, delay])
-  return debounced
-}
-
-// ---------------------------------------------------------------------------
 // Main exported component
 // ---------------------------------------------------------------------------
 function SectionPreviewInner({
@@ -648,6 +755,8 @@ function SectionPreviewInner({
   ctaSecondaryHref,
   backgroundMediaUrl,
   embedded,
+  colorMode,
+  siteTokens,
 }: SectionPreviewProps) {
   // All hooks must be called unconditionally (React rules of hooks).
   const [open, setOpen] = useState(false)
@@ -655,17 +764,8 @@ function SectionPreviewInner({
   const innerRef = useRef<HTMLDivElement>(null)
   const [innerHeight, setInnerHeight] = useState(0)
 
-  const dContent = useDebouncedValue(content, DEBOUNCE_MS)
-  const dFormatting = useDebouncedValue(formatting, DEBOUNCE_MS)
-  const dTitle = useDebouncedValue(title, DEBOUNCE_MS)
-  const dSubtitle = useDebouncedValue(subtitle, DEBOUNCE_MS)
-  const dCtaPrimaryLabel = useDebouncedValue(ctaPrimaryLabel, DEBOUNCE_MS)
-  const dCtaPrimaryHref = useDebouncedValue(ctaPrimaryHref, DEBOUNCE_MS)
-  const dCtaSecondaryLabel = useDebouncedValue(ctaSecondaryLabel, DEBOUNCE_MS)
-  const dCtaSecondaryHref = useDebouncedValue(ctaSecondaryHref, DEBOUNCE_MS)
-  const dBackgroundMediaUrl = useDebouncedValue(backgroundMediaUrl, DEBOUNCE_MS)
-
   const scale = embedded ? PREVIEW_SCALE_EMBEDDED : PREVIEW_SCALE
+  const tokenStyle = useMemo(() => siteTokens ? siteTokensToCssVars(siteTokens) : {}, [siteTokens])
 
   useEffect(() => {
     if (embedded || !open || !innerRef.current) {
@@ -691,15 +791,15 @@ function SectionPreviewInner({
       <Suspense fallback={<PreviewLoading />}>
         <SectionRenderer
           sectionType={sectionType}
-          content={dContent}
-          formatting={dFormatting}
-          title={dTitle}
-          subtitle={dSubtitle}
-          ctaPrimaryLabel={dCtaPrimaryLabel}
-          ctaPrimaryHref={dCtaPrimaryHref}
-          ctaSecondaryLabel={dCtaSecondaryLabel}
-          ctaSecondaryHref={dCtaSecondaryHref}
-          backgroundMediaUrl={dBackgroundMediaUrl}
+          content={content}
+          formatting={formatting}
+          title={title}
+          subtitle={subtitle}
+          ctaPrimaryLabel={ctaPrimaryLabel}
+          ctaPrimaryHref={ctaPrimaryHref}
+          ctaSecondaryLabel={ctaSecondaryLabel}
+          ctaSecondaryHref={ctaSecondaryHref}
+          backgroundMediaUrl={backgroundMediaUrl}
         />
       </Suspense>
     </SkipAnimationProvider>
@@ -707,8 +807,9 @@ function SectionPreviewInner({
 
   // --- Embedded mode: always-visible, no collapsible wrapper ---
   if (embedded) {
+    const themeClass = colorMode === "light" ? "light" : "dark"
     return (
-      <div className="dark text-foreground pointer-events-none" style={{ transformOrigin: "top left" }}>
+      <div className={`${themeClass} bg-background text-foreground pointer-events-none`} style={{ colorScheme: colorMode || "dark", transformOrigin: "top left", ...tokenStyle }}>
         <div style={{ transform: `scale(${scale})`, width: `${100 / scale}%`, transformOrigin: "top left" }}>
           {rendererEl}
         </div>
@@ -750,10 +851,12 @@ function SectionPreviewInner({
         >
           <div
             ref={innerRef}
-            className="dark bg-[oklch(0.145_0_0)] text-foreground origin-top-left pointer-events-none"
+            className={`${colorMode === "light" ? "light" : "dark"} bg-background text-foreground origin-top-left pointer-events-none`}
             style={{
+              colorScheme: colorMode || "dark",
               transform: `scale(${scale})`,
               width: `${100 / scale}%`,
+              ...tokenStyle,
             }}
           >
             {rendererEl}

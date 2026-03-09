@@ -113,7 +113,7 @@ export function SocialProofStripSection({
                       <img
                         src={logo.imageUrl}
                         alt={logo.alt || logo.label}
-                        className="h-7 max-w-[110px] object-contain opacity-55 grayscale transition-all duration-300 hover:opacity-80 hover:grayscale-0"
+                        className="h-8 max-w-[120px] object-contain opacity-70 transition-all duration-300 hover:opacity-100"
                       />
                     ) : (
                       <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/55">
@@ -133,7 +133,7 @@ export function SocialProofStripSection({
                       key={logo.label}
                       src={logo.imageUrl}
                       alt={logo.alt || logo.label}
-                      className="h-6 w-auto object-contain opacity-50 grayscale transition-all duration-300 hover:opacity-80 hover:grayscale-0"
+                      className="h-8 w-auto object-contain opacity-70 transition-all duration-300 hover:opacity-100"
                     />
                   ) : (
                     <span

@@ -125,7 +125,7 @@ export function HowItWorksSection({
                             {idx + 1}
                           </span>
                         )}
-                        <p className="text-sm font-medium sm:text-base">{step.title}</p>
+                        <p className="text-sm font-medium text-foreground sm:text-base">{step.title}</p>
                       </div>
                       {step.bodyHtml?.trim() ? (
                         <div
@@ -199,7 +199,7 @@ export function HowItWorksSection({
                     {idx + 1}
                   </span>
                 )}
-                <p className="text-sm font-medium">{step.title}</p>
+                <p className="text-sm font-medium text-foreground">{step.title}</p>
                 {step.bodyHtml?.trim() ? (
                   <div
                     className={cn("mt-1 text-xs text-muted-foreground", RICH_TEXT_CLASS)}
@@ -320,7 +320,7 @@ export function HowItWorksSection({
                       <span className="text-metric text-sm font-semibold text-accent/80">{step.stat}</span>
                     ) : null}
                   </div>
-                  <p className="text-sm font-semibold tracking-tight">{step.title}</p>
+                  <p className="text-sm font-semibold tracking-tight text-foreground">{step.title}</p>
                   {step.bodyHtml?.trim() ? (
                     <div
                       className={cn("mt-1.5 flex-1 text-xs leading-relaxed text-muted-foreground", RICH_TEXT_CLASS)}
@@ -416,7 +416,7 @@ export function HowItWorksSection({
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-sm font-medium sm:text-base">{step.title}</p>
+                    <p className="text-sm font-medium text-foreground sm:text-base">{step.title}</p>
                     {step.bodyHtml?.trim() ? (
                       <div
                         className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}

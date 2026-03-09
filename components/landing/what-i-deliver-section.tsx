@@ -375,7 +375,7 @@ export function WhatIDeliverSection({
                   ) : null}
                   {item.display.showTitle ? (
                     <h3 className={cn(
-                      "font-semibold leading-none",
+                      "font-semibold leading-none text-foreground",
                       sectionVariant === "value_pillars" ? "text-base" : "text-sm"
                     )}>
                       {item.title}

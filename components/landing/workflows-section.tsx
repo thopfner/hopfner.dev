@@ -94,7 +94,7 @@ export function WorkflowsSection({
                 {card.isInlineAccent ? (
                   <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                 ) : null}
-                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
                 {item.bodyHtml?.trim() ? (
                   <div
                     className={cn(card.spacing.gap, "text-sm text-muted-foreground", RICH_TEXT_CLASS)}
@@ -135,7 +135,7 @@ export function WorkflowsSection({
                 {card.isInlineAccent ? (
                   <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                 ) : null}
-                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
                 {item.bodyHtml?.trim() ? (
                   <div
                     className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground", RICH_TEXT_CLASS)}
@@ -176,7 +176,7 @@ export function WorkflowsSection({
                 {card.isInlineAccent ? (
                   <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                 ) : null}
-                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
                 {item.bodyHtml?.trim() ? (
                   <div
                     className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground", RICH_TEXT_CLASS)}

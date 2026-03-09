@@ -191,6 +191,7 @@ export function MediaLibraryModal({
         fullWidth
         maxWidth="lg"
         aria-labelledby="media-library-dialog-title"
+        sx={{ zIndex: 1600 }}
       >
         <DialogTitle id="media-library-dialog-title">{title}</DialogTitle>
         <DialogContent dividers>
@@ -268,6 +269,7 @@ export function MediaLibraryModal({
         fullWidth
         maxWidth="xs"
         aria-labelledby="delete-media-dialog-title"
+        sx={{ zIndex: 1600 }}
       >
         <DialogTitle id="delete-media-dialog-title">Delete media?</DialogTitle>
         <DialogContent dividers>

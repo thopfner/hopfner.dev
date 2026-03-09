@@ -51,7 +51,7 @@ export const FAMILY_CLASSES: Record<CardFamily, string> = {
 export const CHROME_MODIFIERS: Record<CardChrome, string> = {
   flat: "border-transparent shadow-none ring-0 bg-card/[0.03]",
   outlined: "ring-1 ring-border/50 shadow-none border-border/40",
-  elevated: "shadow-xl shadow-black/30 ring-1 ring-white/[0.06] border-transparent",
+  elevated: "shadow-xl shadow-black/30 ring-1 ring-foreground/[0.06] border-transparent",
   inset: "shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_2px_rgba(0,0,0,0.3)] bg-card/[0.04] ring-0 border-border/15",
   glow: "card-chrome-glow shadow-lg",
 }
@@ -60,7 +60,7 @@ export const CHROME_MODIFIERS: Record<CardChrome, string> = {
 export const CHROME_STANDALONE: Record<CardChrome, string> = {
   flat: "border-transparent bg-card/[0.06] rounded-xl",
   outlined: "border border-border/40 bg-card/[0.08] ring-1 ring-border/30 rounded-xl",
-  elevated: "border-transparent bg-card/[0.12] shadow-xl shadow-black/30 ring-1 ring-white/[0.06] rounded-xl",
+  elevated: "border-transparent bg-card/[0.12] shadow-xl shadow-black/30 ring-1 ring-foreground/[0.06] rounded-xl",
   inset: "border border-border/15 bg-card/[0.04] shadow-[inset_0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_2px_rgba(0,0,0,0.3)] rounded-xl",
   glow: "border border-border/30 bg-card/[0.08] card-chrome-glow shadow-lg rounded-xl",
 }

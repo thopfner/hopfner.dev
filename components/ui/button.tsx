@@ -20,9 +20,9 @@ const buttonVariants = cva(
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
         gradient:
-          "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-200",
+          "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-black/25 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5 transition-all duration-200",
         glow:
-          "relative bg-primary text-primary-foreground shadow-[0_0_20px_color-mix(in_oklch,var(--primary)_30%,transparent)] hover:shadow-[0_0_30px_color-mix(in_oklch,var(--primary)_40%,transparent)] hover:-translate-y-0.5 transition-all duration-200",
+          "relative bg-primary text-primary-foreground shadow-[0_0_20px_rgba(0,0,0,0.25)] hover:shadow-[0_0_30px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition-all duration-200",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
