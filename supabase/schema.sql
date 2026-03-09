@@ -5,12 +5,17 @@
 --
 -- This file contains the complete database schema for a fresh install.
 -- It concatenates the base schema (supabase/cms.sql) with all migrations
--- in chronological order.
+-- from both supabase/migrations/ and migrations/ in chronological order.
 --
 -- For fresh deployments: run this single file in the Supabase SQL editor.
 -- For existing deployments: apply only new files from migrations/ incrementally.
 --
 -- All operations are idempotent (IF NOT EXISTS, ON CONFLICT, etc.).
+-- =============================================================================
+
+
+-- =============================================================================
+-- BASE SCHEMA (supabase/cms.sql)
 -- =============================================================================
 
 -- SCHEMA
@@ -2068,6 +2073,1202 @@ commit;
 
 
 -- =============================================================================
+-- MIGRATION: content_snapshots (2026-02-19)
+-- =============================================================================
+
+begin;
+
+create table if not exists public.cms_content_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  source text not null,
+  label text,
+  target_page_slugs text[] not null,
+  payload jsonb not null,
+  created_by uuid references auth.users(id),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists cms_content_snapshots_created_at_idx
+  on public.cms_content_snapshots (created_at desc);
+
+alter table public.cms_content_snapshots enable row level security;
+
+drop policy if exists "cms_content_snapshots_admin_select" on public.cms_content_snapshots;
+create policy "cms_content_snapshots_admin_select"
+  on public.cms_content_snapshots
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "cms_content_snapshots_admin_insert" on public.cms_content_snapshots;
+create policy "cms_content_snapshots_admin_insert"
+  on public.cms_content_snapshots
+  for insert
+  to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "cms_content_snapshots_admin_delete" on public.cms_content_snapshots;
+create policy "cms_content_snapshots_admin_delete"
+  on public.cms_content_snapshots
+  for delete
+  to authenticated
+  using (public.is_admin());
+
+grant select, insert, delete on public.cms_content_snapshots to authenticated;
+
+commit;
+
+
+-- =============================================================================
+-- MIGRATION: global_sections_and_formatting (2026-02-20)
+-- =============================================================================
+
+begin;
+
+create table if not exists public.global_sections (
+  id uuid primary key default gen_random_uuid(),
+  key text not null unique,
+  label text,
+  section_type text not null,
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  created_by uuid references auth.users (id),
+  updated_by uuid references auth.users (id),
+  constraint global_sections_section_type_check check (
+    section_type in (
+      'nav_links','hero_cta','card_grid','steps_list','title_body_list','rich_text_block','label_value_list','faq_list','cta_block'
+    )
+  )
+);
+
+create table if not exists public.global_section_versions (
+  id uuid primary key default gen_random_uuid(),
+  global_section_id uuid not null references public.global_sections (id) on delete cascade,
+  version int not null,
+  status text not null,
+  title text,
+  subtitle text,
+  cta_primary_label text,
+  cta_primary_href text,
+  cta_secondary_label text,
+  cta_secondary_href text,
+  background_media_url text,
+  formatting jsonb not null default '{}'::jsonb,
+  content jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  created_by uuid references auth.users (id),
+  published_at timestamptz,
+  published_by uuid references auth.users (id),
+  constraint global_section_versions_status_check check (status in ('draft','published','archived')),
+  constraint global_section_versions_version_positive check (version > 0),
+  constraint global_section_versions_unique_per_section unique (global_section_id, version)
+);
+
+create unique index if not exists global_section_versions_one_published_per_section
+  on public.global_section_versions (global_section_id)
+  where status = 'published';
+
+alter table public.sections add column if not exists global_section_id uuid references public.global_sections(id) on delete set null;
+alter table public.sections add column if not exists formatting_override jsonb not null default '{}'::jsonb;
+
+alter table public.pages add column if not exists formatting_override jsonb not null default '{}'::jsonb;
+
+create table if not exists public.site_formatting_settings (
+  id text primary key,
+  settings jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  updated_by uuid references auth.users (id)
+);
+
+insert into public.site_formatting_settings (id, settings)
+values ('default', jsonb_build_object('fontFamily', 'Inter, system-ui, sans-serif', 'fontScale', 1))
+on conflict (id) do nothing;
+
+-- basic backfill for section-level overrides from historical formatting
+update public.sections s
+set formatting_override = coalesce(v.formatting, '{}'::jsonb)
+from public.section_versions v
+where v.section_id = s.id
+  and s.formatting_override = '{}'::jsonb
+  and v.status in ('draft','published');
+
+alter table public.global_sections enable row level security;
+alter table public.global_section_versions enable row level security;
+alter table public.site_formatting_settings enable row level security;
+
+create policy "global_sections_select_public_enabled" on public.global_sections
+for select to anon, authenticated
+using (enabled = true);
+
+create policy "global_sections_select_admin" on public.global_sections
+for select to authenticated
+using (public.is_admin());
+
+create policy "global_sections_write_admin" on public.global_sections
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+create policy "global_section_versions_select_public_published" on public.global_section_versions
+for select to anon, authenticated
+using (status = 'published');
+
+create policy "global_section_versions_select_admin" on public.global_section_versions
+for select to authenticated
+using (public.is_admin());
+
+create policy "global_section_versions_write_admin" on public.global_section_versions
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+create policy "site_formatting_settings_select_public" on public.site_formatting_settings
+for select to anon, authenticated
+using (true);
+
+create policy "site_formatting_settings_write_admin" on public.site_formatting_settings
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+grant select on public.global_sections, public.global_section_versions, public.site_formatting_settings to anon, authenticated;
+grant insert, update, delete on public.global_sections, public.global_section_versions, public.site_formatting_settings to authenticated;
+
+commit;
+
+
+-- =============================================================================
+-- MIGRATION: footer_grid_section (2026-02-20)
+-- =============================================================================
+
+begin;
+
+-- Allow new footer section type on page sections
+do $$
+begin
+  alter table public.sections
+    drop constraint if exists sections_section_type_check;
+exception when others then
+end $$;
+
+alter table public.sections
+  add constraint sections_section_type_check check (
+    section_type in (
+      'nav_links',
+      'hero_cta',
+      'card_grid',
+      'steps_list',
+      'title_body_list',
+      'rich_text_block',
+      'label_value_list',
+      'faq_list',
+      'cta_block',
+      'footer_grid'
+    )
+  );
+
+-- Allow new footer section type on global sections
+do $$
+begin
+  alter table public.global_sections
+    drop constraint if exists global_sections_section_type_check;
+exception when others then
+end $$;
+
+alter table public.global_sections
+  add constraint global_sections_section_type_check check (
+    section_type in (
+      'nav_links',
+      'hero_cta',
+      'card_grid',
+      'steps_list',
+      'title_body_list',
+      'rich_text_block',
+      'label_value_list',
+      'faq_list',
+      'cta_block',
+      'footer_grid'
+    )
+  );
+
+-- Seed defaults/capabilities for footer_grid (idempotent)
+insert into public.section_type_defaults (
+  section_type,
+  label,
+  description,
+  default_title,
+  default_subtitle,
+  default_cta_primary_label,
+  default_cta_primary_href,
+  default_cta_secondary_label,
+  default_cta_secondary_href,
+  default_background_media_url,
+  default_formatting,
+  default_content,
+  capabilities
+)
+values (
+  'footer_grid',
+  'Footer grid',
+  'Professional footer with 1-2 cards, links, optional subscribe UI, and legal row.',
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  jsonb_build_object(
+    'widthMode', 'full',
+    'maxWidth', 'max-w-6xl',
+    'paddingY', 'py-8',
+    'textAlign', 'left',
+    'shadowMode', 'off',
+    'innerShadowMode', 'off',
+    'innerShadowStrength', 0
+  ),
+  jsonb_build_object(
+    'brandText', 'The Resonance',
+    'cards', jsonb_build_array(
+      jsonb_build_object(
+        'title', 'Studio',
+        'body', '',
+        'linksMode', 'grouped',
+        'groups', jsonb_build_array(
+          jsonb_build_object('title', 'Studio', 'links', jsonb_build_array(
+            jsonb_build_object('label', 'Brand Sprint', 'href', '#'),
+            jsonb_build_object('label', 'Product Sprint', 'href', '#')
+          )),
+          jsonb_build_object('title', 'AI', 'links', jsonb_build_array(
+            jsonb_build_object('label', 'AI Upskill', 'href', '#'),
+            jsonb_build_object('label', 'Vibegen', 'href', '#')
+          )),
+          jsonb_build_object('title', 'Connect', 'links', jsonb_build_array(
+            jsonb_build_object('label', 'Thoughts', 'href', '#'),
+            jsonb_build_object('label', 'Contact Us', 'href', '#')
+          ))
+        ),
+        'links', jsonb_build_array(),
+        'subscribe', jsonb_build_object('enabled', false, 'placeholder', 'Email Address', 'buttonLabel', 'Subscribe'),
+        'ctaPrimary', jsonb_build_object('label', '', 'href', ''),
+        'ctaSecondary', jsonb_build_object('label', '', 'href', '')
+      ),
+      jsonb_build_object(
+        'title', 'Subscribe',
+        'body', '',
+        'linksMode', 'flat',
+        'links', jsonb_build_array(
+          jsonb_build_object('label', 'Privacy Policy', 'href', '#'),
+          jsonb_build_object('label', 'Sitemap', 'href', '#')
+        ),
+        'groups', jsonb_build_array(),
+        'subscribe', jsonb_build_object('enabled', true, 'placeholder', 'Email Address', 'buttonLabel', 'Subscribe'),
+        'ctaPrimary', jsonb_build_object('label', '', 'href', ''),
+        'ctaSecondary', jsonb_build_object('label', '', 'href', '')
+      )
+    ),
+    'legal', jsonb_build_object(
+      'copyright', '© 2026 Your Company',
+      'links', jsonb_build_array(
+        jsonb_build_object('label', 'Privacy Policy', 'href', '#'),
+        jsonb_build_object('label', 'Terms', 'href', '#'),
+        jsonb_build_object('label', 'Sitemap', 'href', '#')
+      )
+    )
+  ),
+  jsonb_build_object(
+    'fields', jsonb_build_object(
+      'title', true,
+      'subtitle', false,
+      'cta_primary', false,
+      'cta_secondary', false,
+      'background_media', false
+    ),
+    'content', jsonb_build_object(
+      'cards', 'cards[] (1..2)',
+      'cards.linksMode', '"flat"|"grouped"',
+      'cards.links', 'links[]',
+      'cards.groups', 'groups[]',
+      'cards.subscribe', 'object(enabled,placeholder,buttonLabel)',
+      'cards.ctaPrimary', 'object(label,href)',
+      'cards.ctaSecondary', 'object(label,href)',
+      'brandText', 'string',
+      'legal', 'object(copyright,links[])'
+    )
+  )
+)
+on conflict (section_type) do update
+set
+  label = excluded.label,
+  description = excluded.description,
+  default_title = excluded.default_title,
+  default_subtitle = excluded.default_subtitle,
+  default_cta_primary_label = excluded.default_cta_primary_label,
+  default_cta_primary_href = excluded.default_cta_primary_href,
+  default_cta_secondary_label = excluded.default_cta_secondary_label,
+  default_cta_secondary_href = excluded.default_cta_secondary_href,
+  default_background_media_url = excluded.default_background_media_url,
+  default_formatting = excluded.default_formatting,
+  default_content = excluded.default_content,
+  capabilities = excluded.capabilities,
+  updated_at = now();
+
+-- Optional schema registry seed for required content key
+insert into public.cms_schema_registry (scope, section_type, version, schema, is_active)
+values
+  ('section_content', 'footer_grid', 1, jsonb_build_object('required', jsonb_build_array('cards', 'legal')), true),
+  ('section_formatting', 'footer_grid', 1, jsonb_build_object('allowedBackgroundTypes', jsonb_build_array('none','color','gradient','image')), true)
+on conflict do nothing;
+
+commit;
+
+
+-- =============================================================================
+-- MIGRATION: v2_foundations (2026-02-20)
+-- =============================================================================
+
+begin;
+
+-- A) Global section lifecycle + impact mapping
+alter table public.global_sections
+  add column if not exists lifecycle_state text not null default 'draft',
+  add column if not exists published_version_id uuid,
+  add column if not exists last_published_at timestamptz,
+  add column if not exists last_published_by uuid references auth.users (id);
+
+alter table public.global_sections
+  drop constraint if exists global_sections_lifecycle_state_check;
+alter table public.global_sections
+  add constraint global_sections_lifecycle_state_check
+  check (lifecycle_state in ('draft','published','archived'));
+
+create index if not exists sections_global_section_id_idx on public.sections (global_section_id);
+
+create or replace view public.global_section_where_used as
+select
+  gs.id as global_section_id,
+  gs.key as global_section_key,
+  s.id as section_id,
+  p.id as page_id,
+  p.slug as page_slug,
+  p.title as page_title,
+  s.key as section_key,
+  s.enabled as section_enabled,
+  s.position
+from public.global_sections gs
+join public.sections s on s.global_section_id = gs.id
+join public.pages p on p.id = s.page_id;
+
+grant select on public.global_section_where_used to authenticated;
+
+create or replace function public.global_section_impact_preview(p_global_section_id uuid)
+returns table(total_references int, enabled_references int, distinct_pages int)
+language sql
+stable
+set search_path = public
+as $$
+  select
+    count(*)::int as total_references,
+    count(*) filter (where s.enabled = true)::int as enabled_references,
+    count(distinct s.page_id)::int as distinct_pages
+  from public.sections s
+  where s.global_section_id = p_global_section_id;
+$$;
+
+grant execute on function public.global_section_impact_preview(uuid) to authenticated;
+
+create or replace function public.detach_global_section_to_local(p_section_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_section record;
+  v_global_published record;
+  v_next_version int;
+  v_new_version_id uuid;
+begin
+  v_user_id := auth.uid();
+  if v_user_id is null then
+    raise exception 'not authenticated';
+  end if;
+  if not public.is_admin() then
+    raise exception 'not authorized';
+  end if;
+
+  select * into v_section
+  from public.sections s
+  where s.id = p_section_id;
+
+  if not found then
+    raise exception 'section not found';
+  end if;
+
+  if v_section.global_section_id is null then
+    raise exception 'section is not attached to a global section';
+  end if;
+
+  select * into v_global_published
+  from public.global_section_versions gsv
+  where gsv.global_section_id = v_section.global_section_id
+    and gsv.status = 'published'
+  order by gsv.version desc
+  limit 1;
+
+  update public.sections
+  set global_section_id = null,
+      updated_at = now(),
+      updated_by = v_user_id
+  where id = p_section_id;
+
+  if found and v_global_published.id is not null then
+    select coalesce(max(version), 0) + 1 into v_next_version
+    from public.section_versions
+    where section_id = p_section_id;
+
+    insert into public.section_versions (
+      section_id, version, status,
+      title, subtitle,
+      cta_primary_label, cta_primary_href,
+      cta_secondary_label, cta_secondary_href,
+      background_media_url, formatting, content,
+      created_by
+    ) values (
+      p_section_id, v_next_version, 'draft',
+      v_global_published.title, v_global_published.subtitle,
+      v_global_published.cta_primary_label, v_global_published.cta_primary_href,
+      v_global_published.cta_secondary_label, v_global_published.cta_secondary_href,
+      v_global_published.background_media_url,
+      coalesce(v_global_published.formatting, '{}'::jsonb),
+      coalesce(v_global_published.content, '{}'::jsonb),
+      v_user_id
+    ) returning id into v_new_version_id;
+  end if;
+
+  return v_new_version_id;
+end;
+$$;
+
+grant execute on function public.detach_global_section_to_local(uuid) to authenticated;
+
+-- B + C) Design tokens / formatting schema extension defaults
+update public.site_formatting_settings
+set settings = coalesce(settings, '{}'::jsonb)
+  || jsonb_build_object(
+    'tokens', coalesce(settings->'tokens', '{}'::jsonb)
+      || jsonb_build_object(
+        'fontFamily', coalesce(settings->'tokens'->>'fontFamily', settings->>'fontFamily', 'Inter, system-ui, sans-serif'),
+        'fontScale', coalesce((settings->'tokens'->>'fontScale')::numeric, (settings->>'fontScale')::numeric, 1),
+        'spaceScale', coalesce((settings->'tokens'->>'spaceScale')::numeric, 1),
+        'radiusScale', coalesce((settings->'tokens'->>'radiusScale')::numeric, 1),
+        'shadowScale', coalesce((settings->'tokens'->>'shadowScale')::numeric, 1)
+      )
+  ),
+  updated_at = now()
+where id = 'default';
+
+-- D) Schema registry + server-side validation foundation
+create table if not exists public.cms_schema_registry (
+  id bigserial primary key,
+  scope text not null,
+  section_type text,
+  version int not null default 1,
+  schema jsonb not null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  created_by uuid references auth.users (id),
+  constraint cms_schema_registry_scope_check check (scope in ('section_content', 'section_formatting', 'site_formatting'))
+);
+
+create unique index if not exists cms_schema_registry_unique_active
+  on public.cms_schema_registry (scope, coalesce(section_type, ''), version)
+  where is_active = true;
+
+alter table public.cms_schema_registry enable row level security;
+
+drop policy if exists cms_schema_registry_select_admin on public.cms_schema_registry;
+create policy cms_schema_registry_select_admin
+  on public.cms_schema_registry
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists cms_schema_registry_write_admin on public.cms_schema_registry;
+create policy cms_schema_registry_write_admin
+  on public.cms_schema_registry
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+grant select, insert, update, delete on public.cms_schema_registry to authenticated;
+grant usage, select on sequence public.cms_schema_registry_id_seq to authenticated;
+
+create or replace function public.validate_section_version_payload(
+  p_section_type text,
+  p_content jsonb,
+  p_formatting jsonb
+)
+returns table(valid boolean, errors jsonb)
+language plpgsql
+stable
+set search_path = public
+as $$
+declare
+  v_errors jsonb := '[]'::jsonb;
+  v_schema_content jsonb;
+  v_schema_formatting jsonb;
+begin
+  if p_section_type is null or btrim(p_section_type) = '' then
+    v_errors := v_errors || jsonb_build_array(jsonb_build_object('field','section_type','error','missing'));
+  end if;
+
+  if jsonb_typeof(coalesce(p_content, '{}'::jsonb)) <> 'object' then
+    v_errors := v_errors || jsonb_build_array(jsonb_build_object('field','content','error','must_be_object'));
+  end if;
+
+  if jsonb_typeof(coalesce(p_formatting, '{}'::jsonb)) <> 'object' then
+    v_errors := v_errors || jsonb_build_array(jsonb_build_object('field','formatting','error','must_be_object'));
+  end if;
+
+  if not public.formatting_is_valid(coalesce(p_formatting, '{}'::jsonb)) then
+    v_errors := v_errors || jsonb_build_array(jsonb_build_object('field','formatting','error','tailwind_or_enum_invalid'));
+  end if;
+
+  select schema into v_schema_content
+  from public.cms_schema_registry
+  where scope = 'section_content'
+    and section_type = p_section_type
+    and is_active = true
+  order by version desc
+  limit 1;
+
+  if v_schema_content is not null and (v_schema_content ? 'required') then
+    for i in 0..coalesce(jsonb_array_length(v_schema_content->'required') - 1, -1) loop
+      if not (coalesce(p_content, '{}'::jsonb) ? (v_schema_content->'required'->>i)) then
+        v_errors := v_errors || jsonb_build_array(
+          jsonb_build_object('field', 'content.' || (v_schema_content->'required'->>i), 'error', 'required')
+        );
+      end if;
+    end loop;
+  end if;
+
+  select schema into v_schema_formatting
+  from public.cms_schema_registry
+  where scope = 'section_formatting'
+    and section_type = p_section_type
+    and is_active = true
+  order by version desc
+  limit 1;
+
+  if v_schema_formatting is not null and (v_schema_formatting ? 'allowedBackgroundTypes') then
+    if not exists (
+      select 1
+      from jsonb_array_elements_text(v_schema_formatting->'allowedBackgroundTypes') t(value)
+      where t.value = coalesce(p_formatting->>'backgroundType', 'none')
+    ) then
+      v_errors := v_errors || jsonb_build_array(
+        jsonb_build_object('field', 'formatting.backgroundType', 'error', 'not_allowed')
+      );
+    end if;
+  end if;
+
+  return query select (jsonb_array_length(v_errors) = 0), v_errors;
+end;
+$$;
+
+grant execute on function public.validate_section_version_payload(text, jsonb, jsonb) to authenticated;
+
+-- E) Audit / diff / rollback foundation for global sections
+create table if not exists public.global_section_version_audit (
+  id bigserial primary key,
+  global_section_id uuid not null references public.global_sections(id) on delete cascade,
+  global_section_version_id uuid references public.global_section_versions(id) on delete set null,
+  action text not null,
+  actor_id uuid references auth.users(id),
+  before jsonb,
+  after jsonb,
+  created_at timestamptz not null default now(),
+  constraint global_section_version_audit_action_check check (action in ('insert','update','delete','publish','rollback'))
+);
+
+create index if not exists global_section_version_audit_idx
+  on public.global_section_version_audit (global_section_id, created_at desc);
+
+alter table public.global_section_version_audit enable row level security;
+
+drop policy if exists global_section_version_audit_select_admin on public.global_section_version_audit;
+create policy global_section_version_audit_select_admin
+  on public.global_section_version_audit
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists global_section_version_audit_insert_admin on public.global_section_version_audit;
+create policy global_section_version_audit_insert_admin
+  on public.global_section_version_audit
+  for insert
+  to authenticated
+  with check (public.is_admin());
+
+grant select, insert on public.global_section_version_audit to authenticated;
+
+-- helper functions
+create or replace function public.publish_global_section_version(
+  p_global_section_id uuid,
+  p_version_id uuid,
+  p_publish_at timestamptz default now()
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_valid boolean;
+  v_errors jsonb;
+  v_section_type text;
+  v_target record;
+begin
+  v_user_id := auth.uid();
+  if v_user_id is null then
+    raise exception 'not authenticated';
+  end if;
+  if not public.is_admin() then
+    raise exception 'not authorized';
+  end if;
+
+  select gs.section_type into v_section_type
+  from public.global_sections gs
+  where gs.id = p_global_section_id;
+
+  select * into v_target
+  from public.global_section_versions
+  where id = p_version_id
+    and global_section_id = p_global_section_id;
+
+  if not found then
+    raise exception 'global section version not found';
+  end if;
+
+  select valid, errors into v_valid, v_errors
+  from public.validate_section_version_payload(v_section_type, v_target.content, v_target.formatting);
+
+  if not v_valid then
+    raise exception 'publish validation failed: %', v_errors::text;
+  end if;
+
+  update public.global_section_versions
+    set status = 'archived'
+  where global_section_id = p_global_section_id
+    and status = 'published';
+
+  update public.global_section_versions
+    set status = 'published',
+        published_at = p_publish_at,
+        published_by = v_user_id
+  where id = p_version_id;
+
+  update public.global_sections
+    set lifecycle_state = 'published',
+        published_version_id = p_version_id,
+        last_published_at = p_publish_at,
+        last_published_by = v_user_id,
+        updated_at = now(),
+        updated_by = v_user_id
+  where id = p_global_section_id;
+end;
+$$;
+
+grant execute on function public.publish_global_section_version(uuid, uuid, timestamptz) to authenticated;
+
+create or replace function public.rollback_global_section_to_version(
+  p_global_section_id uuid,
+  p_from_version_id uuid
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_from record;
+  v_next_version int;
+  v_new_id uuid;
+begin
+  v_user_id := auth.uid();
+  if v_user_id is null then
+    raise exception 'not authenticated';
+  end if;
+  if not public.is_admin() then
+    raise exception 'not authorized';
+  end if;
+
+  select * into v_from
+  from public.global_section_versions
+  where id = p_from_version_id
+    and global_section_id = p_global_section_id;
+
+  if not found then
+    raise exception 'source version not found';
+  end if;
+
+  select coalesce(max(version), 0) + 1 into v_next_version
+  from public.global_section_versions
+  where global_section_id = p_global_section_id;
+
+  insert into public.global_section_versions (
+    global_section_id, version, status,
+    title, subtitle,
+    cta_primary_label, cta_primary_href,
+    cta_secondary_label, cta_secondary_href,
+    background_media_url, formatting, content,
+    created_by
+  ) values (
+    p_global_section_id, v_next_version, 'draft',
+    v_from.title, v_from.subtitle,
+    v_from.cta_primary_label, v_from.cta_primary_href,
+    v_from.cta_secondary_label, v_from.cta_secondary_href,
+    v_from.background_media_url, v_from.formatting, v_from.content,
+    v_user_id
+  ) returning id into v_new_id;
+
+  return v_new_id;
+end;
+$$;
+
+grant execute on function public.rollback_global_section_to_version(uuid, uuid) to authenticated;
+
+-- lightweight schema seeds for migration-safe defaults
+insert into public.cms_schema_registry (scope, section_type, version, schema, is_active)
+values
+  ('section_content', 'hero_cta', 1, jsonb_build_object('required', jsonb_build_array('bullets')), true),
+  ('section_content', 'card_grid', 1, jsonb_build_object('required', jsonb_build_array('cards')), true),
+  ('section_formatting', 'hero_cta', 1, jsonb_build_object('allowedBackgroundTypes', jsonb_build_array('none','color','gradient','image')), true),
+  ('site_formatting', null, 1, jsonb_build_object('required', jsonb_build_array('tokens')), true)
+on conflict do nothing;
+
+commit;
+
+
+-- =============================================================================
+-- MIGRATION: formatting_templates (2026-02-21)
+-- =============================================================================
+
+begin;
+
+create table if not exists public.formatting_templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  settings jsonb not null default '{}'::jsonb,
+  is_system boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists formatting_templates_name_unique on public.formatting_templates (lower(name));
+
+create or replace function public.touch_formatting_templates_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_touch_formatting_templates_updated_at on public.formatting_templates;
+create trigger trg_touch_formatting_templates_updated_at
+before update on public.formatting_templates
+for each row
+execute function public.touch_formatting_templates_updated_at();
+
+alter table public.formatting_templates enable row level security;
+
+drop policy if exists formatting_templates_select on public.formatting_templates;
+create policy formatting_templates_select on public.formatting_templates
+for select to authenticated
+using (true);
+
+drop policy if exists formatting_templates_insert on public.formatting_templates;
+create policy formatting_templates_insert on public.formatting_templates
+for insert to authenticated
+with check (true);
+
+drop policy if exists formatting_templates_update on public.formatting_templates;
+create policy formatting_templates_update on public.formatting_templates
+for update to authenticated
+using (true)
+with check (true);
+
+drop policy if exists formatting_templates_delete on public.formatting_templates;
+create policy formatting_templates_delete on public.formatting_templates
+for delete to authenticated
+using (not is_system);
+
+insert into public.formatting_templates (name, description, is_system, settings)
+values
+  (
+    'Slate Executive (Dark)',
+    'Neutral dark enterprise baseline with slate accents.',
+    true,
+    '{
+      "fontFamily":"Inter, system-ui, sans-serif",
+      "fontScale":1,
+      "tokens":{
+        "fontFamily":"Inter, system-ui, sans-serif",
+        "fontScale":1,
+        "spaceScale":1,
+        "spacingScale":1,
+        "radiusScale":1,
+        "shadowScale":1,
+        "innerShadowScale":0.2,
+        "textColor":"#e5e7eb",
+        "mutedTextColor":"#9ca3af",
+        "accentColor":"#64748b",
+        "shadowColor":"#111827",
+        "backgroundColor":"#111827",
+        "cardBackgroundColor":"#1f2937"
+      }
+    }'::jsonb
+  ),
+  (
+    'Graphite Cyan (Dark)',
+    'Premium charcoal with restrained cyan highlights.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":1,"innerShadowScale":0.25,"textColor":"#e6edf3","mutedTextColor":"#93a4b4","accentColor":"#22d3ee","shadowColor":"#0b1220","backgroundColor":"#0f172a","cardBackgroundColor":"#111827"}}'::jsonb
+  ),
+  (
+    'Navy Indigo (Dark)',
+    'Conservative dark navy with indigo emphasis.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":1,"innerShadowScale":0.2,"textColor":"#e2e8f0","mutedTextColor":"#94a3b8","accentColor":"#6366f1","shadowColor":"#0b1020","backgroundColor":"#0b1324","cardBackgroundColor":"#111b30"}}'::jsonb
+  ),
+  (
+    'Deep Emerald (Dark)',
+    'Professional dark scheme with green-teal trust cues.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":1,"innerShadowScale":0.2,"textColor":"#e7f0ee","mutedTextColor":"#9db3ae","accentColor":"#10b981","shadowColor":"#0b1513","backgroundColor":"#0f1f1c","cardBackgroundColor":"#14302a"}}'::jsonb
+  ),
+  (
+    'Carbon Blue Steel (Dark)',
+    'Dark carbon base with corporate steel-blue accents.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":1,"innerShadowScale":0.2,"textColor":"#e5eaf2","mutedTextColor":"#9aa6b7","accentColor":"#3b82f6","shadowColor":"#0a0f1a","backgroundColor":"#151a23","cardBackgroundColor":"#1f2632"}}'::jsonb
+  ),
+  (
+    'Midnight Violet (Dark)',
+    'Low-noise dark UI with subtle violet accent.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":1,"innerShadowScale":0.2,"textColor":"#ede9fe","mutedTextColor":"#b4abd8","accentColor":"#8b5cf6","shadowColor":"#131022","backgroundColor":"#181625","cardBackgroundColor":"#211f33"}}'::jsonb
+  ),
+  (
+    'Light Neutral Corporate',
+    'Clean light enterprise default with cool neutrals.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":0.7,"innerShadowScale":0,"textColor":"#111827","mutedTextColor":"#6b7280","accentColor":"#2563eb","shadowColor":"#0f172a","backgroundColor":"#f8fafc","cardBackgroundColor":"#ffffff"}}'::jsonb
+  ),
+  (
+    'Ivory Slate',
+    'Warm-light professional palette for consulting sites.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":0.6,"innerShadowScale":0,"textColor":"#1f2937","mutedTextColor":"#6b7280","accentColor":"#0ea5e9","shadowColor":"#334155","backgroundColor":"#f9fafb","cardBackgroundColor":"#ffffff"}}'::jsonb
+  ),
+  (
+    'Sandstone Professional',
+    'Soft neutral light scheme with restrained blue accent.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":0.55,"innerShadowScale":0,"textColor":"#1f2937","mutedTextColor":"#6b7280","accentColor":"#3b82f6","shadowColor":"#475569","backgroundColor":"#f5f5f4","cardBackgroundColor":"#ffffff"}}'::jsonb
+  ),
+  (
+    'Mist Blue',
+    'Airy light B2B look with calm blue accents.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":0.6,"innerShadowScale":0,"textColor":"#0f172a","mutedTextColor":"#64748b","accentColor":"#2563eb","shadowColor":"#1e293b","backgroundColor":"#eff6ff","cardBackgroundColor":"#ffffff"}}'::jsonb
+  ),
+  (
+    'Monochrome Clean',
+    'Minimal grayscale light theme for serious corporate tone.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":0.5,"innerShadowScale":0,"textColor":"#111111","mutedTextColor":"#666666","accentColor":"#2f2f2f","shadowColor":"#222222","backgroundColor":"#f7f7f7","cardBackgroundColor":"#ffffff"}}'::jsonb
+  ),
+  (
+    'Cool Gray Pro',
+    'Balanced light-neutral scheme with modern enterprise polish.',
+    true,
+    '{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"tokens":{"fontFamily":"Inter, system-ui, sans-serif","fontScale":1,"spaceScale":1,"spacingScale":1,"radiusScale":1,"shadowScale":0.65,"innerShadowScale":0,"textColor":"#1e293b","mutedTextColor":"#64748b","accentColor":"#0f766e","shadowColor":"#334155","backgroundColor":"#f1f5f9","cardBackgroundColor":"#ffffff"}}'::jsonb
+  )
+on conflict (lower(name)) do nothing;
+
+commit;
+
+
+-- =============================================================================
+-- MIGRATION: pages_bg_image (2026-02-21)
+-- =============================================================================
+
+begin;
+
+alter table public.pages
+  add column if not exists bg_image_url text;
+
+commit;
+
+
+-- =============================================================================
+-- MIGRATION: global_local_invariant_guardrails (2026-02-22)
+-- =============================================================================
+
+begin;
+
+-- Guardrail #1:
+-- Global-linked sections must never get local section_versions.
+create or replace function public.enforce_no_local_versions_for_global_sections()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_global_section_id uuid;
+begin
+  select s.global_section_id
+  into v_global_section_id
+  from public.sections s
+  where s.id = new.section_id;
+
+  if v_global_section_id is not null then
+    raise exception 'global-linked sections cannot have local section_versions (section_id=%)', new.section_id
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_enforce_no_local_versions_for_global_sections on public.section_versions;
+create trigger trg_enforce_no_local_versions_for_global_sections
+before insert or update of section_id
+on public.section_versions
+for each row
+execute function public.enforce_no_local_versions_for_global_sections();
+
+-- Guardrail #2:
+-- Prevent linking a section to a global section while local versions still exist.
+create or replace function public.enforce_no_global_link_if_local_versions_exist()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.global_section_id is not null
+     and (old.global_section_id is distinct from new.global_section_id)
+     and exists (
+       select 1
+       from public.section_versions sv
+       where sv.section_id = new.id
+     ) then
+    raise exception 'cannot link section to global while local section_versions exist (section_id=%)', new.id
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_enforce_no_global_link_if_local_versions_exist on public.sections;
+create trigger trg_enforce_no_global_link_if_local_versions_exist
+before update of global_section_id
+on public.sections
+for each row
+execute function public.enforce_no_global_link_if_local_versions_exist();
+
+commit;
+
+
+-- =============================================================================
+-- MIGRATION: section_library_foundation (2026-02-22)
+-- =============================================================================
+
+begin;
+
+-- 1) Dynamic section type registry (built-in + custom)
+create table if not exists public.section_type_registry (
+  key text primary key,
+  label text not null,
+  source text not null default 'builtin',
+  renderer text not null default 'legacy',
+  composer_schema jsonb not null default '{}'::jsonb,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  created_by uuid references auth.users(id),
+  updated_by uuid references auth.users(id),
+  constraint section_type_registry_source_check check (source in ('builtin','custom')),
+  constraint section_type_registry_renderer_check check (renderer in ('legacy','composed'))
+);
+
+create or replace function public.set_updated_at_now()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_section_type_registry_set_updated_at on public.section_type_registry;
+create trigger trg_section_type_registry_set_updated_at
+before update on public.section_type_registry
+for each row
+execute function public.set_updated_at_now();
+
+insert into public.section_type_registry (key, label, source, renderer)
+values
+  ('nav_links','Navigation Links','builtin','legacy'),
+  ('hero_cta','Hero + CTA','builtin','legacy'),
+  ('card_grid','Card Grid','builtin','legacy'),
+  ('steps_list','Steps List','builtin','legacy'),
+  ('title_body_list','Title + Body List','builtin','legacy'),
+  ('rich_text_block','Rich Text Block','builtin','legacy'),
+  ('label_value_list','Label/Value List','builtin','legacy'),
+  ('faq_list','FAQ List','builtin','legacy'),
+  ('cta_block','CTA Block','builtin','legacy'),
+  ('footer_grid','Footer Grid','builtin','legacy')
+on conflict (key) do update
+set label = excluded.label,
+    source = excluded.source,
+    renderer = excluded.renderer,
+    is_active = true,
+    updated_at = now();
+
+alter table public.section_type_registry enable row level security;
+
+drop policy if exists section_type_registry_select_public on public.section_type_registry;
+create policy section_type_registry_select_public on public.section_type_registry
+for select to anon, authenticated
+using (is_active = true);
+
+drop policy if exists section_type_registry_write_admin on public.section_type_registry;
+create policy section_type_registry_write_admin on public.section_type_registry
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+grant select on public.section_type_registry to anon, authenticated;
+grant insert, update, delete on public.section_type_registry to authenticated;
+
+-- 2) Relax hardcoded section_type check constraints that block custom keys
+alter table public.global_sections drop constraint if exists global_sections_section_type_check;
+
+do $$
+declare
+  r record;
+begin
+  for r in
+    select conname
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'sections'
+      and c.contype = 'c'
+      and pg_get_constraintdef(c.oid) ilike '%section_type%'
+  loop
+    execute format('alter table public.sections drop constraint if exists %I', r.conname);
+  end loop;
+end $$;
+
+-- 3) Runtime validation trigger to ensure section_type exists in registry
+create or replace function public.validate_section_type_registry_membership()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.section_type is null or btrim(new.section_type) = '' then
+    raise exception 'section_type is required' using errcode = '23514';
+  end if;
+
+  if not exists (
+    select 1
+    from public.section_type_registry str
+    where str.key = new.section_type
+      and str.is_active = true
+  ) then
+    raise exception 'unknown section_type: %', new.section_type using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_validate_section_type_sections on public.sections;
+create trigger trg_validate_section_type_sections
+before insert or update of section_type on public.sections
+for each row
+execute function public.validate_section_type_registry_membership();
+
+drop trigger if exists trg_validate_section_type_global_sections on public.global_sections;
+create trigger trg_validate_section_type_global_sections
+before insert or update of section_type on public.global_sections
+for each row
+execute function public.validate_section_type_registry_membership();
+
+-- 4) Public sections policy supports composed section types (no version rows needed)
+
+drop policy if exists sections_select_public_enabled on public.sections;
+drop policy if exists sections_select_public_published on public.sections;
+drop policy if exists sections_select_public on public.sections;
+drop policy if exists sections_select_admin on public.sections;
+
+create policy sections_select_public on public.sections
+for select
+to anon, authenticated
+using (
+  enabled = true
+  and (
+    exists (
+      select 1
+      from public.section_type_registry str
+      where str.key = sections.section_type
+        and str.renderer = 'composed'
+        and str.is_active = true
+    )
+    or exists (
+      select 1
+      from public.section_versions sv
+      where sv.section_id = sections.id
+        and sv.status = 'published'
+    )
+    or (
+      sections.global_section_id is not null
+      and exists (
+        select 1
+        from public.global_section_versions gsv
+        where gsv.global_section_id = sections.global_section_id
+          and gsv.status = 'published'
+      )
+    )
+  )
+);
+
+create policy sections_select_admin on public.sections
+for select
+to authenticated
+using (public.is_admin());
+
+commit;
+
+
+-- =============================================================================
 -- MIGRATION: sections_public_select_global_support (2026-02-22)
 -- =============================================================================
 
@@ -2111,6 +3312,547 @@ create policy sections_select_admin on public.sections
 for select
 to authenticated
 using (public.is_admin());
+
+
+-- =============================================================================
+-- MIGRATION: blog_foundation (2026-02-23)
+-- =============================================================================
+
+begin;
+
+create extension if not exists pgcrypto;
+
+create table if not exists public.blog_categories (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  name text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  created_by uuid references auth.users (id),
+  updated_by uuid references auth.users (id)
+);
+
+create table if not exists public.blog_tags (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  name text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  created_by uuid references auth.users (id),
+  updated_by uuid references auth.users (id)
+);
+
+create table if not exists public.blog_articles (
+  id uuid primary key default gen_random_uuid(),
+  external_id text not null unique,
+  slug text not null unique,
+  current_published_version_id uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  created_by uuid references auth.users (id),
+  updated_by uuid references auth.users (id)
+);
+
+create table if not exists public.blog_article_versions (
+  id uuid primary key default gen_random_uuid(),
+  article_id uuid not null references public.blog_articles (id) on delete cascade,
+  version int not null,
+  status text not null,
+  title text not null,
+  excerpt text,
+  content jsonb not null default '{}'::jsonb,
+  seo_title text,
+  seo_description text,
+  cover_image_url text,
+  cover_image_path text,
+  cover_image_prompt text,
+  rejection_reason text,
+  approved_at timestamptz,
+  approved_by uuid references auth.users (id),
+  published_at timestamptz,
+  published_by uuid references auth.users (id),
+  rejected_at timestamptz,
+  rejected_by uuid references auth.users (id),
+  created_at timestamptz not null default now(),
+  created_by uuid references auth.users (id),
+  constraint blog_article_versions_status_check check (status in ('draft', 'approved', 'published', 'rejected')),
+  constraint blog_article_versions_version_positive check (version > 0),
+  constraint blog_article_versions_unique_per_article unique (article_id, version),
+  constraint blog_article_versions_rejection_reason_required check (
+    status <> 'rejected' or char_length(btrim(coalesce(rejection_reason, ''))) > 0
+  )
+);
+
+create table if not exists public.blog_article_version_categories (
+  version_id uuid not null references public.blog_article_versions (id) on delete cascade,
+  category_id uuid not null references public.blog_categories (id) on delete restrict,
+  created_at timestamptz not null default now(),
+  primary key (version_id, category_id)
+);
+
+create table if not exists public.blog_article_version_tags (
+  version_id uuid not null references public.blog_article_versions (id) on delete cascade,
+  tag_id uuid not null references public.blog_tags (id) on delete restrict,
+  created_at timestamptz not null default now(),
+  primary key (version_id, tag_id)
+);
+
+create table if not exists public.blog_status_audit (
+  id bigserial primary key,
+  article_id uuid not null references public.blog_articles (id) on delete cascade,
+  version_id uuid not null references public.blog_article_versions (id) on delete cascade,
+  from_status text,
+  to_status text not null,
+  reason text,
+  changed_by uuid references auth.users (id),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists blog_article_versions_article_status_idx
+  on public.blog_article_versions (article_id, status, version desc);
+
+create index if not exists blog_article_versions_status_created_idx
+  on public.blog_article_versions (status, created_at desc);
+
+create index if not exists blog_article_versions_title_idx
+  on public.blog_article_versions (title);
+
+create index if not exists blog_articles_slug_idx
+  on public.blog_articles (slug);
+
+create index if not exists blog_articles_updated_idx
+  on public.blog_articles (updated_at desc);
+
+create index if not exists blog_status_audit_article_created_idx
+  on public.blog_status_audit (article_id, created_at desc);
+
+create index if not exists blog_status_audit_version_created_idx
+  on public.blog_status_audit (version_id, created_at desc);
+
+create unique index if not exists blog_article_versions_one_published_per_article
+  on public.blog_article_versions (article_id)
+  where status = 'published';
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'blog_articles_current_published_fkey'
+      and conrelid = 'public.blog_articles'::regclass
+  ) then
+    alter table public.blog_articles
+      add constraint blog_articles_current_published_fkey
+      foreign key (current_published_version_id)
+      references public.blog_article_versions (id)
+      on delete set null;
+  end if;
+end
+$$;
+
+create or replace function public.blog_slugify(p_input text)
+returns text
+language plpgsql
+immutable
+as $$
+declare
+  v text;
+begin
+  v := lower(coalesce(p_input, ''));
+  v := regexp_replace(v, '[^a-z0-9]+', '-', 'g');
+  v := regexp_replace(v, '(^-|-$)', '', 'g');
+  if v = '' then
+    v := 'blog-post';
+  end if;
+  return v;
+end;
+$$;
+
+create or replace function public.blog_set_taxonomy_slug()
+returns trigger
+language plpgsql
+as $$
+begin
+  if coalesce(btrim(new.name), '') = '' then
+    raise exception 'name is required';
+  end if;
+
+  if coalesce(btrim(new.slug), '') = '' then
+    new.slug := public.blog_slugify(new.name);
+  else
+    new.slug := public.blog_slugify(new.slug);
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.blog_articles_slug_immutable_after_publish()
+returns trigger
+language plpgsql
+as $$
+begin
+  if old.current_published_version_id is not null and new.slug is distinct from old.slug then
+    raise exception 'slug is immutable once article has been published';
+  end if;
+  return new;
+end;
+$$;
+
+create or replace function public.blog_status_audit_changes()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if old.status is distinct from new.status then
+    insert into public.blog_status_audit (
+      article_id,
+      version_id,
+      from_status,
+      to_status,
+      reason,
+      changed_by
+    )
+    values (
+      new.article_id,
+      new.id,
+      old.status,
+      new.status,
+      case when new.status = 'rejected' then new.rejection_reason else null end,
+      auth.uid()
+    );
+  end if;
+
+  return null;
+end;
+$$;
+
+drop trigger if exists blog_categories_set_slug on public.blog_categories;
+create trigger blog_categories_set_slug
+before insert or update on public.blog_categories
+for each row execute function public.blog_set_taxonomy_slug();
+
+drop trigger if exists blog_tags_set_slug on public.blog_tags;
+create trigger blog_tags_set_slug
+before insert or update on public.blog_tags
+for each row execute function public.blog_set_taxonomy_slug();
+
+drop trigger if exists blog_articles_enforce_slug_immutable on public.blog_articles;
+create trigger blog_articles_enforce_slug_immutable
+before update on public.blog_articles
+for each row execute function public.blog_articles_slug_immutable_after_publish();
+
+drop trigger if exists blog_article_versions_status_audit on public.blog_article_versions;
+create trigger blog_article_versions_status_audit
+after update on public.blog_article_versions
+for each row execute function public.blog_status_audit_changes();
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_proc
+    where pronamespace = 'public'::regnamespace
+      and proname = 'set_updated_at'
+  ) then
+    drop trigger if exists blog_categories_set_updated_at on public.blog_categories;
+    create trigger blog_categories_set_updated_at
+    before update on public.blog_categories
+    for each row execute function public.set_updated_at();
+
+    drop trigger if exists blog_tags_set_updated_at on public.blog_tags;
+    create trigger blog_tags_set_updated_at
+    before update on public.blog_tags
+    for each row execute function public.set_updated_at();
+
+    drop trigger if exists blog_articles_set_updated_at on public.blog_articles;
+    create trigger blog_articles_set_updated_at
+    before update on public.blog_articles
+    for each row execute function public.set_updated_at();
+  end if;
+end
+$$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_proc
+    where pronamespace = 'public'::regnamespace
+      and proname = 'set_actor_ids'
+  ) then
+    drop trigger if exists blog_categories_set_actor_ids on public.blog_categories;
+    create trigger blog_categories_set_actor_ids
+    before insert or update on public.blog_categories
+    for each row execute function public.set_actor_ids();
+
+    drop trigger if exists blog_tags_set_actor_ids on public.blog_tags;
+    create trigger blog_tags_set_actor_ids
+    before insert or update on public.blog_tags
+    for each row execute function public.set_actor_ids();
+
+    drop trigger if exists blog_articles_set_actor_ids on public.blog_articles;
+    create trigger blog_articles_set_actor_ids
+    before insert or update on public.blog_articles
+    for each row execute function public.set_actor_ids();
+  end if;
+
+  if exists (
+    select 1
+    from pg_proc
+    where pronamespace = 'public'::regnamespace
+      and proname = 'set_created_by'
+  ) then
+    drop trigger if exists blog_article_versions_set_created_by on public.blog_article_versions;
+    create trigger blog_article_versions_set_created_by
+    before insert on public.blog_article_versions
+    for each row execute function public.set_created_by();
+  end if;
+end
+$$;
+
+create or replace view public.blog_published_posts as
+select
+  a.id as article_id,
+  a.external_id,
+  a.slug,
+  v.id as version_id,
+  v.version,
+  v.title,
+  v.excerpt,
+  v.content,
+  v.cover_image_url,
+  v.seo_title,
+  v.seo_description,
+  v.published_at,
+  a.updated_at,
+  coalesce(
+    (
+      select array_agg(c.slug order by c.slug)
+      from public.blog_article_version_categories bvc
+      join public.blog_categories c on c.id = bvc.category_id
+      where bvc.version_id = v.id
+    ),
+    array[]::text[]
+  ) as category_slugs,
+  coalesce(
+    (
+      select array_agg(c.name order by c.name)
+      from public.blog_article_version_categories bvc
+      join public.blog_categories c on c.id = bvc.category_id
+      where bvc.version_id = v.id
+    ),
+    array[]::text[]
+  ) as category_names,
+  coalesce(
+    (
+      select array_agg(t.slug order by t.slug)
+      from public.blog_article_version_tags bvt
+      join public.blog_tags t on t.id = bvt.tag_id
+      where bvt.version_id = v.id
+    ),
+    array[]::text[]
+  ) as tag_slugs,
+  coalesce(
+    (
+      select array_agg(t.name order by t.name)
+      from public.blog_article_version_tags bvt
+      join public.blog_tags t on t.id = bvt.tag_id
+      where bvt.version_id = v.id
+    ),
+    array[]::text[]
+  ) as tag_names,
+  trim(
+    both ' ' from (
+      coalesce(v.title, '') || ' ' ||
+      coalesce(v.excerpt, '') || ' ' ||
+      coalesce(v.content::text, '')
+    )
+  ) as search_text
+from public.blog_articles a
+join public.blog_article_versions v
+  on v.id = a.current_published_version_id
+where v.status = 'published';
+
+commit;
+
+begin;
+
+grant usage on schema public to anon, authenticated;
+
+grant select on public.blog_categories to anon, authenticated;
+grant select on public.blog_tags to anon, authenticated;
+grant select on public.blog_articles to anon, authenticated;
+grant select on public.blog_article_versions to anon, authenticated;
+grant select on public.blog_article_version_categories to anon, authenticated;
+grant select on public.blog_article_version_tags to anon, authenticated;
+grant select on public.blog_published_posts to anon, authenticated;
+
+grant insert, update, delete on public.blog_categories to authenticated;
+grant insert, update, delete on public.blog_tags to authenticated;
+grant insert, update, delete on public.blog_articles to authenticated;
+grant insert, update, delete on public.blog_article_versions to authenticated;
+grant insert, update, delete on public.blog_article_version_categories to authenticated;
+grant insert, update, delete on public.blog_article_version_tags to authenticated;
+grant select, insert on public.blog_status_audit to authenticated;
+
+alter table public.blog_categories enable row level security;
+alter table public.blog_tags enable row level security;
+alter table public.blog_articles enable row level security;
+alter table public.blog_article_versions enable row level security;
+alter table public.blog_article_version_categories enable row level security;
+alter table public.blog_article_version_tags enable row level security;
+alter table public.blog_status_audit enable row level security;
+
+drop policy if exists "blog_categories_select_public" on public.blog_categories;
+create policy "blog_categories_select_public"
+  on public.blog_categories
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "blog_categories_write_admin_only" on public.blog_categories;
+create policy "blog_categories_write_admin_only"
+  on public.blog_categories
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "blog_tags_select_public" on public.blog_tags;
+create policy "blog_tags_select_public"
+  on public.blog_tags
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "blog_tags_write_admin_only" on public.blog_tags;
+create policy "blog_tags_write_admin_only"
+  on public.blog_tags
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "blog_articles_select_public" on public.blog_articles;
+create policy "blog_articles_select_public"
+  on public.blog_articles
+  for select
+  to anon, authenticated
+  using (current_published_version_id is not null);
+
+drop policy if exists "blog_articles_select_admin" on public.blog_articles;
+create policy "blog_articles_select_admin"
+  on public.blog_articles
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "blog_articles_write_admin_only" on public.blog_articles;
+create policy "blog_articles_write_admin_only"
+  on public.blog_articles
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "blog_article_versions_select_public" on public.blog_article_versions;
+create policy "blog_article_versions_select_public"
+  on public.blog_article_versions
+  for select
+  to anon, authenticated
+  using (status = 'published');
+
+drop policy if exists "blog_article_versions_select_admin" on public.blog_article_versions;
+create policy "blog_article_versions_select_admin"
+  on public.blog_article_versions
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "blog_article_versions_write_admin_only" on public.blog_article_versions;
+create policy "blog_article_versions_write_admin_only"
+  on public.blog_article_versions
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "blog_article_version_categories_select_public" on public.blog_article_version_categories;
+create policy "blog_article_version_categories_select_public"
+  on public.blog_article_version_categories
+  for select
+  to anon, authenticated
+  using (
+    exists (
+      select 1
+      from public.blog_article_versions v
+      where v.id = blog_article_version_categories.version_id
+        and v.status = 'published'
+    )
+  );
+
+drop policy if exists "blog_article_version_categories_select_admin" on public.blog_article_version_categories;
+create policy "blog_article_version_categories_select_admin"
+  on public.blog_article_version_categories
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "blog_article_version_categories_write_admin_only" on public.blog_article_version_categories;
+create policy "blog_article_version_categories_write_admin_only"
+  on public.blog_article_version_categories
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "blog_article_version_tags_select_public" on public.blog_article_version_tags;
+create policy "blog_article_version_tags_select_public"
+  on public.blog_article_version_tags
+  for select
+  to anon, authenticated
+  using (
+    exists (
+      select 1
+      from public.blog_article_versions v
+      where v.id = blog_article_version_tags.version_id
+        and v.status = 'published'
+    )
+  );
+
+drop policy if exists "blog_article_version_tags_select_admin" on public.blog_article_version_tags;
+create policy "blog_article_version_tags_select_admin"
+  on public.blog_article_version_tags
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "blog_article_version_tags_write_admin_only" on public.blog_article_version_tags;
+create policy "blog_article_version_tags_write_admin_only"
+  on public.blog_article_version_tags
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "blog_status_audit_select_admin_only" on public.blog_status_audit;
+create policy "blog_status_audit_select_admin_only"
+  on public.blog_status_audit
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "blog_status_audit_insert_admin_only" on public.blog_status_audit;
+create policy "blog_status_audit_insert_admin_only"
+  on public.blog_status_audit
+  for insert
+  to authenticated
+  with check (public.is_admin());
+
+commit;
 
 
 -- =============================================================================
@@ -2895,32 +4637,12 @@ ON CONFLICT (section_type, variant_key) DO UPDATE SET
 
 -- =============================================================================
 -- MIGRATION: v13_elite_ui_capabilities (2026-03-08)
+-- NOTE: Original UPDATE statements referenced columns (supported_controls, notes)
+-- that do not exist on section_control_capabilities. The intended changes
+-- (hero_cta headingTreatment support) are applied correctly by v16 below.
 -- =============================================================================
 
--- v13: Elite UI Transformation — capability updates
--- Adds headingTreatment to hero_cta, marquee layout variant to tech_stack
-
--- hero_cta now supports headingTreatment (gradient, display_xl, etc.)
-UPDATE section_control_capabilities
-SET supported_controls = array_append(supported_controls, 'headingTreatment')
-WHERE section_type = 'hero_cta'
-  AND NOT ('headingTreatment' = ANY(supported_controls));
-
--- Update notes for hero_cta
-UPDATE section_control_capabilities
-SET notes = jsonb_set(
-  COALESCE(notes, '{}'::jsonb),
-  '{sectionRhythm}',
-  '"Hero uses bespoke layout; rhythm/surface not applicable"'
-)
-WHERE section_type = 'hero_cta';
-
--- New token values for design_theme_presets reference
--- (These are code-level additions; no DB schema changes needed)
--- HeadingTreatment: gradient, gradient_accent, display_xl, display_lg
--- Surface: gradient_mesh, accent_glow, dark_elevated, dot_grid
--- CardChrome: glow
--- TechStack LayoutVariant: marquee (code-level only)
+-- (no executable statements — see v16_capability_truth below)
 
 
 -- =============================================================================
