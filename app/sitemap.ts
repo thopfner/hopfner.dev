@@ -2,8 +2,10 @@ import type { MetadataRoute } from "next"
 
 import { getSupabasePublicClient } from "@/lib/cms/supabase"
 
+export const dynamic = "force-dynamic"
+
 function siteBaseUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://hopfner.dev"
+  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:3010"
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
