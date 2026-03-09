@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, memo } from "react"
+import { useState, useRef, useCallback, useEffect, memo } from "react"
 import {
   Group,
   Stack,
@@ -65,6 +65,11 @@ export const TipTapJsonEditor = memo(function TipTapJsonEditor({
   // to prevent echo loops (external update → setContent → onUpdate → onChange)
   const suppressUpdateRef = useRef(false)
 
+  // Track serialized JSON that the editor itself emitted via onUpdate, so the
+  // external sync effect can distinguish "value came from my own typing" from
+  // "value came from hydrate/restore/section switch".
+  const lastEditorEmittedRef = useRef<string>("")
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -75,15 +80,29 @@ export const TipTapJsonEditor = memo(function TipTapJsonEditor({
     content: value,
     onUpdate({ editor: ed }) {
       if (suppressUpdateRef.current) return
-      onChangeRef.current(ed.getJSON() as Record<string, unknown>)
+      const json = ed.getJSON() as Record<string, unknown>
+      lastEditorEmittedRef.current = JSON.stringify(json)
+      onChangeRef.current(json)
     },
   })
 
-  // Only push external content changes into TipTap when the value truly changed
-  // from outside (hydrate, restore, etc.) — not from our own onUpdate commits.
-  // We detect this by checking if the editor's current JSON differs from the
-  // incoming value. This prevents echo loops and preserves cursor position.
-  // Note: useEditor's `content` is only used for initial creation, not updates.
+  // Push external content changes (hydrate, restore, section switch) into the
+  // TipTap instance. useEditor's `content` only runs on creation, so we need
+  // this effect for subsequent value changes. Skip when the incoming value
+  // matches what the editor itself last emitted (normal typing flow).
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return
+    const incomingJson = JSON.stringify(value)
+    // Value originated from editor's own onUpdate — skip to avoid cursor reset
+    if (incomingJson === lastEditorEmittedRef.current) return
+    // Value already matches editor state (e.g. initial mount)
+    const currentJson = JSON.stringify(editor.getJSON())
+    if (incomingJson === currentJson) return
+    // Truly external change — push into editor
+    suppressUpdateRef.current = true
+    editor.commands.setContent(value, { emitUpdate: false })
+    suppressUpdateRef.current = false
+  }, [editor, value])
 
   const onPickImage = useCallback(async (file: File) => {
     if (!editor) return

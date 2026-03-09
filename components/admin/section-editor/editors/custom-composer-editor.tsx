@@ -2,11 +2,17 @@
 
 import { Stack, Text } from "@/components/mui-compat"
 import { CustomBlockEditor } from "./custom-block-editor"
-import type { ContentEditorProps, ComposerBlock, FlattenedComposerBlock } from "../types"
+import type { ContentEditorProps, FlattenedComposerBlock } from "../types"
+
+function asRecord(v: unknown): Record<string, unknown> {
+  return v && typeof v === "object" && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : {}
+}
 
 type CustomComposerEditorProps = ContentEditorProps & {
   flattenedCustomBlocks: FlattenedComposerBlock[]
-  getMergedCustomBlock: (block: ComposerBlock) => Record<string, unknown>
+  customBlockOverrides: Record<string, unknown>
   setCustomBlockPatch: (blockId: string, patch: Record<string, unknown>) => void
   applyCustomBlockImageUrl: (blockId: string, url: string) => void
   onOpenCustomImageLibrary: (blockId: string) => void
@@ -18,7 +24,7 @@ export function CustomComposerEditor({
   loading,
   linkMenuProps,
   flattenedCustomBlocks,
-  getMergedCustomBlock,
+  customBlockOverrides,
   setCustomBlockPatch,
   applyCustomBlockImageUrl,
   onOpenCustomImageLibrary,
@@ -28,12 +34,14 @@ export function CustomComposerEditor({
     <Stack gap="sm">
       {flattenedCustomBlocks.length ? (
         flattenedCustomBlocks.map(({ rowIndex, columnIndex, block }) => {
-          const merged = getMergedCustomBlock(block)
+          // Pass the per-block override record. CustomBlockEditor is memoized
+          // and merges internally, so only blocks whose override changed re-render.
+          const blockOverride = asRecord(customBlockOverrides[block.id])
           return (
             <CustomBlockEditor
               key={`custom-${block.id}`}
               block={block}
-              merged={merged}
+              blockOverride={blockOverride}
               rowIndex={rowIndex}
               columnIndex={columnIndex}
               setCustomBlockPatch={setCustomBlockPatch}

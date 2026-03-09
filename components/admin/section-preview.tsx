@@ -4,6 +4,7 @@ import React, { Suspense, useMemo, useState, useCallback, useRef, useEffect } fr
 import dynamic from "next/dynamic"
 import { resolveSectionUi } from "@/lib/design-system/resolve"
 import { SkipAnimationProvider } from "@/components/landing/motion-primitives"
+import { tiptapJsonToSanitizedHtml } from "@/lib/cms/rich-text"
 
 // ---------------------------------------------------------------------------
 // Safe accessors
@@ -128,6 +129,15 @@ const FooterGridSection = dynamic(
     })),
   { ssr: false }
 )
+
+/** Convert TipTap JSON → HTML if present, falling back to plain HTML string. */
+function richHtml(richText: unknown, fallbackHtml: unknown): string {
+  if (richText && typeof richText === "object") {
+    const html = tiptapJsonToSanitizedHtml(richText)
+    if (html) return html
+  }
+  return typeof fallbackHtml === "string" ? fallbackHtml : ""
+}
 
 // ---------------------------------------------------------------------------
 // Site token → CSS custom property computation (mirrors page.tsx rootStyle)
@@ -362,7 +372,7 @@ function SectionRenderer({
         return {
           title: s(c.title),
           text: s(c.text),
-          textHtml: s(c.textHtml),
+          textHtml: richHtml(c.textRichText, c.textHtml),
           icon: s(c.icon),
           tag: s(c.tag),
           stat: s(c.stat),
@@ -429,7 +439,7 @@ function SectionRenderer({
       const steps = asRecordArray(content.steps).map((st) => ({
         title: s(st.title),
         body: s(st.body),
-        bodyHtml: s(st.bodyHtml),
+        bodyHtml: richHtml(st.bodyRichText, st.bodyHtml),
         icon: s(st.icon),
         stat: s(st.stat),
       }))
@@ -463,7 +473,7 @@ function SectionRenderer({
       const items = asRecordArray(content.items).map((i) => ({
         title: s(i.title),
         body: s(i.body),
-        bodyHtml: s(i.bodyHtml),
+        bodyHtml: richHtml(i.bodyRichText, i.bodyHtml),
       }))
       const layoutVariantRaw = s(content.layoutVariant)
       const validLayouts = ["accordion", "stacked", "two_column", "cards"]
@@ -491,7 +501,7 @@ function SectionRenderer({
         <WhyThisApproachSection
           title={title}
           heading={subtitle}
-          bodyHtml={s(content.bodyHtml)}
+          bodyHtml={richHtml(content.bodyRichText, content.bodyHtml)}
           eyebrow={s(content.eyebrow)}
           ui={ui}
         />
@@ -540,7 +550,7 @@ function SectionRenderer({
       const items = asRecordArray(content.items).map((i) => ({
         question: s(i.question),
         answer: s(i.answer),
-        answerHtml: s(i.answerHtml),
+        answerHtml: richHtml(i.answerRichText, i.answerHtml),
       }))
       return (
         <FaqSection
@@ -567,7 +577,7 @@ function SectionRenderer({
         <FinalCtaSection
           headline={title}
           body={s(content.body)}
-          bodyHtml={s(content.bodyHtml)}
+          bodyHtml={richHtml(content.bodyRichText, content.bodyHtml)}
           eyebrow={s(content.eyebrow)}
           primaryCta={{ label: ctaPrimaryLabel, href: ctaPrimaryHref || "#" }}
           secondaryCta={{
@@ -661,7 +671,7 @@ function SectionRenderer({
           title={title}
           subtitle={s(content.subtitle) || subtitle}
           eyebrow={s(content.eyebrow)}
-          narrativeHtml={s(content.narrativeHtml) || s(content.narrative)}
+          narrativeHtml={richHtml(content.narrativeRichText, content.narrativeHtml) || s(content.narrative)}
           beforeLabel={s(content.beforeLabel)}
           afterLabel={s(content.afterLabel)}
           beforeItems={asStringArray(content.beforeItems)}

@@ -232,15 +232,47 @@ export function updateDirtyPathForFormatting(
   return next
 }
 
-/** Mark content dirty after a bulk content update (add/remove operations). Always marks dirty. */
+/** Mark content dirty after a bulk content update (add/remove operations). */
 export function updateDirtyPathForContent(
   dirtyPaths: Set<string>,
-  _currentContent: Record<string, unknown>,
+  currentContent: Record<string, unknown>,
   base: EditorDraft | null
 ): Set<string> {
   const next = new Set(dirtyPaths)
   if (base) {
-    next.add("content")
+    if (isContentClean(currentContent, base.content)) {
+      next.delete("content")
+    } else {
+      next.add("content")
+    }
   }
   return next
+}
+
+/** Mark a specific custom block path dirty/clean after a patch. */
+export function updateDirtyPathForCustomBlock(
+  dirtyPaths: Set<string>,
+  blockId: string,
+  currentBlockValue: Record<string, unknown>,
+  base: EditorDraft | null
+): Set<string> {
+  const dirtyKey = `content.customBlocks.${blockId}`
+  const next = new Set(dirtyPaths)
+  if (!base) return next
+
+  const baseCustomBlocks = asRecord(base.content.customBlocks)
+  const baseBlockValue = asRecord(baseCustomBlocks[blockId])
+
+  if (valuesEqualShallow(currentBlockValue, baseBlockValue)) {
+    next.delete(dirtyKey)
+  } else {
+    next.add(dirtyKey)
+  }
+  return next
+}
+
+function asRecord(v: unknown): Record<string, unknown> {
+  return v && typeof v === "object" && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : {}
 }

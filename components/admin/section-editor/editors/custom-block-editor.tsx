@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback } from "react"
+import React, { useCallback, useMemo } from "react"
 import {
   ActionIcon,
   Badge,
@@ -46,7 +46,7 @@ export const COMPOSER_LIST_STYLE_OPTIONS = [
 
 export type CustomBlockEditorProps = {
   block: ComposerBlock
-  merged: Record<string, unknown>
+  blockOverride: Record<string, unknown>
   rowIndex: number
   columnIndex: number
   setCustomBlockPatch: (blockId: string, patch: Record<string, unknown>) => void
@@ -1162,7 +1162,7 @@ function StatChipRowBlock({
 
 function CustomBlockEditorInner({
   block,
-  merged,
+  blockOverride,
   rowIndex,
   columnIndex,
   setCustomBlockPatch,
@@ -1173,6 +1173,12 @@ function CustomBlockEditorInner({
   loading,
   linkMenuProps,
 }: CustomBlockEditorProps) {
+  // Merge block schema defaults with per-block overrides. Memoized so that
+  // siblings whose blockOverride didn't change skip re-render via React.memo.
+  const merged = useMemo<Record<string, unknown>>(
+    () => ({ ...block, ...blockOverride }),
+    [block, blockOverride]
+  )
   const imageUrl = asString(merged.imageUrl)
 
   return (

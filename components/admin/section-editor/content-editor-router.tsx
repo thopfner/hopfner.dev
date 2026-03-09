@@ -68,15 +68,13 @@ export const ContentEditorRouter = memo(function ContentEditorRouter({
     linkMenuProps,
   }), [content, onContentChange, setContentPath, onError, loading, linkMenuProps])
 
-  // Helper for custom composer: merge override blocks
-  const getMergedCustomBlock = useCallback((block: ComposerBlock): ComposerBlock => {
-    const customBlocks = asRecord(content.customBlocks)
-    const override = asRecord(customBlocks[block.id])
-    return {
-      ...block,
-      ...override,
-    }
-  }, [content.customBlocks])
+  // Pass the raw customBlocks record so CustomComposerEditor can look up
+  // per-block overrides. Each CustomBlockEditor merges internally and is
+  // memoized, so only the block whose override changed re-renders.
+  const customBlockOverrides = useMemo(
+    () => asRecord(content.customBlocks),
+    [content.customBlocks]
+  )
 
   const applyCustomBlockImageUrl = useCallback((blockId: string, url: string) => {
     setCustomBlockPatch(blockId, { imageUrl: url })
@@ -95,7 +93,7 @@ export const ContentEditorRouter = memo(function ContentEditorRouter({
       <CustomComposerEditor
         {...editorProps}
         flattenedCustomBlocks={flattenedCustomBlocks}
-        getMergedCustomBlock={getMergedCustomBlock}
+        customBlockOverrides={customBlockOverrides}
         setCustomBlockPatch={setCustomBlockPatch}
         applyCustomBlockImageUrl={applyCustomBlockImageUrl}
         onOpenCustomImageLibrary={onOpenCustomImageLibrary}

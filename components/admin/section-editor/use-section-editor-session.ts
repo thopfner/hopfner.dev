@@ -11,6 +11,7 @@ import {
   updateDirtyPathForContent,
   updateDirtyPathForContentPath,
   updateDirtyPathForFormattingPath,
+  updateDirtyPathForCustomBlock,
   setAtPath,
 } from "./dirty-paths"
 
@@ -152,23 +153,22 @@ function reducer(state: EditorSessionState, action: EditorSessionAction): Editor
     case "patch-custom-block": {
       const existingCustomBlocks = asRecord(state.draft.content.customBlocks)
       const current = asRecord(existingCustomBlocks[action.blockId])
+      const patchedBlock = { ...current, ...action.patch }
       const nextContent = {
         ...state.draft.content,
         customBlocks: {
           ...existingCustomBlocks,
-          [action.blockId]: {
-            ...current,
-            ...action.patch,
-          },
+          [action.blockId]: patchedBlock,
         },
       }
       const nextDraft = { ...state.draft, content: nextContent }
       return {
         ...state,
         draft: nextDraft,
-        dirtyPaths: updateDirtyPathForContent(
+        dirtyPaths: updateDirtyPathForCustomBlock(
           state.dirtyPaths,
-          nextContent,
+          action.blockId,
+          patchedBlock,
           state.baseSnapshot
         ),
       }
