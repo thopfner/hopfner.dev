@@ -167,7 +167,7 @@ function tailwindSpacingToCssValue(spacingToken: string): string | undefined {
   return undefined
 }
 
-function spacingTokenToMarginStyle(
+function spacingTokenToStyle(
   spacingTop?: string,
   spacingBottom?: string,
   outerSpacing?: string
@@ -176,6 +176,18 @@ function spacingTokenToMarginStyle(
   const applyToken = (tokenRaw: string) => {
     const token = tokenRaw.trim()
     if (!token) return
+    const pt = token.match(/^pt-(.+)$/)
+    if (pt) {
+      const value = tailwindSpacingToCssValue(pt[1])
+      if (value) style.paddingTop = value
+      return
+    }
+    const pb = token.match(/^pb-(.+)$/)
+    if (pb) {
+      const value = tailwindSpacingToCssValue(pb[1])
+      if (value) style.paddingBottom = value
+      return
+    }
     const mt = token.match(/^mt-(.+)$/)
     if (mt) {
       const value = tailwindSpacingToCssValue(mt[1])
@@ -309,7 +321,7 @@ function sectionContainerProps(
   const spacingBottom = asString(formatting.spacingBottom)
   const outerSpacing = asString(formatting.outerSpacing)
 
-  Object.assign(sectionStyle, spacingTokenToMarginStyle(spacingTop, spacingBottom, outerSpacing))
+  Object.assign(sectionStyle, spacingTokenToStyle(spacingTop, spacingBottom, outerSpacing))
 
   return {
     sectionId: sectionKey ?? undefined,

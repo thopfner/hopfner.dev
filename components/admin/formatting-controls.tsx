@@ -19,6 +19,8 @@ export type FormattingState = {
   sectionClass: string
   paddingY: "" | "py-4" | "py-6" | "py-8" | "py-10" | "py-12"
   outerSpacing: "" | "my-2" | "my-4" | "my-6" | "my-8" | "my-10" | "my-12"
+  spacingTop: string
+  spacingBottom: string
   maxWidth: "" | "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl"
   textAlign: "" | "left" | "center"
   widthMode: "content" | "full"
@@ -174,6 +176,34 @@ const OUTER_SPACING_DATA = [
   { value: "my-8", label: "my-8" },
   { value: "my-10", label: "my-10" },
   { value: "my-12", label: "my-12" },
+] as const
+
+const SPACING_TOP_DATA = [
+  { value: "", label: "(default)" },
+  { value: "pt-0", label: "None (pt-0)" },
+  { value: "pt-2", label: "pt-2" },
+  { value: "pt-4", label: "pt-4" },
+  { value: "pt-6", label: "pt-6" },
+  { value: "pt-8", label: "pt-8" },
+  { value: "pt-10", label: "pt-10" },
+  { value: "pt-12", label: "pt-12" },
+  { value: "pt-16", label: "pt-16" },
+  { value: "pt-20", label: "pt-20" },
+  { value: "pt-24", label: "pt-24" },
+] as const
+
+const SPACING_BOTTOM_DATA = [
+  { value: "", label: "(default)" },
+  { value: "pb-0", label: "None (pb-0)" },
+  { value: "pb-2", label: "pb-2" },
+  { value: "pb-4", label: "pb-4" },
+  { value: "pb-6", label: "pb-6" },
+  { value: "pb-8", label: "pb-8" },
+  { value: "pb-10", label: "pb-10" },
+  { value: "pb-12", label: "pb-12" },
+  { value: "pb-16", label: "pb-16" },
+  { value: "pb-20", label: "pb-20" },
+  { value: "pb-24", label: "pb-24" },
 ] as const
 
 // ---------- Semantic Controls (memoized) ----------
@@ -376,13 +406,6 @@ const LowLevelOverrides = memo(function LowLevelOverrides({
           value={formatting.innerShadowMode}
           onChange={(v: string) => onFormattingChange((s) => ({ ...s, innerShadowMode: v === "on" || v === "off" ? v : "inherit" }))}
         />
-        <Select
-          label="Section spacing (outer)"
-          comboboxProps={{ withinPortal: false }}
-          data={OUTER_SPACING_DATA as unknown as { value: string; label: string }[]}
-          value={formatting.outerSpacing}
-          onChange={(v: string) => onFormattingChange((s) => ({ ...s, outerSpacing: (v ?? "") as FormattingState["outerSpacing"] || "" }))}
-        />
       </SimpleGrid>
 
       {formatting.innerShadowMode === "on" ? (
@@ -401,6 +424,42 @@ const LowLevelOverrides = memo(function LowLevelOverrides({
         </Stack>
       ) : null}
     </>
+  )
+})
+
+// ---------- Advanced Spacing (memoized) ----------
+
+const AdvancedSpacing = memo(function AdvancedSpacing({
+  formatting,
+  onFormattingChange,
+}: {
+  formatting: FormattingState
+  onFormattingChange: (updater: (f: FormattingState) => FormattingState) => void
+}) {
+  return (
+    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+      <Select
+        label="Top spacing"
+        comboboxProps={{ withinPortal: false }}
+        data={SPACING_TOP_DATA as unknown as { value: string; label: string }[]}
+        value={formatting.spacingTop}
+        onChange={(v: string) => onFormattingChange((s) => ({ ...s, spacingTop: v ?? "" }))}
+      />
+      <Select
+        label="Bottom spacing"
+        comboboxProps={{ withinPortal: false }}
+        data={SPACING_BOTTOM_DATA as unknown as { value: string; label: string }[]}
+        value={formatting.spacingBottom}
+        onChange={(v: string) => onFormattingChange((s) => ({ ...s, spacingBottom: v ?? "" }))}
+      />
+      <Select
+        label="Section spacing (outer)"
+        comboboxProps={{ withinPortal: false }}
+        data={OUTER_SPACING_DATA as unknown as { value: string; label: string }[]}
+        value={formatting.outerSpacing}
+        onChange={(v: string) => onFormattingChange((s) => ({ ...s, outerSpacing: (v ?? "") as FormattingState["outerSpacing"] || "" }))}
+      />
+    </SimpleGrid>
   )
 })
 
@@ -503,6 +562,14 @@ export const FormattingControls = memo(function FormattingControls({
           onFormattingChange={onFormattingChange}
           isControlSupported={isControlSupported}
           sectionType={sectionType ?? ""}
+        />
+
+        <Divider style={{ marginTop: 4, marginBottom: 4 }} />
+
+        <Text fw={600} size="sm">Advanced spacing</Text>
+        <AdvancedSpacing
+          formatting={formatting}
+          onFormattingChange={onFormattingChange}
         />
 
         <Divider style={{ marginTop: 4, marginBottom: 4 }} />

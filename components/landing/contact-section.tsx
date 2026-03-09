@@ -3,7 +3,7 @@ import Link from "next/link"
 import { SectionHeading } from "@/components/landing/section-primitives"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import type { LandingContent } from "@/lib/landing-content"
+import type { LandingContent } from "@/lib/landing-types"
 
 export function ContactSection({
   content,

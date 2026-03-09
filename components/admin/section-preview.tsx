@@ -268,6 +268,46 @@ function PreviewLoading() {
 }
 
 // ---------------------------------------------------------------------------
+// Spacing helpers (mirrors page.tsx spacingTokenToMarginStyle)
+// ---------------------------------------------------------------------------
+function tailwindSpacingToCssValue(spacingToken: string): string | undefined {
+  const token = spacingToken.trim()
+  const arbitrary = token.match(/^\[(.+)\]$/)
+  if (arbitrary) return arbitrary[1]
+  if (token === "px") return "1px"
+  if (token === "0") return "0px"
+  if (/^\d+(?:\.\d+)?$/.test(token)) return `calc(var(--spacing) * ${token})`
+  return undefined
+}
+
+function spacingTokensToStyle(
+  spacingTop?: string,
+  spacingBottom?: string,
+  outerSpacing?: string
+): React.CSSProperties {
+  const style: React.CSSProperties = {}
+  const applyToken = (tokenRaw: string) => {
+    const token = tokenRaw.trim()
+    if (!token) return
+    const pt = token.match(/^pt-(.+)$/)
+    if (pt) { const v = tailwindSpacingToCssValue(pt[1]); if (v) style.paddingTop = v; return }
+    const pb = token.match(/^pb-(.+)$/)
+    if (pb) { const v = tailwindSpacingToCssValue(pb[1]); if (v) style.paddingBottom = v; return }
+    const mt = token.match(/^mt-(.+)$/)
+    if (mt) { const v = tailwindSpacingToCssValue(mt[1]); if (v) style.marginTop = v; return }
+    const mb = token.match(/^mb-(.+)$/)
+    if (mb) { const v = tailwindSpacingToCssValue(mb[1]); if (v) style.marginBottom = v; return }
+    const my = token.match(/^my-(.+)$/)
+    if (my) { const v = tailwindSpacingToCssValue(my[1]); if (v) style.marginBlock = v }
+  }
+  ;[spacingTop, spacingBottom, outerSpacing].forEach((raw) => {
+    if (!raw) return
+    raw.split(/\s+/).forEach(applyToken)
+  })
+  return style
+}
+
+// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 type SectionPreviewProps = {
@@ -793,24 +833,32 @@ function SectionPreviewInner({
     return () => observer.disconnect()
   }, [open, embedded])
 
+  // Spacing style from formatting tokens (mirrors page.tsx behavior)
+  const spacingStyle = useMemo(
+    () => spacingTokensToStyle(s(formatting.spacingTop), s(formatting.spacingBottom), s(formatting.outerSpacing)),
+    [formatting.spacingTop, formatting.spacingBottom, formatting.outerSpacing]
+  )
+
   // Shared renderer element — wrapped in SkipAnimationProvider so scroll-triggered
   // animations (whileInView, IntersectionObserver) render immediately in the
   // scaled/overflow preview container where observers don't fire correctly.
   const rendererEl = (
     <SkipAnimationProvider value={true}>
       <Suspense fallback={<PreviewLoading />}>
-        <SectionRenderer
-          sectionType={sectionType}
-          content={content}
-          formatting={formatting}
-          title={title}
-          subtitle={subtitle}
-          ctaPrimaryLabel={ctaPrimaryLabel}
-          ctaPrimaryHref={ctaPrimaryHref}
-          ctaSecondaryLabel={ctaSecondaryLabel}
-          ctaSecondaryHref={ctaSecondaryHref}
-          backgroundMediaUrl={backgroundMediaUrl}
-        />
+        <div style={spacingStyle}>
+          <SectionRenderer
+            sectionType={sectionType}
+            content={content}
+            formatting={formatting}
+            title={title}
+            subtitle={subtitle}
+            ctaPrimaryLabel={ctaPrimaryLabel}
+            ctaPrimaryHref={ctaPrimaryHref}
+            ctaSecondaryLabel={ctaSecondaryLabel}
+            ctaSecondaryHref={ctaSecondaryHref}
+            backgroundMediaUrl={backgroundMediaUrl}
+          />
+        </div>
       </Suspense>
     </SkipAnimationProvider>
   )
