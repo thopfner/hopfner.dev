@@ -206,7 +206,8 @@ function spacingTokenToMarginStyle(
 function sectionContainerProps(
   formatting: Record<string, unknown>,
   whitelist: Set<string>,
-  sectionKey?: string | null
+  sectionKey?: string | null,
+  sectionType?: string
 ) {
   const f = getSafeFormatting(formatting, whitelist)
   const backgroundType = asString(formatting.backgroundType)
@@ -312,7 +313,7 @@ function sectionContainerProps(
 
   return {
     sectionId: sectionKey ?? undefined,
-    sectionClassName: cn(f.paddingY || "py-6", f.sectionClass),
+    sectionClassName: cn(f.paddingY || (sectionType === "hero_cta" ? "py-0" : "py-6"), f.sectionClass),
     containerClassName: cn(
       widthMode === "full" ? "max-w-none" : f.maxWidth || "max-w-5xl",
       align === "left" ? "ml-0 mr-auto" : align === "right" ? "ml-auto mr-0" : "mx-auto",
@@ -577,7 +578,7 @@ export default async function MarketingPage({
             ),
             deepMerge(asRecord(section.formatting_override), asRecord(v.formatting))
           )
-          const props = sectionContainerProps(formatting, tailwindWhitelist, section.key)
+          const props = sectionContainerProps(formatting, tailwindWhitelist, section.key, section.section_type)
           const ui = resolveSectionUi(formatting, section.section_type, { presets: dbPresets })
           const fullPageBackdropMode = pageBackdropEnabled && topBackdropScope === "full-page"
           const propsWithFullPageBackdrop =
