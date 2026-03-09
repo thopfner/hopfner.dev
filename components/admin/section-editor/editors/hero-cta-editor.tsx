@@ -197,15 +197,7 @@ export function HeroCtaEditor({ content, onContentChange, setContentPath, loadin
 
   return (
     <>
-      <Select
-        label="Hero layout"
-        comboboxProps={{ withinPortal: false }}
-        data={HERO_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
-        value={heroLayoutVariant}
-        onChange={(v: string) =>
-          onContentChange((c) => ({ ...c, layoutVariant: v || "centered" }))
-        }
-      />
+      {/* --- Content first --- */}
       <TextInput
         label="Eyebrow"
         placeholder="e.g. AI + Automation Consultancy"
@@ -278,18 +270,6 @@ export function HeroCtaEditor({ content, onContentChange, setContentPath, loadin
         <>
           <Divider />
           <Text size="xs" c="dimmed" fw={500}>Proof panel (split layout)</Text>
-          <Select
-            label="Proof panel type"
-            comboboxProps={{ withinPortal: false }}
-            data={HERO_PROOF_PANEL_OPTIONS as unknown as { value: string; label: string }[]}
-            value={proofPanelType}
-            onChange={(v: string) =>
-              onContentChange((c) => ({
-                ...c,
-                proofPanel: { ...asRecord(c.proofPanel), type: v || undefined },
-              }))
-            }
-          />
           {proofPanelType ? (
             <>
               <TextInput
@@ -322,20 +302,6 @@ export function HeroCtaEditor({ content, onContentChange, setContentPath, loadin
                   </Button>
                 </Stack>
               ) : null}
-              {proofPanelType === "mockup" ? (
-                <Select
-                  label="Mockup variant"
-                  comboboxProps={{ withinPortal: false }}
-                  data={HERO_MOCKUP_VARIANT_OPTIONS as unknown as { value: string; label: string }[]}
-                  value={asString(heroProofPanel.mockupVariant, "dashboard")}
-                  onChange={(v: string) =>
-                    onContentChange((c) => ({
-                      ...c,
-                      proofPanel: { ...asRecord(c.proofPanel), mockupVariant: v || "dashboard" },
-                    }))
-                  }
-                />
-              ) : null}
               {proofPanelType !== "stats" ? (
                 <TextInput
                   label="Proof image URL"
@@ -345,6 +311,49 @@ export function HeroCtaEditor({ content, onContentChange, setContentPath, loadin
                 />
               ) : null}
             </>
+          ) : null}
+        </>
+      ) : null}
+
+      {/* --- Layout & display last --- */}
+      <Divider />
+      <Text size="xs" c="dimmed" fw={500}>Layout & display</Text>
+      <Select
+        label="Hero layout"
+        comboboxProps={{ withinPortal: false }}
+        data={HERO_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
+        value={heroLayoutVariant}
+        onChange={(v: string) =>
+          onContentChange((c) => ({ ...c, layoutVariant: v || "centered" }))
+        }
+      />
+      {(heroLayoutVariant === "split" || heroLayoutVariant === "split_reversed") ? (
+        <>
+          <Select
+            label="Proof panel type"
+            comboboxProps={{ withinPortal: false }}
+            data={HERO_PROOF_PANEL_OPTIONS as unknown as { value: string; label: string }[]}
+            value={proofPanelType}
+            onChange={(v: string) =>
+              onContentChange((c) => ({
+                ...c,
+                proofPanel: { ...asRecord(c.proofPanel), type: v || undefined },
+              }))
+            }
+          />
+          {proofPanelType === "mockup" ? (
+            <Select
+              label="Mockup variant"
+              comboboxProps={{ withinPortal: false }}
+              data={HERO_MOCKUP_VARIANT_OPTIONS as unknown as { value: string; label: string }[]}
+              value={asString(heroProofPanel.mockupVariant, "dashboard")}
+              onChange={(v: string) =>
+                onContentChange((c) => ({
+                  ...c,
+                  proofPanel: { ...asRecord(c.proofPanel), mockupVariant: v || "dashboard" },
+                }))
+              }
+            />
           ) : null}
         </>
       ) : null}

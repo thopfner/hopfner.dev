@@ -7,7 +7,6 @@ import {
   Stack,
   Text,
   TextInput,
-  Textarea,
 } from "@/components/mui-compat"
 import { IconPlus, IconX } from "@tabler/icons-react"
 import {
@@ -16,14 +15,21 @@ import {
   asArray,
   asStringArray,
   inputValueFromEvent,
+  richTextWithFallback,
 } from "../payload"
+import { TipTapJsonEditor } from "../fields/tiptap-json-editor"
 import type { ContentEditorProps } from "../types"
 
-export function CaseStudySplitEditor({ content, onContentChange }: ContentEditorProps) {
+export function CaseStudySplitEditor({ content, onContentChange, onError }: ContentEditorProps) {
   return (
     <Stack gap="sm">
       <TextInput label="Eyebrow" value={asString(content.eyebrow)} onChange={(e) => onContentChange((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))} />
-      <Textarea label="Narrative" autosize minRows={3} value={asString(content.narrative)} onChange={(e) => onContentChange((c) => ({ ...c, narrative: inputValueFromEvent(e) }))} />
+      <TipTapJsonEditor
+        label="Narrative"
+        value={richTextWithFallback(content.narrativeRichText, content.narrative)}
+        onChange={(next) => onContentChange((c) => ({ ...c, narrativeRichText: next }))}
+        onError={onError}
+      />
       <Group grow>
         <TextInput label="Before label" placeholder="Before" value={asString(content.beforeLabel)} onChange={(e) => onContentChange((c) => ({ ...c, beforeLabel: inputValueFromEvent(e) }))} />
         <TextInput label="After label" placeholder="After" value={asString(content.afterLabel)} onChange={(e) => onContentChange((c) => ({ ...c, afterLabel: inputValueFromEvent(e) }))} />

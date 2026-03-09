@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   Checkbox,
+  Divider,
   Group,
   Paper,
   Select,
@@ -35,23 +36,12 @@ export function LabelValueListEditor({ content, onContentChange }: ContentEditor
 
   return (
     <Stack gap="sm">
-      <Select
-        label="Layout variant"
-        comboboxProps={{ withinPortal: false }}
-        data={LABEL_VALUE_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
-        value={asString(content.layoutVariant, "default")}
-        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "default" }))}
-      />
+      {/* --- Content first --- */}
       <TextInput
         label="Section eyebrow"
         placeholder="e.g. Trusted By"
         value={asString(content.eyebrow)}
         onChange={(e) => onContentChange((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
-      />
-      <Checkbox
-        label="Compact mode"
-        checked={content.compact === true}
-        onChange={(e) => onContentChange((c) => ({ ...c, compact: e.currentTarget.checked }))}
       />
       <Group justify="space-between">
         <Text size="sm" fw={600}>
@@ -141,6 +131,22 @@ export function LabelValueListEditor({ content, onContentChange }: ContentEditor
           )
         })}
       </Stack>
+
+      {/* --- Layout & display last --- */}
+      <Divider />
+      <Text size="xs" c="dimmed" fw={500}>Layout & display</Text>
+      <Select
+        label="Layout variant"
+        comboboxProps={{ withinPortal: false }}
+        data={LABEL_VALUE_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
+        value={asString(content.layoutVariant, "default")}
+        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "default" }))}
+      />
+      <Checkbox
+        label="Compact mode"
+        checked={content.compact === true}
+        onChange={(e) => onContentChange((c) => ({ ...c, compact: e.currentTarget.checked }))}
+      />
     </Stack>
   )
 }

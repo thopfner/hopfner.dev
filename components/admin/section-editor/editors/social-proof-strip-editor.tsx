@@ -4,6 +4,7 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Divider,
   Group,
   Paper,
   Select,
@@ -61,13 +62,7 @@ export function SocialProofStripEditor({
 
   return (
     <Stack gap="sm">
-      <Select
-        label="Layout variant"
-        comboboxProps={{ withinPortal: false }}
-        data={SOCIAL_PROOF_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
-        value={asString(content.layoutVariant, "inline")}
-        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "inline" }))}
-      />
+      {/* --- Content first --- */}
       <TextInput
         label="Eyebrow"
         placeholder="e.g. Trusted by"
@@ -146,6 +141,7 @@ export function SocialProofStripEditor({
                   </Paper>
                 ) : null}
                 <TextInput label="Alt text" value={asString(l.alt)} onChange={(e) => { const next = logos.slice(); next[idx] = { ...l, alt: inputValueFromEvent(e) }; onContentChange((c) => ({ ...c, logos: next })) }} />
+                <TextInput label="Link URL" placeholder="https://..." value={asString(l.href)} onChange={(e) => { const next = logos.slice(); next[idx] = { ...l, href: inputValueFromEvent(e) }; onContentChange((c) => ({ ...c, logos: next })) }} />
               </Stack>
             </Paper>
           )
@@ -193,6 +189,17 @@ export function SocialProofStripEditor({
           )
         })}
       </Stack>
+
+      {/* --- Layout & display last --- */}
+      <Divider />
+      <Text size="xs" c="dimmed" fw={500}>Layout & display</Text>
+      <Select
+        label="Layout variant"
+        comboboxProps={{ withinPortal: false }}
+        data={SOCIAL_PROOF_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
+        value={asString(content.layoutVariant, "inline")}
+        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "inline" }))}
+      />
     </Stack>
   )
 }

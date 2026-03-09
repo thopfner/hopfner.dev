@@ -317,11 +317,28 @@ export function defaultsToPayload(defaults?: SectionTypeDefault): VersionPayload
 // Draft <-> Payload conversions
 // ---------------------------------------------------------------------------
 
-export function payloadToDraft(p: VersionPayload): EditorDraft {
+/**
+ * Convert a version payload into the editor draft shape.
+ *
+ * When `sectionType` is a built-in type, legacy `content.subtitle` is
+ * hydrated into `meta.subtitle` if the meta field is empty — so the user
+ * always sees one canonical subtitle input.
+ */
+export function payloadToDraft(p: VersionPayload, sectionType?: string | null): EditorDraft {
+  let subtitle = p.subtitle ?? ""
+
+  // Hydrate: seed meta.subtitle from content.subtitle for built-in types
+  if (sectionType && isBuiltinSectionType(sectionType) && !subtitle.trim()) {
+    const contentSubtitle = asString(p.content.subtitle)
+    if (contentSubtitle.trim()) {
+      subtitle = contentSubtitle
+    }
+  }
+
   return {
     meta: {
       title: p.title ?? "",
-      subtitle: p.subtitle ?? "",
+      subtitle,
       ctaPrimaryLabel: p.cta_primary_label ?? "",
       ctaPrimaryHref: p.cta_primary_href ?? "",
       ctaSecondaryLabel: p.cta_secondary_label ?? "",
@@ -333,7 +350,21 @@ export function payloadToDraft(p: VersionPayload): EditorDraft {
   }
 }
 
-export function draftToPayload(d: EditorDraft): VersionPayload {
+/**
+ * Convert the editor draft back into a version payload for saving.
+ *
+ * When `sectionType` is a built-in type, `content.subtitle` is stripped
+ * so the canonical subtitle lives exclusively in the meta column.
+ */
+export function draftToPayload(d: EditorDraft, sectionType?: string | null): VersionPayload {
+  let content = d.content
+
+  // Strip legacy content.subtitle for built-in types
+  if (sectionType && isBuiltinSectionType(sectionType) && "subtitle" in content) {
+    const { subtitle: _removed, ...rest } = content
+    content = rest
+  }
+
   return {
     title: textOrNull(d.meta.title),
     subtitle: textOrNull(d.meta.subtitle),
@@ -343,7 +374,7 @@ export function draftToPayload(d: EditorDraft): VersionPayload {
     cta_secondary_href: textOrNull(d.meta.ctaSecondaryHref),
     background_media_url: textOrNull(d.meta.backgroundMediaUrl),
     formatting: formattingToJsonb(d.formatting),
-    content: d.content,
+    content,
   }
 }
 

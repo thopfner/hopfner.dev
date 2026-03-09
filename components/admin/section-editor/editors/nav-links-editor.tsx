@@ -210,6 +210,16 @@ export function NavLinksEditor({
                     ensureAnchorsLoaded={linkMenuProps.ensureAnchorsLoaded}
                   />
                 </SimpleGrid>
+                <TextInput
+                  label="Anchor target"
+                  placeholder="e.g. services-heading"
+                  value={asString(r.anchorId)}
+                  onChange={(e) => {
+                    const next = navLinks.slice()
+                    next[idx] = { ...r, anchorId: inputValueFromEvent(e) }
+                    onContentChange((c) => ({ ...c, links: next }))
+                  }}
+                />
               </Stack>
             </Paper>
           )

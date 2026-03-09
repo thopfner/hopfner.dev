@@ -424,7 +424,7 @@ function SectionRenderer({
       return (
         <WhatIDeliverSection
           title={title}
-          subtitle={s(content.subtitle) || subtitle}
+          subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           cards={cards}
           sectionVariant={sectionVariant}
@@ -460,7 +460,7 @@ function SectionRenderer({
       return (
         <HowItWorksSection
           title={title}
-          subtitle={s(content.subtitle) || subtitle}
+          subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           steps={steps}
           layoutVariant={layoutVariant}
@@ -487,7 +487,7 @@ function SectionRenderer({
       return (
         <WorkflowsSection
           title={title}
-          subtitle={s(content.subtitle) || subtitle}
+          subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           items={items}
           layoutVariant={layoutVariant}
@@ -536,7 +536,7 @@ function SectionRenderer({
       return (
         <TechStackSection
           title={title}
-          subtitle={s(content.subtitle) || subtitle}
+          subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           items={items}
           layoutVariant={layoutVariant}
@@ -555,7 +555,7 @@ function SectionRenderer({
       return (
         <FaqSection
           title={title}
-          subtitle={s(content.subtitle) || subtitle}
+          subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           items={items}
           ui={ui}
@@ -609,7 +609,7 @@ function SectionRenderer({
       return (
         <SocialProofStripSection
           title={title}
-          subtitle={s(content.subtitle) || subtitle}
+          subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           logos={logos}
           badges={badges}
@@ -649,7 +649,7 @@ function SectionRenderer({
       return (
         <ProofClusterSection
           title={title}
-          subtitle={s(content.subtitle) || subtitle}
+          subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           metrics={metrics}
           proofCard={proofCard}
@@ -669,7 +669,7 @@ function SectionRenderer({
       return (
         <CaseStudySplitSection
           title={title}
-          subtitle={s(content.subtitle) || subtitle}
+          subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           narrativeHtml={richHtml(content.narrativeRichText, content.narrativeHtml) || s(content.narrative)}
           beforeLabel={s(content.beforeLabel)}

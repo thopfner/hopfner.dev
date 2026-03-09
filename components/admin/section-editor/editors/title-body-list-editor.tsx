@@ -4,6 +4,7 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Divider,
   Group,
   Paper,
   Select,
@@ -35,13 +36,7 @@ export function TitleBodyListEditor({ content, onContentChange, onError }: Conte
 
   return (
     <Stack gap="sm">
-      <Select
-        label="Layout variant"
-        comboboxProps={{ withinPortal: false }}
-        data={TITLE_BODY_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
-        value={asString(content.layoutVariant, "accordion")}
-        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "accordion" }))}
-      />
+      {/* --- Content first --- */}
       <TextInput
         label="Section eyebrow"
         placeholder="e.g. Who It's For"
@@ -113,6 +108,17 @@ export function TitleBodyListEditor({ content, onContentChange, onError }: Conte
           )
         })}
       </Stack>
+
+      {/* --- Layout & display last --- */}
+      <Divider />
+      <Text size="xs" c="dimmed" fw={500}>Layout & display</Text>
+      <Select
+        label="Layout variant"
+        comboboxProps={{ withinPortal: false }}
+        data={TITLE_BODY_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
+        value={asString(content.layoutVariant, "accordion")}
+        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "accordion" }))}
+      />
     </Stack>
   )
 }

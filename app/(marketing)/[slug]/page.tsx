@@ -734,7 +734,7 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
-                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   cards={cards}
                   sectionVariant={cardGridSectionVariant}
@@ -760,7 +760,7 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
-                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   steps={steps}
                   layoutVariant={stepsLayout}
@@ -782,7 +782,7 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
-                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   items={items}
                   layoutVariant={tbLayout}
@@ -819,7 +819,7 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
-                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   items={items}
                   layoutVariant={lvLayout}
@@ -839,7 +839,7 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
-                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   items={items}
                 />
@@ -962,7 +962,7 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
-                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   logos={logos}
                   badges={badges}
@@ -999,7 +999,7 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
-                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   metrics={metrics}
                   proofCard={proofCard}
@@ -1023,7 +1023,7 @@ export default async function MarketingPage({
                   {...adjustedProps}
                   ui={ui}
                   title={pickText(v.title, defaults?.default_title)}
-                  subtitle={asString(content.subtitle) || pickText(v.subtitle, defaults?.default_subtitle)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   narrativeHtml={narrativeHtml || asString(content.narrative)}
                   beforeLabel={asString(content.beforeLabel)}

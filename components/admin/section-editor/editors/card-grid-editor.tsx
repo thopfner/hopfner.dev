@@ -3,7 +3,10 @@
 import { useCallback } from "react"
 import {
   Button,
+  Checkbox,
+  Divider,
   Group,
+  Paper,
   Select,
   SimpleGrid,
   Stack,
@@ -45,11 +48,6 @@ const CARD_GRID_TONE_OPTIONS = [
   { value: "elevated", label: "Elevated" },
   { value: "muted", label: "Muted" },
   { value: "contrast", label: "Contrast" },
-] as const
-
-const BLOCK_LIST_MODE_OPTIONS = [
-  { label: "Block", value: "block" },
-  { label: "List", value: "list" },
 ] as const
 
 type CardGridEditorProps = ContentEditorProps & {
@@ -196,35 +194,23 @@ export function CardGridEditor({
     }))
   }, [onContentChange])
 
-  // ---- Section-level controls ----
+  // ---- Section-level cardDisplay defaults ----
 
-  const globalCardDisplay = content.cardDisplay as Record<string, unknown> | undefined
+  const globalCardDisplay = toCardDisplay(content.cardDisplay)
+
+  const handleGlobalDisplayChange = useCallback(
+    (patch: Partial<CardDisplayState>) => {
+      onContentChange((c) => ({
+        ...c,
+        cardDisplay: { ...toCardDisplay(c.cardDisplay), ...patch },
+      }))
+    },
+    [onContentChange]
+  )
 
   return (
     <Stack gap="sm">
-      <Select
-        label="Section variant"
-        comboboxProps={{ withinPortal: false }}
-        data={CARD_GRID_VARIANT_OPTIONS as unknown as { value: string; label: string }[]}
-        value={asString(content.sectionVariant, "default")}
-        onChange={(v: string) => onContentChange((c) => ({ ...c, sectionVariant: v || "default" }))}
-      />
-      <SimpleGrid cols={2}>
-        <Select
-          label="Columns"
-          comboboxProps={{ withinPortal: false }}
-          data={CARD_GRID_COLUMNS_OPTIONS as unknown as { value: string; label: string }[]}
-          value={String(content.columns ?? "")}
-          onChange={(v: string) => onContentChange((c) => ({ ...c, columns: v ? Number(v) : undefined }))}
-        />
-        <Select
-          label="Card tone"
-          comboboxProps={{ withinPortal: false }}
-          data={CARD_GRID_TONE_OPTIONS as unknown as { value: string; label: string }[]}
-          value={asString(content.cardTone, "default")}
-          onChange={(v: string) => onContentChange((c) => ({ ...c, cardTone: v || "default" }))}
-        />
-      </SimpleGrid>
+      {/* --- Content first --- */}
       <TextInput
         label="Section eyebrow"
         placeholder="e.g. Our Services"
@@ -252,7 +238,7 @@ export function CardGridEditor({
             key={idx}
             index={idx}
             card={asRecord(card)}
-            globalCardDisplay={globalCardDisplay}
+            globalCardDisplay={content.cardDisplay as Record<string, unknown> | undefined}
             onPatchCard={handlePatchCard}
             onRemoveCard={handleRemoveCard}
             onSetCardDisplay={handleSetCardDisplay}
@@ -270,6 +256,48 @@ export function CardGridEditor({
           </Text>
         ) : null}
       </Stack>
+
+      {/* --- Layout & display last --- */}
+      <Divider />
+      <Text size="xs" c="dimmed" fw={500}>Layout & display</Text>
+      <Select
+        label="Section variant"
+        comboboxProps={{ withinPortal: false }}
+        data={CARD_GRID_VARIANT_OPTIONS as unknown as { value: string; label: string }[]}
+        value={asString(content.sectionVariant, "default")}
+        onChange={(v: string) => onContentChange((c) => ({ ...c, sectionVariant: v || "default" }))}
+      />
+      <SimpleGrid cols={2}>
+        <Select
+          label="Columns"
+          comboboxProps={{ withinPortal: false }}
+          data={CARD_GRID_COLUMNS_OPTIONS as unknown as { value: string; label: string }[]}
+          value={String(content.columns ?? "")}
+          onChange={(v: string) => onContentChange((c) => ({ ...c, columns: v ? Number(v) : undefined }))}
+        />
+        <Select
+          label="Card tone"
+          comboboxProps={{ withinPortal: false }}
+          data={CARD_GRID_TONE_OPTIONS as unknown as { value: string; label: string }[]}
+          value={asString(content.cardTone, "default")}
+          onChange={(v: string) => onContentChange((c) => ({ ...c, cardTone: v || "default" }))}
+        />
+      </SimpleGrid>
+
+      {/* Section-level card display defaults */}
+      <Paper withBorder p="sm" radius="md">
+        <Stack gap="xs">
+          <Text size="xs" fw={600}>Default card fields</Text>
+          <Text size="xs" c="dimmed">Controls which fields new cards show by default.</Text>
+          <SimpleGrid cols={2}>
+            <Checkbox label="Title" size="xs" checked={globalCardDisplay.showTitle} onChange={(e) => handleGlobalDisplayChange({ showTitle: e.currentTarget.checked })} />
+            <Checkbox label="Text" size="xs" checked={globalCardDisplay.showText} onChange={(e) => handleGlobalDisplayChange({ showText: e.currentTarget.checked })} />
+            <Checkbox label="Image" size="xs" checked={globalCardDisplay.showImage} onChange={(e) => handleGlobalDisplayChange({ showImage: e.currentTarget.checked })} />
+            <Checkbox label="You get" size="xs" checked={globalCardDisplay.showYouGet} onChange={(e) => handleGlobalDisplayChange({ showYouGet: e.currentTarget.checked })} />
+            <Checkbox label="Best for" size="xs" checked={globalCardDisplay.showBestFor} onChange={(e) => handleGlobalDisplayChange({ showBestFor: e.currentTarget.checked })} />
+          </SimpleGrid>
+        </Stack>
+      </Paper>
     </Stack>
   )
 }

@@ -327,7 +327,7 @@ export function useSectionEditorResources(
             payload = defaultsToPayload(defaults)
           }
 
-          const draft = payloadToDraft(payload)
+          const draft = payloadToDraft(payload, normalizedType)
           onHydrate?.(draft)
         }
       } catch (e) {
@@ -337,7 +337,7 @@ export function useSectionEditorResources(
         setLoading(false)
       }
     },
-    [section, supabase, versionTable, ownerIdColumn, versionSelect, defaults]
+    [section, supabase, versionTable, ownerIdColumn, versionSelect, defaults, normalizedType]
   )
 
   // ---------------------------------------------------------------------------
@@ -370,7 +370,7 @@ export function useSectionEditorResources(
           return
         }
 
-        const payload = draftToPayload(draft)
+        const payload = draftToPayload(draft, normalizedType)
 
         const { error: archiveError } = await supabase
           .from(versionTable)
@@ -395,7 +395,7 @@ export function useSectionEditorResources(
         setLoading(false)
       }
     },
-    [section, supabase, versionTable, ownerIdColumn, versions, allowedClasses]
+    [section, supabase, versionTable, ownerIdColumn, versions, allowedClasses, normalizedType]
   )
 
   // ---------------------------------------------------------------------------
@@ -430,7 +430,7 @@ export function useSectionEditorResources(
         }
 
         // 2. Save as draft
-        const payload = draftToPayload(draft)
+        const payload = draftToPayload(draft, normalizedType)
 
         const { error: archiveError } = await supabase
           .from(versionTable)
@@ -467,7 +467,7 @@ export function useSectionEditorResources(
         setLoading(false)
       }
     },
-    [section, supabase, versionTable, ownerIdColumn, versions, allowedClasses, scope, publishRpc]
+    [section, supabase, versionTable, ownerIdColumn, versions, allowedClasses, scope, publishRpc, normalizedType]
   )
 
   // ---------------------------------------------------------------------------

@@ -37,9 +37,10 @@ import {
 import { useSectionEditorResources } from "./use-section-editor-resources"
 import { useSectionEditorSession } from "./use-section-editor-session"
 import { VersionStatusCard } from "./version-status-card"
-import { CommonFieldsPanel } from "./common-fields-panel"
+import { SectionBasicsPanel, SectionActionsPanel, BackgroundMediaPanel } from "./common-fields-panel"
 import { PreviewPane } from "./preview-pane"
 import { ContentEditorRouter } from "./content-editor-router"
+import { resolveMetaFieldVisibility } from "./builtin-editor-contract"
 
 // ---------------------------------------------------------------------------
 // Drawer chrome constants — stable references
@@ -138,13 +139,15 @@ export function SectionEditorDrawerShell({
   const { draft, isDirty, actions } = session
 
   const type = normalizedType
+
+  // --- Shared-field visibility via code contract (built-ins) or DB caps (custom) ---
   const capabilities = asRecord(defaults?.capabilities)
-  const fieldCaps = asRecord(capabilities.fields)
-  const showTitle = fieldCaps.title !== false
-  const showSubtitle = fieldCaps.subtitle !== false
-  const showCtaPrimary = fieldCaps.cta_primary !== false
-  const showCtaSecondary = fieldCaps.cta_secondary !== false
-  const showBackgroundMedia = fieldCaps.background_media === true
+  const dbFieldCaps = asRecord(capabilities.fields)
+  const metaVisibility = useMemo(
+    () => resolveMetaFieldVisibility(type, dbFieldCaps),
+    [type, dbFieldCaps]
+  )
+  const { title: showTitle, subtitle: showSubtitle, ctaPrimary: showCtaPrimary, ctaSecondary: showCtaSecondary, backgroundMedia: showBackgroundMedia } = metaVisibility
 
   const published = useMemo(() => versions.find((v) => v.status === "published") ?? null, [versions])
   const drafts = useMemo(() => versions.filter((v) => v.status === "draft").sort((a, b) => b.version - a.version), [versions])
@@ -338,6 +341,7 @@ export function SectionEditorDrawerShell({
                   </Paper>
                 ) : null}
 
+                {/* 1. Version status */}
                 <VersionStatusCard
                   published={published}
                   activeDraft={activeDraft}
@@ -349,29 +353,24 @@ export function SectionEditorDrawerShell({
                   onDeleteDraft={handleOpenDeleteModal}
                 />
 
-                <CommonFieldsPanel
+                {/* 2. Section basics — title + subtitle */}
+                <SectionBasicsPanel
                   meta={draft.meta}
                   onMetaField={actions.setMetaField}
                   showTitle={showTitle}
                   showSubtitle={showSubtitle}
+                />
+
+                {/* 3. Shared actions — CTA primary + secondary */}
+                <SectionActionsPanel
+                  meta={draft.meta}
+                  onMetaField={actions.setMetaField}
                   showCtaPrimary={showCtaPrimary}
                   showCtaSecondary={showCtaSecondary}
-                  showBackgroundMedia={showBackgroundMedia}
-                  loading={loading}
-                  onUploadBackground={onUploadBackground}
-                  onOpenBackgroundLibrary={handleOpenBackgroundLibrary}
-                  onError={handleError}
                   linkMenuProps={linkMenuProps}
                 />
 
-                <FormattingControls
-                  formatting={draft.formatting}
-                  onFormattingChange={actions.setFormatting}
-                  isControlSupported={isControlSupportedActive}
-                  activePresets={activePresets}
-                  sectionType={normalizedType}
-                />
-
+                {/* 4. Section content */}
                 <Paper withBorder p="md" radius="md">
                   <Stack gap="sm">
                     <Text fw={600} size="sm">
@@ -398,6 +397,27 @@ export function SectionEditorDrawerShell({
                   </Stack>
                 </Paper>
 
+                {/* 5. Formatting controls (design system) */}
+                <FormattingControls
+                  formatting={draft.formatting}
+                  onFormattingChange={actions.setFormatting}
+                  isControlSupported={isControlSupportedActive}
+                  activePresets={activePresets}
+                  sectionType={normalizedType}
+                />
+
+                {/* 6. Background media */}
+                <BackgroundMediaPanel
+                  meta={draft.meta}
+                  onMetaField={actions.setMetaField}
+                  showBackgroundMedia={showBackgroundMedia}
+                  loading={loading}
+                  onUploadBackground={onUploadBackground}
+                  onOpenBackgroundLibrary={handleOpenBackgroundLibrary}
+                  onError={handleError}
+                />
+
+                {/* 7. Version history */}
                 <Paper withBorder p="md" radius="md">
                   <Stack gap="sm">
                     <Text fw={600} size="sm">

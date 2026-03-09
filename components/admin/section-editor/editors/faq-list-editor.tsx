@@ -25,6 +25,12 @@ export function FaqListEditor({ content, onContentChange, onError }: ContentEdit
 
   return (
     <Stack gap="sm">
+      <TextInput
+        label="Eyebrow"
+        placeholder="e.g. Frequently Asked Questions"
+        value={asString(content.eyebrow)}
+        onChange={(e) => onContentChange((c) => ({ ...c, eyebrow: inputValueFromEvent(e) }))}
+      />
       <Group justify="space-between">
         <Text size="sm" fw={600}>
           Items

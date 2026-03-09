@@ -4,6 +4,7 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Divider,
   Group,
   Paper,
   Select,
@@ -35,13 +36,7 @@ export function StepsListEditor({ content, onContentChange, onError }: ContentEd
 
   return (
     <Stack gap="sm">
-      <Select
-        label="Layout variant"
-        comboboxProps={{ withinPortal: false }}
-        data={STEPS_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
-        value={asString(content.layoutVariant, "grid")}
-        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "grid" }))}
-      />
+      {/* --- Content first --- */}
       <TextInput
         label="Section eyebrow"
         placeholder="e.g. How It Works"
@@ -135,6 +130,17 @@ export function StepsListEditor({ content, onContentChange, onError }: ContentEd
           )
         })}
       </Stack>
+
+      {/* --- Layout & display last --- */}
+      <Divider />
+      <Text size="xs" c="dimmed" fw={500}>Layout & display</Text>
+      <Select
+        label="Layout variant"
+        comboboxProps={{ withinPortal: false }}
+        data={STEPS_LIST_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
+        value={asString(content.layoutVariant, "grid")}
+        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "grid" }))}
+      />
     </Stack>
   )
 }

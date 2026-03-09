@@ -1,8 +1,10 @@
 "use client"
 
 import {
+  Divider,
   Select,
   Stack,
+  Text,
   TextInput,
 } from "@/components/mui-compat"
 import {
@@ -23,13 +25,7 @@ const CTA_BLOCK_LAYOUT_OPTIONS = [
 export function CtaBlockEditor({ content, onContentChange, onError }: ContentEditorProps) {
   return (
     <Stack gap="sm">
-      <Select
-        label="Layout variant"
-        comboboxProps={{ withinPortal: false }}
-        data={CTA_BLOCK_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
-        value={asString(content.layoutVariant, "centered")}
-        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "centered" }))}
-      />
+      {/* --- Content first --- */}
       <TextInput
         label="Eyebrow"
         placeholder="e.g. Ready to start?"
@@ -41,6 +37,17 @@ export function CtaBlockEditor({ content, onContentChange, onError }: ContentEdi
         value={richTextWithFallback(content.bodyRichText, content.body)}
         onChange={(next) => onContentChange((c) => ({ ...c, bodyRichText: next }))}
         onError={onError}
+      />
+
+      {/* --- Layout & display last --- */}
+      <Divider />
+      <Text size="xs" c="dimmed" fw={500}>Layout & display</Text>
+      <Select
+        label="Layout variant"
+        comboboxProps={{ withinPortal: false }}
+        data={CTA_BLOCK_LAYOUT_OPTIONS as unknown as { value: string; label: string }[]}
+        value={asString(content.layoutVariant, "centered")}
+        onChange={(v: string) => onContentChange((c) => ({ ...c, layoutVariant: v || "centered" }))}
       />
     </Stack>
   )

@@ -155,6 +155,12 @@ export const CardGridRow = React.memo(function CardGridRow({
     [onSetCardImageWidth, index]
   )
 
+  const imageAltField = useBufferedField(
+    asString(cardImage.alt),
+    useCallback((v: string) => onPatchCard(index, { image: { ...asRecord(card.image), alt: v } }), [onPatchCard, index, card.image]),
+    300
+  )
+
   // ---- Display toggle callbacks ----
 
   const handleShowTitle = useCallback(
@@ -288,6 +294,13 @@ export const CardGridRow = React.memo(function CardGridRow({
             advancedUrl
             previewHeight={132}
           >
+            <TextInput
+              label="Alt text"
+              placeholder="Image description"
+              value={imageAltField.value}
+              onChange={(e) => imageAltField.onChange(e.currentTarget.value)}
+              onBlur={imageAltField.onBlur}
+            />
             <Stack gap={4}>
               <Group justify="space-between">
                 <Text size="sm">Width</Text>
