@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="hopfner.dev"
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APP_NAME="$(basename "$APP_DIR")"
 LOCK_FILE="/tmp/${APP_NAME}.deploy.lock"
 
 cd "$APP_DIR"
