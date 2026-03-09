@@ -11,7 +11,7 @@ export function tiptapJsonToSanitizedHtml(doc: unknown): string {
   let html = ""
   try {
     html = generateHTML(doc as JSONContent, [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       Link.configure({ openOnClick: false }),
       Image.configure({ allowBase64: false }),
     ])

@@ -18,7 +18,6 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3010
 ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs && \
@@ -31,6 +30,8 @@ COPY --from=build /app/public ./public
 
 USER nextjs
 
-EXPOSE 3010
+ARG PORT=3010
+ENV PORT=$PORT
+EXPOSE $PORT
 
 CMD ["node", "server.js"]

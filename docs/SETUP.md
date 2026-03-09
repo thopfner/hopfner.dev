@@ -35,6 +35,7 @@ SUPABASE_STORAGE_BUCKET="cms-media"
 BLOG_INGEST_API_KEY="generate-a-random-key"
 NEXT_PUBLIC_SITE_URL="https://yourdomain.com"
 NEXT_PUBLIC_SITE_NAME="Your Site Name"
+PORT=3010
 ```
 
 ## 3. Database Setup
@@ -55,7 +56,7 @@ docker compose up -d
 Verify the app is running:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3010/admin/login
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${PORT:-3010}/admin/login
 # Should return 200 or 307
 ```
 
