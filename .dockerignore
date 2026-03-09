@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+enhancements_v*
+fine_tuning_v*.md
+formatting_readme.md
+*.md
+!package.json
+.env.local
+.env
