@@ -6,5 +6,4 @@ fine_tuning_v*.md
 formatting_readme.md
 *.md
 !package.json
-.env.local
 .env
