@@ -193,17 +193,17 @@ export function CaseStudySplitSection({
           {/* Stats — reinforce the "after" side */}
           {hasStats ? (
             <FadeIn delay={0.15}>
-              <div className={cn("grid", stats.length <= 2 ? "grid-cols-2" : "grid-cols-3", GRID_GAP_CLASSES[gridGap])}>
+              <div className={cn("grid grid-cols-2", stats.length > 2 && "sm:grid-cols-3", GRID_GAP_CLASSES[gridGap])}>
                 {stats.map((s) => (
                   <div
                     key={s.label}
-                    className={cn(card.cardClass, card.spacing.rootPadding, "text-center")}
+                    className={cn(card.cardClass, card.spacing.rootPadding, "min-w-0 text-center")}
                     style={panelStyle}
                   >
                     {card.isInlineAccent ? (
                       <div aria-hidden className="mx-auto mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                     ) : null}
-                    <p className="text-metric text-gradient text-2xl font-semibold">{s.value}</p>
+                    <p className="text-metric text-gradient text-xl font-semibold sm:text-2xl">{s.value}</p>
                     <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-1.5")}>{s.label}</p>
                   </div>
                 ))}
