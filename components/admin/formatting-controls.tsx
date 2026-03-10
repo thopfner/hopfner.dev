@@ -23,6 +23,7 @@ export type FormattingState = {
   spacingBottom: string
   maxWidth: "" | "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl"
   textAlign: "" | "left" | "center"
+  heroRightAlign: "" | "left" | "center"
   widthMode: "content" | "full"
   heroMinHeight: "auto" | "70svh" | "100svh"
   shadowMode: "inherit" | "on" | "off"
@@ -376,6 +377,13 @@ const LowLevelOverrides = memo(function LowLevelOverrides({
         />
         {sectionType === "hero_cta" ? (
           <>
+            <Select
+              label="Right column align (split)"
+              comboboxProps={{ withinPortal: false }}
+              data={TEXT_ALIGN_DATA as unknown as { value: string; label: string }[]}
+              value={formatting.heroRightAlign}
+              onChange={(v: string) => onFormattingChange((s) => ({ ...s, heroRightAlign: (v ?? "") as FormattingState["heroRightAlign"] || "" }))}
+            />
             <Select
               label="Hero width mode"
               comboboxProps={{ withinPortal: false }}

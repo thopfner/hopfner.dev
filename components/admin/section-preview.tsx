@@ -376,6 +376,8 @@ function SectionRenderer({
         value: s(it.value),
         label: s(it.label),
       }))
+      const heroContentOrder = asStringArray(content.heroContentOrder)
+      const heroContentSides = asRecord(content.heroContentSides)
       const layoutVariant = s(content.layoutVariant)
       return (
         <HeroSection
@@ -398,6 +400,18 @@ function SectionRenderer({
           proofPanel={proofPanel}
           trustItems={trustItems.length > 0 ? trustItems : undefined}
           heroStats={heroStats.length > 0 ? heroStats : undefined}
+          heroContentOrder={heroContentOrder.length > 0 ? heroContentOrder : undefined}
+          heroContentSides={Object.keys(heroContentSides).length > 0 ? heroContentSides as Record<string, "left" | "right"> : undefined}
+          textAlign={
+            s(formatting.textAlign) === "center" ? "center"
+            : s(formatting.textAlign) === "left" ? "left"
+            : undefined
+          }
+          rightColumnAlign={
+            s(formatting.heroRightAlign) === "center" ? "center"
+            : s(formatting.heroRightAlign) === "left" ? "left"
+            : undefined
+          }
           ui={ui}
         />
       )

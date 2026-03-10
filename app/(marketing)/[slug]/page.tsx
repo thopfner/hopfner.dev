@@ -662,6 +662,8 @@ export default async function MarketingPage({
                 value: asString(it.value),
                 label: asString(it.label),
               }))
+              const heroContentOrder = asStringArray(content.heroContentOrder)
+              const heroContentSides = asRecord(content.heroContentSides)
 
               return (
                 <HeroSection
@@ -703,6 +705,18 @@ export default async function MarketingPage({
                   proofPanel={heroProofPanel}
                   trustItems={heroTrustItems.length > 0 ? heroTrustItems : undefined}
                   heroStats={heroStatsArr.length > 0 ? heroStatsArr : undefined}
+                  heroContentOrder={heroContentOrder.length > 0 ? heroContentOrder : undefined}
+                  heroContentSides={Object.keys(heroContentSides).length > 0 ? heroContentSides as Record<string, "left" | "right"> : undefined}
+                  textAlign={
+                    asString(formatting.textAlign) === "center" ? "center"
+                    : asString(formatting.textAlign) === "left" ? "left"
+                    : undefined
+                  }
+                  rightColumnAlign={
+                    asString(formatting.heroRightAlign) === "center" ? "center"
+                    : asString(formatting.heroRightAlign) === "left" ? "left"
+                    : undefined
+                  }
                   ui={ui}
                 />
               )

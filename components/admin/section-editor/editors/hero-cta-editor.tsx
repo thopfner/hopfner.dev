@@ -2,17 +2,23 @@
 
 import { useCallback } from "react"
 import {
+  ActionIcon,
+  Badge,
   Button,
   Divider,
+  Group,
+  Paper,
+  SegmentedControl,
   Select,
   Stack,
   Text,
   TextInput,
   Textarea,
 } from "@/components/mui-compat"
-import { IconPlus } from "@tabler/icons-react"
+import { IconArrowUp, IconArrowDown, IconPlus } from "@tabler/icons-react"
 import {
   asString,
+  asStringArray,
   asRecord,
   asArray,
   inputValueFromEvent,
@@ -43,6 +49,18 @@ const HERO_MOCKUP_VARIANT_OPTIONS = [
   { value: "terminal", label: "Terminal" },
 ] as const
 
+const ALL_BLOCK_KEYS = ["ctas", "stats", "trust"] as const
+type BlockKey = (typeof ALL_BLOCK_KEYS)[number]
+const BLOCK_LABELS: Record<BlockKey, string> = { ctas: "CTAs", stats: "Stats", trust: "Trust" }
+
+function resolveBlockOrder(raw: string[]): BlockKey[] {
+  const valid = raw.filter((k): k is BlockKey => (ALL_BLOCK_KEYS as readonly string[]).includes(k))
+  for (const k of ALL_BLOCK_KEYS) {
+    if (!valid.includes(k)) valid.push(k)
+  }
+  return valid
+}
+
 export function HeroCtaEditor({ content, onContentChange, setContentPath, loading }: ContentEditorProps) {
   const heroBullets = asArray<string>(content.bullets)
   const heroTrust = asString(content.trustLine)
@@ -51,6 +69,33 @@ export function HeroCtaEditor({ content, onContentChange, setContentPath, loadin
   const heroProofPanel = asRecord(content.proofPanel)
   const heroTrustItems = asArray<Record<string, unknown>>(content.trustItems)
   const heroStats = asArray<Record<string, unknown>>(content.heroStats)
+
+  // --- Content block order ---
+  const blockOrder = resolveBlockOrder(asStringArray(content.heroContentOrder))
+  const blockSides = asRecord(content.heroContentSides) as Record<string, string>
+  const isSplitLayout = heroLayoutVariant === "split" || heroLayoutVariant === "split_reversed"
+
+  const moveBlock = useCallback(
+    (from: number, to: number) => {
+      onContentChange((c) => {
+        const order = resolveBlockOrder(asStringArray(c.heroContentOrder))
+        const [item] = order.splice(from, 1)
+        order.splice(to, 0, item)
+        return { ...c, heroContentOrder: order }
+      })
+    },
+    [onContentChange]
+  )
+
+  const setBlockSide = useCallback(
+    (key: BlockKey, side: string) => {
+      onContentChange((c) => ({
+        ...c,
+        heroContentSides: { ...asRecord(c.heroContentSides), [key]: side },
+      }))
+    },
+    [onContentChange]
+  )
 
   // --- Buffered fields for scalar inputs ---
   const eyebrowField = useBufferedField(
@@ -327,6 +372,49 @@ export function HeroCtaEditor({ content, onContentChange, setContentPath, loadin
           onContentChange((c) => ({ ...c, layoutVariant: v || "centered" }))
         }
       />
+
+      <Text size="xs" c="dimmed" fw={500}>Content block order</Text>
+      <Stack gap={4}>
+        {blockOrder.map((key, idx) => (
+          <Paper key={key} withBorder p="xs">
+            <Group justify="space-between">
+              <Group gap="xs">
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  disabled={idx === 0}
+                  onClick={() => moveBlock(idx, idx - 1)}
+                  aria-label={`Move ${BLOCK_LABELS[key]} up`}
+                >
+                  <IconArrowUp size={14} />
+                </ActionIcon>
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  disabled={idx === blockOrder.length - 1}
+                  onClick={() => moveBlock(idx, idx + 1)}
+                  aria-label={`Move ${BLOCK_LABELS[key]} down`}
+                >
+                  <IconArrowDown size={14} />
+                </ActionIcon>
+                <Badge size="sm" variant="light">{BLOCK_LABELS[key]}</Badge>
+              </Group>
+              {isSplitLayout ? (
+                <SegmentedControl
+                  size="xs"
+                  data={[
+                    { value: "left", label: "Left" },
+                    { value: "right", label: "Right" },
+                  ]}
+                  value={blockSides[key] === "right" ? "right" : "left"}
+                  onChange={(v: string) => setBlockSide(key, v)}
+                />
+              ) : null}
+            </Group>
+          </Paper>
+        ))}
+      </Stack>
+
       {(heroLayoutVariant === "split" || heroLayoutVariant === "split_reversed") ? (
         <>
           <Select

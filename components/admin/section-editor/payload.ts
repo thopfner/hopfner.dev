@@ -136,6 +136,7 @@ const DEFAULT_FORMATTING: FormattingState = {
   spacingBottom: "",
   maxWidth: "max-w-5xl",
   textAlign: "left",
+  heroRightAlign: "",
   widthMode: "content",
   heroMinHeight: "auto",
   shadowMode: "inherit",
@@ -159,6 +160,7 @@ export function normalizeFormatting(raw: Record<string, unknown>): FormattingSta
     spacingBottom: asString(raw.spacingBottom),
     maxWidth: (asString(raw.maxWidth) as FormattingState["maxWidth"]) || "",
     textAlign: (asString(raw.textAlign) as FormattingState["textAlign"]) || "",
+    heroRightAlign: (asString(raw.heroRightAlign) as FormattingState["heroRightAlign"]) || "",
     widthMode: asString(raw.widthMode) === "full" ? "full" : "content",
     heroMinHeight:
       asString(raw.heroMinHeight) === "70svh" || asString(raw.heroMinHeight) === "100svh"
@@ -210,6 +212,7 @@ export function formattingToJsonb(state: FormattingState) {
     spacingBottom: state.spacingBottom || "",
     maxWidth: state.maxWidth,
     textAlign: state.textAlign,
+    heroRightAlign: state.heroRightAlign,
     widthMode: state.widthMode,
     heroMinHeight: state.heroMinHeight,
     shadowMode: state.shadowMode,

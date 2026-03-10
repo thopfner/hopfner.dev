@@ -68,6 +68,10 @@ export function HeroSection({
   proofPanel,
   trustItems,
   heroStats,
+  heroContentOrder: heroContentOrderRaw,
+  heroContentSides: heroContentSidesRaw,
+  textAlign,
+  rightColumnAlign,
   ui,
   // Legacy prop — prefer ui.headingTreatment
   headingTreatment: headingTreatmentLegacy,
@@ -100,6 +104,10 @@ export function HeroSection({
   proofPanel?: ProofPanelProps
   trustItems?: TrustItem[]
   heroStats?: HeroStat[]
+  heroContentOrder?: string[]
+  heroContentSides?: Record<string, "left" | "right">
+  textAlign?: "left" | "center"
+  rightColumnAlign?: "left" | "center"
   ui?: ResolvedSectionUi
   headingTreatment?: ResolvedSectionUi["headingTreatment"]
 }) {
@@ -141,16 +149,133 @@ export function HeroSection({
 
   const isSplit = layoutVariant === "split" || layoutVariant === "split_reversed"
   const isReversed = layoutVariant === "split_reversed"
+
+  // Effective alignment (respects admin override, falls back to layout default)
+  const effectiveAlign = textAlign ?? (isSplit ? "left" : "center")
+  const effectiveRightAlign = rightColumnAlign ?? "left"
+  const isCenter = effectiveAlign === "center"
+  const isRightCenter = effectiveRightAlign === "center"
+  const justifyClass = isCenter ? "justify-center" : "justify-start"
+  const autoMarginClass = isCenter ? "mx-auto" : ""
+  const constrainClass = isCenter ? "mx-auto max-w-3xl" : "max-w-lg"
+
   const hasProofPanel = isSplit && proofPanel && (proofPanel.type === "stats" || proofPanel.type === "mockup" || proofPanel.type === "image")
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasTrustItems = Array.isArray(trustItems) && trustItems.length > 0
   const hasHeroStats = Array.isArray(heroStats) && heroStats.length > 0
 
-  const textContent = (
-    <div className={cn("space-y-6", isSplit ? "text-left" : "text-center")}>
+  // --- Moveable block order ---
+  const ALL_BLOCK_KEYS = ["ctas", "stats", "trust"] as const
+  type BlockKey = (typeof ALL_BLOCK_KEYS)[number]
+  const resolvedOrder: BlockKey[] = (() => {
+    const raw = heroContentOrderRaw
+    if (!Array.isArray(raw) || raw.length === 0) return [...ALL_BLOCK_KEYS]
+    const valid = raw.filter((k): k is BlockKey => ALL_BLOCK_KEYS.includes(k as BlockKey))
+    // Append any missing keys in default order
+    for (const k of ALL_BLOCK_KEYS) {
+      if (!valid.includes(k)) valid.push(k)
+    }
+    return valid
+  })()
+  const getSide = (key: BlockKey): "left" | "right" =>
+    heroContentSidesRaw?.[key] === "right" ? "right" : "left"
+
+  // Fixed content delay: eyebrow=0, headline=0.15, bullets=0.3 (or shifted down by 0.15 if eyebrow)
+  const fixedEndDelay = hasEyebrow ? 0.45 : 0.3
+  const blockDelay = (position: number) => fixedEndDelay + position * 0.15
+
+  // --- Moveable block renderers ---
+  const renderCtasBlock = (delay: number, justify: string) => (
+    <HeroEntrance key="ctas" delay={delay}>
+      <div className={cn("flex flex-wrap items-center gap-2", justify)}>
+        <Button size="default" variant="gradient" className="btn-press px-6" asChild>
+          <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
+        </Button>
+        <Button size="default" className="btn-press px-6" asChild>
+          <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
+        </Button>
+      </div>
+    </HeroEntrance>
+  )
+  const renderStatsBlock = (delay: number, justify: string) =>
+    hasHeroStats ? (
+      <HeroEntrance key="stats" delay={delay}>
+        <div className={cn("flex flex-wrap gap-8 pt-4", justify)}>
+          {heroStats!.map((stat, i) => (
+            <div key={i} className="text-center">
+              <p className="text-metric text-2xl">{renderMetricValue(stat.value)}</p>
+              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </HeroEntrance>
+    ) : null
+  const renderTrustBlock = (delay: number, inSplit: boolean, justify: string) =>
+    hasTrustItems ? (
+      <HeroEntrance key="trust" delay={delay}>
+        {inSplit ? (
+          <div className={cn("mt-6 flex flex-wrap items-center gap-x-4 gap-y-1", justify)}>
+            {trustItems!.map((item, i) => (
+              <span key={i} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
+                {item.icon ? <span className="mr-1">{item.icon}</span> : null}
+                {item.text}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <>
+            <Separator className="bg-border/60" />
+            <div className={cn("mt-4 flex flex-wrap items-center gap-x-4 gap-y-1", justify)}>
+              {trustItems!.map((item, i) => (
+                <span key={i} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
+                  {item.icon ? <span className="mr-1">{item.icon}</span> : null}
+                  {item.text}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+      </HeroEntrance>
+    ) : !inSplit && trustLine ? (
+      <HeroEntrance key="trust" delay={delay}>
+        <Separator className="bg-border/60" />
+        <p
+          className={cn("mt-4", isCenter ? "text-center" : "text-left", trustLineColorValue ? undefined : "text-muted-foreground")}
+          style={{ fontSize: `${trustLineSize}px`, color: trustLineColorValue || undefined }}
+        >
+          {trustLine}
+        </p>
+      </HeroEntrance>
+    ) : inSplit && trustLine ? (
+      <HeroEntrance key="trust" delay={delay}>
+        <div className="mt-6">
+          <Separator className="bg-border/60" />
+          <p
+            className={cn("mt-4", isCenter ? "text-center" : "text-left", trustLineColorValue ? undefined : "text-muted-foreground")}
+            style={{ fontSize: `${trustLineSize}px`, color: trustLineColorValue || undefined }}
+          >
+            {trustLine}
+          </p>
+        </div>
+      </HeroEntrance>
+    ) : null
+
+  const renderBlock = (key: BlockKey, position: number, inSplit: boolean, columnAlign: "left" | "center" = "left") => {
+    const delay = blockDelay(position)
+    const colJustify = columnAlign === "center" ? "justify-center" : "justify-start"
+    switch (key) {
+      case "ctas": return renderCtasBlock(delay, colJustify)
+      case "stats": return renderStatsBlock(delay, colJustify)
+      case "trust": return renderTrustBlock(delay, inSplit, colJustify)
+    }
+  }
+
+  // --- Fixed content (eyebrow, headline, subheadline, bullets) ---
+  const fixedContent = (
+    <>
       {hasEyebrow ? (
         <HeroEntrance delay={0}>
-          <p className={cn(LABEL_STYLE_CLASSES[labelStyle], isSplit ? "" : "mx-auto")}>
+          <p className={cn(LABEL_STYLE_CLASSES[labelStyle], autoMarginClass)}>
             {eyebrow}
           </p>
         </HeroEntrance>
@@ -170,7 +295,7 @@ export function HeroSection({
           <p
             className={cn(
               "text-pretty text-base text-muted-foreground sm:text-lg",
-              isSplit ? "max-w-lg" : "mx-auto max-w-3xl"
+              constrainClass
             )}
           >
             {subheadline}
@@ -180,37 +305,25 @@ export function HeroSection({
 
       {bullets.length > 0 ? (
         <HeroEntrance delay={hasEyebrow ? 0.3 : 0.15}>
-          <ul className={cn("space-y-1 text-sm text-muted-foreground", isSplit ? "max-w-lg" : "mx-auto max-w-3xl")}>
+          <ul className={cn("space-y-1 text-sm text-muted-foreground", constrainClass)}>
             {bullets.map((b) => (
               <li key={b}>{b}</li>
             ))}
           </ul>
         </HeroEntrance>
       ) : null}
+    </>
+  )
 
-      <HeroEntrance delay={hasEyebrow ? 0.45 : 0.3}>
-        <div className={cn("flex flex-wrap items-center gap-2", isSplit ? "justify-start" : "justify-center")}>
-          <Button size="default" variant="gradient" className="btn-press px-6" asChild>
-            <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
-          </Button>
-          <Button size="default" className="btn-press px-6" asChild>
-            <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
-          </Button>
-        </div>
-      </HeroEntrance>
-
-      {hasHeroStats ? (
-        <HeroEntrance delay={hasEyebrow ? 0.6 : 0.45}>
-          <div className={cn("flex flex-wrap gap-8 pt-4", isSplit ? "justify-start" : "justify-center")}>
-            {heroStats!.map((stat, i) => (
-              <div key={i} className="text-center">
-                <p className="text-metric text-2xl">{renderMetricValue(stat.value)}</p>
-                <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </HeroEntrance>
-      ) : null}
+  // --- Assemble text content (centered: all blocks; split: left-side blocks only) ---
+  const textContent = (
+    <div className={cn("space-y-6", isCenter ? "text-center" : "text-left")}>
+      {fixedContent}
+      {isSplit
+        ? resolvedOrder
+            .filter((k) => getSide(k) === "left")
+            .map((k, i) => renderBlock(k, i, true, effectiveAlign))
+        : resolvedOrder.map((k, i) => renderBlock(k, i, false, effectiveAlign))}
     </div>
   )
 
@@ -432,69 +545,19 @@ export function HeroSection({
                 isReversed ? "lg:[direction:rtl] lg:[&>*]:[direction:ltr]" : undefined
               )}>
                 <div className="flex flex-col justify-center">{textContent}</div>
-                {proofContent ? (
-                  <HeroEntrance delay={0.6} className="flex flex-col justify-center">
-                    {proofContent}
-                  </HeroEntrance>
-                ) : null}
+                <div className={cn("flex flex-col justify-center space-y-6", isRightCenter ? "text-center" : "text-left")}>
+                  {proofContent ? (
+                    <HeroEntrance delay={0.6}>
+                      {proofContent}
+                    </HeroEntrance>
+                  ) : null}
+                  {resolvedOrder
+                    .filter((k) => getSide(k) === "right")
+                    .map((k, i) => renderBlock(k, i, true, effectiveRightAlign))}
+                </div>
               </div>
             ) : (
               textContent
-            )}
-
-            {!isSplit ? (
-              <>
-                {hasTrustItems ? (
-                  <HeroEntrance delay={hasEyebrow ? 0.6 : 0.45}>
-                    <Separator className="bg-border/60" />
-                    <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-                      {trustItems!.map((item, i) => (
-                        <span key={i} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
-                          {item.icon ? <span className="mr-1">{item.icon}</span> : null}
-                          {item.text}
-                        </span>
-                      ))}
-                    </div>
-                  </HeroEntrance>
-                ) : trustLine ? (
-                  <HeroEntrance delay={hasEyebrow ? 0.6 : 0.45}>
-                    <Separator className="bg-border/60" />
-                    <p
-                      className={cn("mt-4 text-center", trustLineColorValue ? undefined : "text-muted-foreground")}
-                      style={{ fontSize: `${trustLineSize}px`, color: trustLineColorValue || undefined }}
-                    >
-                      {trustLine}
-                    </p>
-                  </HeroEntrance>
-                ) : null}
-              </>
-            ) : (
-              <>
-                {hasTrustItems ? (
-                  <HeroEntrance delay={0.6}>
-                    <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1">
-                      {trustItems!.map((item, i) => (
-                        <span key={i} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
-                          {item.icon ? <span className="mr-1">{item.icon}</span> : null}
-                          {item.text}
-                        </span>
-                      ))}
-                    </div>
-                  </HeroEntrance>
-                ) : trustLine ? (
-                  <HeroEntrance delay={0.6}>
-                    <div className="mt-6">
-                      <Separator className="bg-border/60" />
-                      <p
-                        className={cn("mt-4 text-center", trustLineColorValue ? undefined : "text-muted-foreground")}
-                        style={{ fontSize: `${trustLineSize}px`, color: trustLineColorValue || undefined }}
-                      >
-                        {trustLine}
-                      </p>
-                    </div>
-                  </HeroEntrance>
-                ) : null}
-              </>
             )}
           </CardContent>
         </Card>
