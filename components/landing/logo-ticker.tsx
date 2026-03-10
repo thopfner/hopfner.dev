@@ -65,7 +65,7 @@ export function LogoTicker({
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
     }
-    ${pauseOnHover ? ".logo-ticker-area:hover .logo-ticker-track { animation-play-state: paused; }" : ""}
+    ${pauseOnHover ? ".logo-ticker-area:hover .logo-ticker-track { animation-play-state: paused !important; }" : ""}
   `
 
   return (
