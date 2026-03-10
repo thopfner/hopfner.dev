@@ -203,8 +203,8 @@ export function SiteHeader({
             <img
               src={logo.url}
               alt={logo.alt}
-              style={{ width: `${logo.widthPx}px`, maxWidth: "100%", height: "auto" }}
-              className="block object-contain"
+              style={{ maxWidth: `${logo.widthPx}px` }}
+              className="block h-11 w-auto object-contain"
             />
           </Link>
         ) : null}
