@@ -97,6 +97,7 @@ const HEADING_DATA = [
   { value: "gradient_accent", label: "Gradient accent" },
   { value: "display_xl", label: "Display XL" },
   { value: "display_lg", label: "Display LG" },
+  { value: "display_md", label: "Display MD" },
 ] as const
 
 const LABEL_DATA = [

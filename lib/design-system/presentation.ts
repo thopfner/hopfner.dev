@@ -96,6 +96,7 @@ export const HEADING_TREATMENT_CLASSES: Record<HeadingTreatment, string> = {
   gradient_accent: "text-gradient-accent",
   display_xl: "text-display-xl",
   display_lg: "text-display-lg",
+  display_md: "text-display-md",
 }
 
 /** Label style classes — applied to tags, badges, eyebrows, micro-labels. */

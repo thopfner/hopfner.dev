@@ -13,7 +13,7 @@ export type ContentDensity = (typeof DENSITIES)[number]
 export const GRID_GAPS = ["tight", "standard", "wide"] as const
 export type GridGap = (typeof GRID_GAPS)[number]
 
-export const HEADING_TREATMENTS = ["default", "display", "mono", "gradient", "gradient_accent", "display_xl", "display_lg"] as const
+export const HEADING_TREATMENTS = ["default", "display", "mono", "gradient", "gradient_accent", "display_xl", "display_lg", "display_md"] as const
 export type HeadingTreatment = (typeof HEADING_TREATMENTS)[number]
 
 export const LABEL_STYLES = ["default", "mono", "pill", "micro"] as const
