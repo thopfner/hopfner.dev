@@ -379,7 +379,14 @@ export function useSectionEditorResources(
           .eq("status", "draft")
         if (archiveError) throw new Error(archiveError.message)
 
-        const nextVersion = (versions.reduce((m, v) => Math.max(m, v.version), 0) || 0) + 1
+        const { data: maxRow } = await supabase
+          .from(versionTable)
+          .select("version")
+          .eq(ownerIdColumn, section.id)
+          .order("version", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        const nextVersion = ((maxRow?.version as number) ?? 0) + 1
         const { error: insertError } = await supabase.from(versionTable).insert({
           [ownerIdColumn]: section.id,
           version: nextVersion,
@@ -395,7 +402,7 @@ export function useSectionEditorResources(
         setLoading(false)
       }
     },
-    [section, supabase, versionTable, ownerIdColumn, versions, allowedClasses, normalizedType]
+    [section, supabase, versionTable, ownerIdColumn, allowedClasses, normalizedType]
   )
 
   // ---------------------------------------------------------------------------
@@ -439,7 +446,14 @@ export function useSectionEditorResources(
           .eq("status", "draft")
         if (archiveError) throw new Error(archiveError.message)
 
-        const nextVersion = (versions.reduce((m, v) => Math.max(m, v.version), 0) || 0) + 1
+        const { data: maxRow } = await supabase
+          .from(versionTable)
+          .select("version")
+          .eq(ownerIdColumn, section.id)
+          .order("version", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        const nextVersion = ((maxRow?.version as number) ?? 0) + 1
         const { data: insertedRow, error: insertError } = await supabase
           .from(versionTable)
           .insert({
@@ -467,7 +481,7 @@ export function useSectionEditorResources(
         setLoading(false)
       }
     },
-    [section, supabase, versionTable, ownerIdColumn, versions, allowedClasses, scope, publishRpc, normalizedType]
+    [section, supabase, versionTable, ownerIdColumn, allowedClasses, scope, publishRpc, normalizedType]
   )
 
   // ---------------------------------------------------------------------------
