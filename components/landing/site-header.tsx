@@ -242,7 +242,7 @@ export function SiteHeader({
           </ul>
         </nav>
 
-        <Button size="sm" variant="secondary" asChild className="shrink-0">
+        <Button size="sm" variant="gradient" asChild className="shrink-0">
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
 

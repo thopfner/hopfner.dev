@@ -160,6 +160,7 @@ function accentDerivedVars(accentColor: string): Record<string, string> {
   if (!accentColor) return {}
   return {
     "--accent": accentColor, "--accent-glow": accentColor,
+    "--accent-light": `color-mix(in oklch, ${accentColor} 70%, white)`,
     "--border": `color-mix(in srgb, ${accentColor} 45%, transparent)`,
     "--input": `color-mix(in srgb, ${accentColor} 38%, transparent)`,
     "--ring": `color-mix(in srgb, ${accentColor} 72%, white 8%)`,

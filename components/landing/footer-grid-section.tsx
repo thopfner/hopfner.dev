@@ -155,12 +155,12 @@ export function FooterGridSection({
                 {hasCta ? (
                   <div className="flex flex-wrap items-center gap-2.5 pt-1">
                     {cta1Label && cta1Href ? (
-                      <Button size="sm" variant="secondary" asChild>
+                      <Button size="sm" variant="gradient" asChild>
                         <Link href={cta1Href}>{cta1Label}</Link>
                       </Button>
                     ) : null}
                     {cta2Label && cta2Href ? (
-                      <Button size="sm" asChild>
+                      <Button size="sm" variant="outline" asChild>
                         <Link href={cta2Href}>{cta2Label}</Link>
                       </Button>
                     ) : null}

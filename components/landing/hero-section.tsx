@@ -191,7 +191,7 @@ export function HeroSection({
         <Button size="default" variant="gradient" className="btn-press px-6" asChild>
           <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
         </Button>
-        <Button size="default" className="btn-press px-6" asChild>
+        <Button size="default" variant="outline" className="btn-press px-6" asChild>
           <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
         </Button>
       </div>

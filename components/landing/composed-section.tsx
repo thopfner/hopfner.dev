@@ -244,11 +244,11 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
   if (b.type === "cta") {
     return (
       <div key={b.id} className="flex flex-wrap items-center gap-2">
-        <Button asChild variant="secondary" size="sm">
+        <Button asChild variant="gradient" size="sm">
           <Link href={b.ctaPrimaryHref || "#"}>{b.ctaPrimaryLabel || "Primary"}</Link>
         </Button>
         {b.ctaSecondaryLabel ? (
-          <Button asChild size="sm">
+          <Button asChild variant="outline" size="sm">
             <Link href={b.ctaSecondaryHref || "#"}>{b.ctaSecondaryLabel}</Link>
           </Button>
         ) : null}
@@ -483,11 +483,11 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
   // Fallback for unknown types - render as CTA
   return (
     <div key={b.id} className="flex flex-wrap items-center gap-2">
-      <Button asChild variant="secondary" size="sm">
+      <Button asChild variant="gradient" size="sm">
         <Link href={b.ctaPrimaryHref || "#"}>{b.ctaPrimaryLabel || "Primary"}</Link>
       </Button>
       {b.ctaSecondaryLabel ? (
-        <Button asChild size="sm">
+        <Button asChild variant="outline" size="sm">
           <Link href={b.ctaSecondaryHref || "#"}>{b.ctaSecondaryLabel}</Link>
         </Button>
       ) : null}

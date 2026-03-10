@@ -20,7 +20,7 @@ const buttonVariants = cva(
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
         gradient:
-          "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-black/25 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5 transition-all duration-200",
+          "btn-gradient hover:-translate-y-0.5 transition-all duration-200",
         glow:
           "relative bg-primary text-primary-foreground shadow-[0_0_20px_rgba(0,0,0,0.25)] hover:shadow-[0_0_30px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 transition-all duration-200",
       },

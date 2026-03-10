@@ -23,12 +23,12 @@ export function ContactSection({
           <CardContent className="space-y-3 px-4">
             <p className="text-sm text-muted-foreground">{content.body}</p>
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" variant="secondary" asChild>
+              <Button size="sm" variant="gradient" asChild>
                 <Link href={content.primaryCta.href}>
                   {content.primaryCta.label}
                 </Link>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="sm" variant="outline" asChild>
                 <Link href={content.secondaryCta.href}>
                   {content.secondaryCta.label}
                 </Link>

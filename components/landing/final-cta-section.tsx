@@ -76,11 +76,11 @@ export function FinalCtaSection({
               <p className={cn("text-sm font-semibold text-foreground sm:text-base", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</p>
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
-              <Button size="sm" variant="secondary" asChild>
+              <Button size="sm" variant="gradient" asChild>
                 <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
               </Button>
               {secondaryCta.label ? (
-                <Button size="sm" asChild>
+                <Button size="sm" variant="outline" asChild>
                   <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
                 </Button>
               ) : null}
@@ -127,11 +127,11 @@ export function FinalCtaSection({
                   ) : null}
                 </div>
                 <div className="flex flex-col items-start justify-center gap-3 sm:items-end">
-                  <Button size="sm" variant="secondary" asChild>
+                  <Button size="sm" variant="gradient" asChild>
                     <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
                   </Button>
                   {secondaryCta.label ? (
-                    <Button size="sm" asChild>
+                    <Button size="sm" variant="outline" asChild>
                       <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
                     </Button>
                   ) : null}
@@ -180,11 +180,11 @@ export function FinalCtaSection({
                 <p className="mx-auto max-w-xl text-sm text-muted-foreground">{body}</p>
               ) : null}
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <Button variant="secondary" asChild>
+                <Button variant="gradient" asChild>
                   <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
                 </Button>
                 {secondaryCta.label ? (
-                  <Button asChild>
+                  <Button variant="outline" asChild>
                     <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
                   </Button>
                 ) : null}
@@ -229,10 +229,10 @@ export function FinalCtaSection({
               <p className="text-sm text-muted-foreground">{body}</p>
             )}
             <div className={cn("flex flex-wrap items-center gap-2", ctaJustify)}>
-              <Button size="sm" variant="secondary" asChild>
+              <Button size="sm" variant="gradient" asChild>
                 <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="sm" variant="outline" asChild>
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
             </div>
