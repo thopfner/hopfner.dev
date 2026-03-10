@@ -12,7 +12,7 @@ import {
   Text,
   TextInput,
 } from "@/components/mui-compat"
-import { IconPlus, IconX } from "@tabler/icons-react"
+import { IconArrowDown, IconArrowUp, IconPlus, IconX } from "@tabler/icons-react"
 import {
   asString,
   asRecord,
@@ -22,6 +22,13 @@ import {
 import { LinkMenuField } from "../fields/link-menu-field"
 import { ImageFieldPicker } from "@/components/image-field-picker"
 import type { ContentEditorProps } from "../types"
+
+function moveItem<T>(arr: T[], from: number, to: number): T[] {
+  const next = arr.slice()
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
+  return next
+}
 
 type NavLinksEditorProps = ContentEditorProps & {
   onOpenNavLogoLibrary: () => void
@@ -170,18 +177,46 @@ export function NavLinksEditor({
                   <Badge size="sm" variant="default">
                     Link {idx + 1}
                   </Badge>
-                  <ActionIcon
-                    variant="default"
-                    aria-label="Remove link"
-                    onClick={() =>
-                      onContentChange((c) => ({
-                        ...c,
-                        links: navLinks.filter((_, i) => i !== idx),
-                      }))
-                    }
-                  >
-                    <IconX size={16} />
-                  </ActionIcon>
+                  <Group gap="xs">
+                    <ActionIcon
+                      variant="default"
+                      aria-label="Move link up"
+                      disabled={idx === 0}
+                      onClick={() =>
+                        onContentChange((c) => ({
+                          ...c,
+                          links: moveItem(navLinks, idx, idx - 1),
+                        }))
+                      }
+                    >
+                      <IconArrowUp size={16} />
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="default"
+                      aria-label="Move link down"
+                      disabled={idx === navLinks.length - 1}
+                      onClick={() =>
+                        onContentChange((c) => ({
+                          ...c,
+                          links: moveItem(navLinks, idx, idx + 1),
+                        }))
+                      }
+                    >
+                      <IconArrowDown size={16} />
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="default"
+                      aria-label="Remove link"
+                      onClick={() =>
+                        onContentChange((c) => ({
+                          ...c,
+                          links: navLinks.filter((_, i) => i !== idx),
+                        }))
+                      }
+                    >
+                      <IconX size={16} />
+                    </ActionIcon>
+                  </Group>
                 </Group>
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                   <TextInput

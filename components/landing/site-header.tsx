@@ -153,7 +153,7 @@ export function SiteHeader({
         ) : null}
 
         <nav aria-label="Top navigation" className="min-w-0 flex-1">
-          <ul className="hidden flex-wrap items-center gap-0.5 text-xs text-muted-foreground sm:text-sm md:flex">
+          <ul className="hidden flex-wrap items-center gap-1 text-xs text-muted-foreground sm:text-sm md:flex">
             {links.map((item, idx) => {
               const isAnchorLink = item.href.startsWith("#")
               const isActive = isAnchorLink
@@ -166,16 +166,16 @@ export function SiteHeader({
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "truncate rounded-md px-2.5 py-1 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "truncate rounded-md px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       isActive
-                        ? "bg-foreground/10 font-medium text-foreground"
-                        : "text-muted-foreground/80 hover:text-foreground"
+                        ? "bg-foreground/15 font-medium text-foreground"
+                        : "text-foreground/70 hover:text-foreground"
                     )}
                   >
                     {item.label}
                   </Link>
                   {idx < links.length - 1 ? (
-                    <span aria-hidden className="px-0.5 text-muted-foreground/30">
+                    <span aria-hidden className="px-0.5 text-foreground/20">
                       ·
                     </span>
                   ) : null}
@@ -185,7 +185,7 @@ export function SiteHeader({
           </ul>
         </nav>
 
-        <Button size="sm" variant="gradient" asChild className="hidden shrink-0 md:inline-flex">
+        <Button size="default" variant="gradient" asChild className="hidden shrink-0 md:inline-flex">
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
 
