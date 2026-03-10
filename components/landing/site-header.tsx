@@ -199,11 +199,11 @@ export function SiteHeader({
         </div>
 
         {logo ? (
-          <Link href="/home" className="shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Link href="/home" className="min-w-0 shrink rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <img
               src={logo.url}
               alt={logo.alt}
-              style={{ width: `${logo.widthPx}px`, height: "auto" }}
+              style={{ width: `${logo.widthPx}px`, maxWidth: "100%", height: "auto" }}
               className="block object-contain"
             />
           </Link>
