@@ -444,7 +444,7 @@ function Modal({ opened, onClose, title, size = "sm", children }: ModalProps) {
   )
 }
 
-const SECTION_TYPES: BuiltinCmsSectionType[] = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block", "footer_grid"]
+const SECTION_TYPES: BuiltinCmsSectionType[] = ["nav_links", "hero_cta", "card_grid", "steps_list", "title_body_list", "rich_text_block", "label_value_list", "faq_list", "cta_block", "footer_grid", "social_proof_strip", "proof_cluster", "case_study_split"]
 
 function normalizeSectionType(raw: string): CmsSectionType | null {
   switch (raw) {
