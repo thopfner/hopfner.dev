@@ -14,6 +14,7 @@ import {
   DENSITY_BODY_PADDING,
   GRID_GAP_CLASSES,
   LABEL_STYLE_CLASSES,
+  SUBTITLE_SIZE_CLASSES,
 } from "@/lib/design-system/presentation"
 import { resolveCardClasses, DEFAULT_CARD_CLASS, SERVICE_CARD_INNER } from "@/lib/design-system/component-families"
 
@@ -157,7 +158,7 @@ export function WhatIDeliverSection({
             ) : null}
             <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
-              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
             ) : null}
           </div>
         </FadeIn>

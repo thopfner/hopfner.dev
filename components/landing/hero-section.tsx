@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { HeroEntrance, AnimatedCounter } from "@/components/landing/motion-primitives"
-import { HEADING_TREATMENT_CLASSES, LABEL_STYLE_CLASSES, RHYTHM_CLASSES, SURFACE_CLASSES } from "@/lib/design-system/presentation"
+import { HEADING_TREATMENT_CLASSES, LABEL_STYLE_CLASSES, SUBTITLE_SIZE_CLASSES, RHYTHM_CLASSES, SURFACE_CLASSES } from "@/lib/design-system/presentation"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
@@ -141,7 +141,8 @@ export function HeroSection({
       : {
           rhythm: "standard", surface: "none", density: ui?.density ?? "standard",
           gridGap: "standard", headingTreatment: "default", labelStyle: "default",
-          dividerMode: "none", componentFamily: "metric",
+          dividerMode: "none", subtitleSize: ui?.subtitleSize ?? "md",
+          componentFamily: "metric",
           componentChrome: ui?.componentChrome, accentRule: ui?.accentRule,
         },
     { mode: "compact" }
@@ -294,7 +295,8 @@ export function HeroSection({
           </h1>
           <p
             className={cn(
-              "text-pretty text-base text-muted-foreground sm:text-lg",
+              "text-pretty text-muted-foreground",
+              SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "md"],
               constrainClass
             )}
           >

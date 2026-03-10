@@ -4,6 +4,7 @@ import { LogoTicker } from "@/components/landing/logo-ticker"
 import {
   HEADING_TREATMENT_CLASSES,
   LABEL_STYLE_CLASSES,
+  SUBTITLE_SIZE_CLASSES,
   DENSITY_SECTION_GAP,
   GRID_GAP_CLASSES,
 } from "@/lib/design-system/presentation"
@@ -89,7 +90,7 @@ export function SocialProofStripSection({
               ) : null}
 
               {hasSubtitle ? (
-                <p className="text-xs text-muted-foreground/60">{subtitle}</p>
+                <p className={cn(SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"], "text-muted-foreground")}>{subtitle}</p>
               ) : null}
             </div>
           ) : null}
@@ -165,7 +166,7 @@ export function SocialProofStripSection({
 
           {/* Trust note */}
           {hasTrustNote ? (
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/40">{trustNote}</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/70">{trustNote}</p>
           ) : null}
         </div>
       </FadeIn>

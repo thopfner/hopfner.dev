@@ -12,6 +12,7 @@ import {
   GRID_GAP_CLASSES,
   DIVIDER_CLASSES,
   LABEL_STYLE_CLASSES,
+  SUBTITLE_SIZE_CLASSES,
 } from "@/lib/design-system/presentation"
 
 type LayoutVariant = "grid" | "timeline" | "connected_flow" | "workflow_visual"
@@ -83,7 +84,7 @@ export function HowItWorksSection({
             ) : null}
             <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
-              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
             ) : null}
           </div>
         </FadeIn>
@@ -169,7 +170,7 @@ export function HowItWorksSection({
             ) : null}
             <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
-              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
             ) : null}
           </div>
         </FadeIn>
@@ -237,6 +238,7 @@ export function HowItWorksSection({
             headingTreatment: ui?.headingTreatment ?? "default",
             labelStyle: ui?.labelStyle ?? "default",
             dividerMode: ui?.dividerMode ?? "none",
+            subtitleSize: ui?.subtitleSize ?? "sm",
             componentFamily: "process",
             componentChrome: ui?.componentChrome,
             accentRule: ui?.accentRule,
@@ -275,7 +277,7 @@ export function HowItWorksSection({
               ) : null}
               <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
               {hasSubtitle ? (
-                <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+                <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
               ) : null}
             </div>
           </FadeIn>
@@ -370,7 +372,7 @@ export function HowItWorksSection({
           ) : null}
           <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
           {hasSubtitle ? (
-            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+            <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
           ) : null}
         </div>
       </FadeIn>

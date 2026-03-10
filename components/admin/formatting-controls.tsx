@@ -39,6 +39,7 @@ export type FormattingState = {
   dividerMode?: string
   headingTreatment?: string
   labelStyle?: string
+  subtitleSize?: string
   sectionPresetKey?: string
   mobile?: {
     containerClass: string
@@ -106,6 +107,13 @@ const LABEL_DATA = [
   { value: "mono", label: "Mono" },
   { value: "pill", label: "Pill" },
   { value: "micro", label: "Micro" },
+] as const
+
+const SUBTITLE_SIZE_DATA = [
+  { value: "", label: "Default (SM)" },
+  { value: "sm", label: "SM (14px)" },
+  { value: "md", label: "MD (16–18px)" },
+  { value: "lg", label: "LG (18–20px)" },
 ] as const
 
 const DIVIDER_DATA = [
@@ -226,7 +234,7 @@ const SemanticControls = memo(function SemanticControls({
     [isControlSupported, sectionType]
   )
 
-  const hasPresentationControls = has("sectionRhythm") || has("sectionSurface") || has("contentDensity") || has("gridGap") || has("headingTreatment") || has("labelStyle") || has("dividerMode")
+  const hasPresentationControls = has("sectionRhythm") || has("sectionSurface") || has("contentDensity") || has("gridGap") || has("headingTreatment") || has("labelStyle") || has("subtitleSize") || has("dividerMode")
   const hasComponentControls = has("cardFamily") || has("cardChrome") || has("accentRule")
 
   if (!hasPresentationControls && !hasComponentControls) {
@@ -289,6 +297,15 @@ const SemanticControls = memo(function SemanticControls({
               value={formatting.labelStyle || ""}
               onChange={(val: string) => onFormattingChange((f) => ({ ...f, labelStyle: val || "" }))}
               data={LABEL_DATA as unknown as { value: string; label: string }[]}
+            />
+          ) : null}
+          {has("subtitleSize") ? (
+            <Select
+              label="Subtitle size"
+              comboboxProps={{ withinPortal: false }}
+              value={formatting.subtitleSize || ""}
+              onChange={(val: string) => onFormattingChange((f) => ({ ...f, subtitleSize: val || "" }))}
+              data={SUBTITLE_SIZE_DATA as unknown as { value: string; label: string }[]}
             />
           ) : null}
           {has("dividerMode") ? (

@@ -6,6 +6,7 @@ import {
   DENSITY_SECTION_GAP,
   GRID_GAP_CLASSES,
   LABEL_STYLE_CLASSES,
+  SUBTITLE_SIZE_CLASSES,
 } from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
@@ -95,7 +96,7 @@ export function CaseStudySplitSection({
                   <SectionHeading id={headingId} title={title!} headingTreatment={ui?.headingTreatment} />
                 ) : null}
                 {hasSubtitle ? (
-                  <p className="max-w-lg text-sm text-muted-foreground">{subtitle}</p>
+                  <p className={cn("max-w-lg text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
                 ) : null}
               </div>
             </FadeIn>

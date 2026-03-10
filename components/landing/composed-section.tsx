@@ -8,7 +8,7 @@ import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { GRID_GAP_CLASSES } from "@/lib/design-system/presentation"
+import { GRID_GAP_CLASSES, SUBTITLE_SIZE_CLASSES } from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation, resolveCardSpacing, type CardSpacing } from "@/lib/design-system/component-families"
 import { cn } from "@/lib/utils"
@@ -558,7 +558,7 @@ export function ComposedSection({
       density={ui?.density}
     >
       {title?.trim() ? <SectionHeading id={`${sectionId ?? "composed"}-title`} title={title.trim()} /> : null}
-      {subtitle?.trim() ? <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">{subtitle.trim()}</p> : null}
+      {subtitle?.trim() ? <p className={cn("max-w-3xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle.trim()}</p> : null}
 
       {rows.map((row, rowIdx) => {
         const cols = Array.isArray(row.columns) ? row.columns : []

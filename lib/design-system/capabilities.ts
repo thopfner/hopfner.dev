@@ -13,6 +13,7 @@ export type SemanticControl =
   | "dividerMode"
   | "headingTreatment"
   | "labelStyle"
+  | "subtitleSize"
 
 export type SectionCapability = {
   supported: SemanticControl[]
@@ -23,7 +24,7 @@ const COMMON: SemanticControl[] = ["sectionRhythm", "sectionSurface"]
 
 export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
   hero_cta: {
-    supported: ["sectionSurface", "contentDensity", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
+    supported: ["sectionSurface", "contentDensity", "headingTreatment", "labelStyle", "subtitleSize", "cardFamily", "cardChrome", "accentRule"],
   },
   card_grid: {
     supported: [
@@ -35,6 +36,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "accentRule",
       "dividerMode",
       "labelStyle",
+      "subtitleSize",
     ],
   },
   steps_list: {
@@ -47,21 +49,22 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "cardChrome",
       "accentRule",
       "labelStyle",
+      "subtitleSize",
       "dividerMode",
     ],
   },
   title_body_list: {
-    supported: [...COMMON, "contentDensity", "gridGap", "dividerMode", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
+    supported: [...COMMON, "contentDensity", "gridGap", "dividerMode", "headingTreatment", "labelStyle", "subtitleSize", "cardFamily", "cardChrome", "accentRule"],
   },
   rich_text_block: {
     supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
   },
   label_value_list: {
-    supported: [...COMMON, "contentDensity", "gridGap", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
+    supported: [...COMMON, "contentDensity", "gridGap", "headingTreatment", "labelStyle", "subtitleSize", "cardFamily", "cardChrome", "accentRule"],
     notes: { cardFamily: "Only applies to default and metrics_grid layouts" },
   },
   faq_list: {
-    supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "dividerMode", "cardFamily", "cardChrome", "accentRule"],
+    supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "subtitleSize", "dividerMode", "cardFamily", "cardChrome", "accentRule"],
   },
   cta_block: {
     supported: [...COMMON, "contentDensity", "headingTreatment", "labelStyle", "cardFamily", "cardChrome", "accentRule"],
@@ -74,7 +77,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
     supported: [],
   },
   social_proof_strip: {
-    supported: [...COMMON, "contentDensity", "gridGap", "headingTreatment", "labelStyle"],
+    supported: [...COMMON, "contentDensity", "gridGap", "headingTreatment", "labelStyle", "subtitleSize"],
   },
   proof_cluster: {
     supported: [
@@ -83,6 +86,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "gridGap",
       "headingTreatment",
       "labelStyle",
+      "subtitleSize",
       "dividerMode",
       "cardFamily",
       "cardChrome",
@@ -96,6 +100,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "gridGap",
       "headingTreatment",
       "labelStyle",
+      "subtitleSize",
       "cardFamily",
       "cardChrome",
       "accentRule",
@@ -108,6 +113,7 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "gridGap",
       "headingTreatment",
       "labelStyle",
+      "subtitleSize",
       "dividerMode",
       "cardFamily",
       "cardChrome",

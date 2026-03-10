@@ -5,6 +5,7 @@ import {
   DENSITY_SECTION_GAP,
   GRID_GAP_CLASSES,
   LABEL_STYLE_CLASSES,
+  SUBTITLE_SIZE_CLASSES,
 } from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
@@ -104,7 +105,7 @@ export function ProofClusterSection({
                 <SectionHeading id={headingId} title={title!} headingTreatment={ui?.headingTreatment} />
               ) : null}
               {hasSubtitle ? (
-                <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+                <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
               ) : null}
             </div>
           </FadeIn>
@@ -225,6 +226,7 @@ function fallbackUi(ui: ResolvedSectionUi | undefined): ResolvedSectionUi {
     headingTreatment: ui?.headingTreatment ?? "default",
     labelStyle: ui?.labelStyle ?? "default",
     dividerMode: ui?.dividerMode ?? "none",
+    subtitleSize: ui?.subtitleSize ?? "sm",
     componentChrome: ui?.componentChrome,
     accentRule: ui?.accentRule,
   }

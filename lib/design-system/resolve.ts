@@ -13,6 +13,7 @@ import {
   CARD_FAMILIES,
   CARD_CHROMES,
   ACCENT_RULES,
+  SUBTITLE_SIZES,
   type ResolvedSectionUi,
   type Rhythm,
   type CardFamily,
@@ -32,6 +33,7 @@ type RawSectionFormatting = {
   cardFamily?: string
   cardChrome?: string
   accentRule?: string
+  subtitleSize?: string
   sectionPresetKey?: string
 }
 
@@ -69,6 +71,7 @@ export function resolveSectionUi(
     cardFamily: asString(raw.cardFamily),
     cardChrome: asString(raw.cardChrome),
     accentRule: asString(raw.accentRule),
+    subtitleSize: asString(raw.subtitleSize),
     sectionPresetKey: asString(raw.sectionPresetKey),
   }
 
@@ -89,6 +92,7 @@ export function resolveSectionUi(
   const componentFamily = f.cardFamily || preset?.component?.family || ""
   const componentChrome = f.cardChrome || preset?.component?.chrome || ""
   const accentRule = f.accentRule || preset?.component?.accentRule || ""
+  const subtitleSize = f.subtitleSize || ""
 
   // Step 3: Section-type default rhythm
   const defaultRhythm: Record<string, Rhythm> = {
@@ -109,6 +113,7 @@ export function resolveSectionUi(
     headingTreatment: validateToken(headingTreatment, HEADING_TREATMENTS, "default"),
     labelStyle: validateToken(labelStyle, LABEL_STYLES, "default"),
     dividerMode: validateToken(dividerMode, DIVIDER_MODES, "none"),
+    subtitleSize: validateToken(subtitleSize, SUBTITLE_SIZES, "sm"),
     componentFamily: componentFamily
       ? validateToken<CardFamily>(componentFamily, CARD_FAMILIES, "quiet")
       : undefined,

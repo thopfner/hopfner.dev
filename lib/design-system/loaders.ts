@@ -145,6 +145,7 @@ const CONTROL_COLUMN_MAP: Record<string, SemanticControl> = {
   supports_divider_mode: "dividerMode",
   supports_heading_treatment: "headingTreatment",
   supports_label_style: "labelStyle",
+  supports_subtitle_size: "subtitleSize",
 }
 
 type CapabilityRow = {

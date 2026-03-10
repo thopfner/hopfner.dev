@@ -31,6 +31,9 @@ export type CardChrome = (typeof CARD_CHROMES)[number]
 export const ACCENT_RULES = ["none", "top", "left", "inline"] as const
 export type AccentRule = (typeof ACCENT_RULES)[number]
 
+export const SUBTITLE_SIZES = ["sm", "md", "lg"] as const
+export type SubtitleSize = (typeof SUBTITLE_SIZES)[number]
+
 /** The single resolved design-system object that all section renderers accept. */
 export type ResolvedSectionUi = {
   rhythm: Rhythm
@@ -40,6 +43,7 @@ export type ResolvedSectionUi = {
   headingTreatment: HeadingTreatment
   labelStyle: LabelStyle
   dividerMode: DividerMode
+  subtitleSize: SubtitleSize
   componentFamily?: CardFamily
   componentChrome?: CardChrome
   accentRule?: AccentRule

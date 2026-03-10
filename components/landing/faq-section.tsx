@@ -7,7 +7,7 @@ import {
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { FadeIn } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
-import { DIVIDER_CLASSES, LABEL_STYLE_CLASSES } from "@/lib/design-system/presentation"
+import { DIVIDER_CLASSES, LABEL_STYLE_CLASSES, SUBTITLE_SIZE_CLASSES } from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import { cn } from "@/lib/utils"
@@ -64,7 +64,7 @@ export function FaqSection({
           ) : null}
           <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
           {hasSubtitle ? (
-            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+            <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
           ) : null}
         </div>
       </FadeIn>

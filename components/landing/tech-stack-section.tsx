@@ -6,6 +6,7 @@ import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import {
   GRID_GAP_CLASSES,
   LABEL_STYLE_CLASSES,
+  SUBTITLE_SIZE_CLASSES,
 } from "@/lib/design-system/presentation"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
@@ -178,7 +179,7 @@ export function TechStackSection({
             ) : null}
             <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
-              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
             ) : null}
           </div>
         </FadeIn>
@@ -226,7 +227,7 @@ export function TechStackSection({
             ) : null}
             <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
             {hasSubtitle ? (
-              <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
             ) : null}
           </div>
         </FadeIn>
@@ -292,7 +293,7 @@ export function TechStackSection({
           ) : null}
           <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
           {hasSubtitle ? (
-            <p className="max-w-2xl text-sm text-muted-foreground">{subtitle}</p>
+            <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
           ) : null}
         </div>
       </FadeIn>

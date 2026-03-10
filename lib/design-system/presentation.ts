@@ -1,7 +1,7 @@
 // Shared class maps for section presentation tokens.
 // Imported by SectionShell and section renderers — never duplicated.
 
-import type { Rhythm, Surface, ContentDensity, GridGap, DividerMode, HeadingTreatment, LabelStyle } from "./tokens"
+import type { Rhythm, Surface, ContentDensity, GridGap, DividerMode, HeadingTreatment, LabelStyle, SubtitleSize } from "./tokens"
 
 export const RHYTHM_CLASSES: Record<Rhythm, string> = {
   hero: "py-16 sm:py-24 lg:py-28",
@@ -104,7 +104,14 @@ export const LABEL_STYLE_CLASSES: Record<LabelStyle, string> = {
   default: "text-[10px] font-semibold uppercase tracking-widest text-muted-foreground",
   mono: "text-label-mono text-muted-foreground",
   pill: "rounded-full border border-accent/25 bg-accent/[0.08] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-accent/80",
-  micro: "text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60",
+  micro: "text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80",
+}
+
+/** Subtitle size classes — responsive text scale for section subtitles. */
+export const SUBTITLE_SIZE_CLASSES: Record<SubtitleSize, string> = {
+  sm: "text-sm",
+  md: "text-base sm:text-lg",
+  lg: "text-lg sm:text-xl",
 }
 
 /** Default rhythm when unset per section type. */
