@@ -65,6 +65,7 @@ export function LogoTicker({
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
     }
+    ${pauseOnHover ? ".logo-ticker-area:hover .logo-ticker-track { animation-play-state: paused; }" : ""}
   `
 
   return (
@@ -73,19 +74,13 @@ export function LogoTicker({
       <div
         role="marquee"
         aria-label="Logo showcase"
-        className={cn("group overflow-hidden", className)}
+        className={cn("logo-ticker-area overflow-hidden", className)}
       >
         <div
-          className="flex w-max items-center"
+          className="logo-ticker-track flex w-max items-center"
           style={{
             animation: `logo-ticker-scroll ${speed}s linear infinite`,
           }}
-          onMouseEnter={pauseOnHover ? (e) => {
-            (e.currentTarget as HTMLDivElement).style.animationPlayState = "paused"
-          } : undefined}
-          onMouseLeave={pauseOnHover ? (e) => {
-            (e.currentTarget as HTMLDivElement).style.animationPlayState = "running"
-          } : undefined}
         >
           {/* First copy */}
           {items.map((item, idx) => renderItem(item, idx))}
