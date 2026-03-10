@@ -141,63 +141,6 @@ export function SiteHeader({
           containerClassName
         )}
       >
-        <div className="relative md:hidden" ref={mobileMenuRef}>
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            className="h-11 w-11 shrink-0 border-border/70 bg-background/70 text-foreground hover:bg-muted"
-            aria-haspopup="menu"
-            aria-expanded={mobileOpen}
-            aria-controls={menuId}
-            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-            onClick={() => setMobileOpen((open) => !open)}
-          >
-            {mobileOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
-          </Button>
-
-          <div
-            id={menuId}
-            role="menu"
-            aria-label="Mobile navigation"
-            aria-hidden={!mobileOpen}
-            className={cn(
-              "absolute left-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-md border border-border bg-background p-2 shadow-lg transition-all duration-200",
-              mobileOpen
-                ? "pointer-events-auto translate-x-0 opacity-100"
-                : "pointer-events-none -translate-x-2 opacity-0"
-            )}
-          >
-            <ul className="space-y-1">
-              {links.map((item, idx) => {
-                const isAnchorLink = item.href.startsWith("#")
-                const isActive = isAnchorLink
-                  ? activeHash === item.href || (item.anchorId ? activeHash === `#${item.anchorId}` : false)
-                  : pathname === item.href
-
-                return (
-                  <li key={`mobile-${item.href}-${idx}`}>
-                    <Link
-                      href={item.href}
-                      role="menuitem"
-                      aria-current={isActive ? "page" : undefined}
-                      className={cn(
-                        "block rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        isActive ? "bg-primary font-semibold text-primary-foreground" : "text-foreground hover:bg-muted"
-                      )}
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-
-            {/* CTA moved to header row */}
-          </div>
-        </div>
-
         {logo ? (
           <Link href="/home" className="min-w-0 shrink rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <img
@@ -242,11 +185,64 @@ export function SiteHeader({
           </ul>
         </nav>
 
-        <Button size="sm" variant="gradient" asChild className="shrink-0">
+        <Button size="sm" variant="gradient" asChild className="hidden shrink-0 md:inline-flex">
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
 
-        {/* mobile menu rendered on the left above */}
+        <div className="relative md:hidden" ref={mobileMenuRef}>
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="h-11 w-11 shrink-0 border-border/70 bg-background/70 text-foreground hover:bg-muted"
+            aria-haspopup="menu"
+            aria-expanded={mobileOpen}
+            aria-controls={menuId}
+            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            onClick={() => setMobileOpen((open) => !open)}
+          >
+            {mobileOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
+          </Button>
+
+          <div
+            id={menuId}
+            role="menu"
+            aria-label="Mobile navigation"
+            aria-hidden={!mobileOpen}
+            className={cn(
+              "absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-md border border-border bg-background p-2 shadow-lg transition-all duration-200",
+              mobileOpen
+                ? "pointer-events-auto translate-x-0 opacity-100"
+                : "pointer-events-none translate-x-2 opacity-0"
+            )}
+          >
+            <ul className="space-y-1">
+              {links.map((item, idx) => {
+                const isAnchorLink = item.href.startsWith("#")
+                const isActive = isAnchorLink
+                  ? activeHash === item.href || (item.anchorId ? activeHash === `#${item.anchorId}` : false)
+                  : pathname === item.href
+
+                return (
+                  <li key={`mobile-${item.href}-${idx}`}>
+                    <Link
+                      href={item.href}
+                      role="menuitem"
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "block rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        isActive ? "bg-primary font-semibold text-primary-foreground" : "text-foreground hover:bg-muted"
+                      )}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        </div>
       </div>
     </header>
   )
