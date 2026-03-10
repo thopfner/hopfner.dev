@@ -501,6 +501,9 @@ type BuiltinCmsSectionType =
   | "faq_list"
   | "cta_block"
   | "footer_grid"
+  | "social_proof_strip"
+  | "proof_cluster"
+  | "case_study_split"
 
 type CmsSectionType = BuiltinCmsSectionType | string
 
@@ -864,8 +867,12 @@ export function GlobalSectionsPage() {
       }))
       setTemplates(rows)
 
+      // Prefer the stored template ID from settings, then fingerprint match, then current selection
+      const storedTemplateId = String(settings._appliedTemplateId ?? "")
+      const storedMatch = storedTemplateId ? rows.find((t) => t.id === storedTemplateId) : null
       const activeFp = settingsFingerprint(settings)
-      const matched = rows.find((t) => settingsFingerprint(asRecord(t.settings)) === activeFp)
+      const fpMatch = rows.find((t) => settingsFingerprint(asRecord(t.settings)) === activeFp)
+      const matched = storedMatch ?? fpMatch
       if (matched) {
         setSelectedTemplateId(matched.id)
         setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(matched.settings)))
@@ -873,9 +880,6 @@ export function GlobalSectionsPage() {
         setSelectedTemplateId(selectedTemplateId)
         const existingSelected = rows.find((t) => t.id === selectedTemplateId)
         setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(existingSelected?.settings)))
-      } else if (rows.length) {
-        setSelectedTemplateId(rows[0].id)
-        setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(rows[0].settings)))
       } else {
         setSelectedTemplateId(null)
         setCustomizeBaselineFingerprint(activeFp)
@@ -985,6 +989,7 @@ export function GlobalSectionsPage() {
 
       const existingSettings = asRecord(existing?.settings)
       const merged = deepMerge(existingSettings, asRecord(selectedTemplate.settings))
+      ;(merged as Record<string, unknown>)._appliedTemplateId = selectedTemplate.id
 
       const { error } = await supabase.from("site_formatting_settings").upsert({
         id: "default",
