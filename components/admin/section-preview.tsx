@@ -448,43 +448,18 @@ function SectionRenderer({
           },
         }
       })
-      const sectionVariantRaw = s(content.sectionVariant)
-      const validVariants = [
-        "default",
-        "value_pillars",
-        "services",
-        "problem_cards",
-        "proof_cards",
-        "logo_tiles",
-      ]
-      const sectionVariant = validVariants.includes(sectionVariantRaw)
-        ? (sectionVariantRaw as
-            | "default"
-            | "value_pillars"
-            | "services"
-            | "problem_cards"
-            | "proof_cards"
-            | "logo_tiles")
-        : "default"
       const columnsRaw = Number(content.columns)
       const columns =
         columnsRaw === 2 || columnsRaw === 3 || columnsRaw === 4
           ? columnsRaw
           : undefined
-      const cardToneRaw = s(content.cardTone)
-      const validTones = ["default", "elevated", "muted", "contrast"]
-      const cardTone = validTones.includes(cardToneRaw)
-        ? (cardToneRaw as "default" | "elevated" | "muted" | "contrast")
-        : "default"
       return (
         <WhatIDeliverSection
           title={title}
           subtitle={subtitle}
           eyebrow={s(content.eyebrow)}
           cards={cards}
-          sectionVariant={sectionVariant}
           columns={columns}
-          cardTone={cardTone}
           ui={ui}
         />
       )

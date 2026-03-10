@@ -16,17 +16,7 @@ import {
   LABEL_STYLE_CLASSES,
   SUBTITLE_SIZE_CLASSES,
 } from "@/lib/design-system/presentation"
-import { resolveCardClasses, DEFAULT_CARD_CLASS, SERVICE_CARD_INNER } from "@/lib/design-system/component-families"
-
-type SectionVariant =
-  | "default"
-  | "value_pillars"
-  | "services"
-  | "problem_cards"
-  | "proof_cards"
-  | "logo_tiles"
-
-type CardTone = "default" | "elevated" | "muted" | "contrast"
+import { resolveCardClasses, SERVICE_CARD_INNER } from "@/lib/design-system/component-families"
 
 export function WhatIDeliverSection({
   sectionId,
@@ -39,9 +29,7 @@ export function WhatIDeliverSection({
   subtitle,
   eyebrow,
   cards,
-  sectionVariant = "default",
   columns,
-  cardTone = "default",
   ui,
 }: {
   sectionId?: string
@@ -76,12 +64,10 @@ export function WhatIDeliverSection({
     stat?: string
     tag?: string
   }>
-  sectionVariant?: SectionVariant
   columns?: 2 | 3 | 4
-  cardTone?: CardTone
   ui?: ResolvedSectionUi
 }) {
-  const effectiveColumns = columns ?? (sectionVariant === "logo_tiles" ? 4 : 3)
+  const effectiveColumns = columns ?? 3
   const gridCols =
     effectiveColumns === 2
       ? "grid-cols-1 sm:grid-cols-2"
@@ -95,33 +81,7 @@ export function WhatIDeliverSection({
   const labelStyle = ui?.labelStyle ?? "default"
   const headingId = sectionId ? `${sectionId}-heading` : "services-title"
 
-  // Legacy tone fallback — used only when ui?.componentFamily is not set
-  const toneClasses: Record<CardTone, string> = {
-    default: DEFAULT_CARD_CLASS,
-    elevated: "surface-panel interactive-lift border-border/80 shadow-md",
-    muted: "border-border/40 bg-card/20",
-    contrast: "border-border/80 bg-foreground/[0.04] shadow-sm",
-  }
-
-  // Resolve card classes from design-system tokens when available
-  const resolved = ui?.componentFamily
-    ? resolveCardClasses(ui.componentFamily, ui.componentChrome, ui.accentRule)
-    : null
-
-  const variantCardClass = (variant: SectionVariant): string => {
-    switch (variant) {
-      case "value_pillars":
-        return "border-l-2 border-l-accent/60"
-      case "problem_cards":
-        return "border-t-2 border-t-accent/40"
-      case "proof_cards":
-        return "bg-card/30"
-      case "logo_tiles":
-        return "flex items-center justify-center p-6"
-      default:
-        return ""
-    }
-  }
+  const resolved = resolveCardClasses(ui?.componentFamily, ui?.componentChrome, ui?.accentRule)
 
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
@@ -188,32 +148,6 @@ export function WhatIDeliverSection({
             const hasIcon = (item.icon ?? "").trim().length > 0
             const hasStat = (item.stat ?? "").trim().length > 0
             const hasTag = (item.tag ?? "").trim().length > 0
-
-            if (sectionVariant === "logo_tiles") {
-              return (
-                <StaggerItem key={`${item.title}-${idx}`} className="h-full">
-                  <div
-                    className={cn(
-                      "h-full rounded-xl border border-border/40 bg-card/20 p-4",
-                      "flex items-center justify-center",
-                      resolved ? resolved.cardClass : toneClasses[cardTone]
-                    )}
-                    style={panelStyle}
-                  >
-                    {item.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.imageUrl}
-                        alt={item.imageAlt || item.title}
-                        className="h-8 max-w-[120px] object-contain opacity-70 grayscale"
-                      />
-                    ) : (
-                      <span className="text-sm font-medium text-muted-foreground">{item.title}</span>
-                    )}
-                  </div>
-                </StaggerItem>
-              )
-            }
 
             // Service family: enhanced internal structure
             if (isServiceFamily) {
@@ -295,7 +229,7 @@ export function WhatIDeliverSection({
                       density === "airy" ? "space-y-2.5" : "space-y-2"
                     )}>
                       <Separator className={cardSeparatorClass} />
-                      <dl className={cn("text-sm", density === "airy" ? "space-y-2" : "space-y-1")}>
+                      <dl className={cn("text-sm", density === "airy" ? "space-y-4" : density === "tight" ? "space-y-2" : "space-y-3")}>
                         {hasYouGet ? (
                           <div className="flex flex-col gap-0.5">
                             <dt className="text-xs font-semibold uppercase tracking-wider text-foreground/80">You get:</dt>
@@ -344,9 +278,7 @@ export function WhatIDeliverSection({
                   "h-full grid grid-rows-subgrid row-span-2",
                   DENSITY_GAP[density],
                   DENSITY_PADDING[density],
-                  resolved
-                    ? resolved.cardClass
-                    : cn(toneClasses[cardTone], variantCardClass(sectionVariant))
+                  resolved.cardClass
                 )}
                 style={panelStyle}
               >
@@ -384,10 +316,7 @@ export function WhatIDeliverSection({
                       <p className="text-metric text-2xl">{item.stat}</p>
                     ) : null}
                     {item.display.showTitle ? (
-                      <h3 className={cn(
-                        "font-semibold leading-none text-foreground",
-                        sectionVariant === "value_pillars" ? "text-base" : "text-sm"
-                      )}>
+                      <h3 className="text-sm font-semibold leading-none text-foreground">
                         {item.title}
                       </h3>
                     ) : null}
@@ -407,7 +336,7 @@ export function WhatIDeliverSection({
                 {hasDetails ? (
                   <CardContent className={cn(DENSITY_BODY_PADDING[density], density === "airy" ? "space-y-2.5" : "space-y-2")}>
                     <Separator className={cardSeparatorClass} />
-                    <dl className={cn("text-sm", density === "airy" ? "space-y-1.5" : "space-y-1")}>
+                    <dl className={cn("text-sm", density === "airy" ? "space-y-4" : density === "tight" ? "space-y-2" : "space-y-3")}>
                       {hasYouGet ? (
                         <div className="flex flex-col gap-0.5">
                           <dt className="font-medium">You get:</dt>

@@ -747,14 +747,8 @@ export default async function MarketingPage({
                 stat: asString(c.stat),
                 tag: asString(c.tag),
               }))
-              const sectionVariantRaw = asString(content.sectionVariant)
-              const validVariants = ["default", "value_pillars", "services", "problem_cards", "proof_cards", "logo_tiles"]
-              const cardGridSectionVariant = validVariants.includes(sectionVariantRaw) ? sectionVariantRaw as "default" | "value_pillars" | "services" | "problem_cards" | "proof_cards" | "logo_tiles" : "default"
               const columnsRaw = Number(content.columns)
               const cardGridColumns = columnsRaw === 2 || columnsRaw === 3 || columnsRaw === 4 ? columnsRaw : undefined
-              const cardToneRaw = asString(content.cardTone)
-              const validTones = ["default", "elevated", "muted", "contrast"]
-              const cardGridTone = validTones.includes(cardToneRaw) ? cardToneRaw as "default" | "elevated" | "muted" | "contrast" : "default"
               return (
                 <WhatIDeliverSection
                   key={section.id}
@@ -764,9 +758,7 @@ export default async function MarketingPage({
                   subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
                   eyebrow={asString(content.eyebrow)}
                   cards={cards}
-                  sectionVariant={cardGridSectionVariant}
                   columns={cardGridColumns}
-                  cardTone={cardGridTone}
                 />
               )
             }

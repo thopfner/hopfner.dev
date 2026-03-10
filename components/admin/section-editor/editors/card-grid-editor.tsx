@@ -27,27 +27,11 @@ import type { ContentEditorProps, CardDisplayState } from "../types"
 import { DEFAULT_CARD_IMAGE_WIDTH } from "../types"
 import { CardGridRow } from "./card-grid-row"
 
-const CARD_GRID_VARIANT_OPTIONS = [
-  { value: "default", label: "Default" },
-  { value: "value_pillars", label: "Value pillars" },
-  { value: "services", label: "Services" },
-  { value: "problem_cards", label: "Problem cards" },
-  { value: "proof_cards", label: "Proof cards" },
-  { value: "logo_tiles", label: "Logo tiles" },
-] as const
-
 const CARD_GRID_COLUMNS_OPTIONS = [
   { value: "", label: "Auto" },
   { value: "2", label: "2" },
   { value: "3", label: "3" },
   { value: "4", label: "4" },
-] as const
-
-const CARD_GRID_TONE_OPTIONS = [
-  { value: "default", label: "Default" },
-  { value: "elevated", label: "Elevated" },
-  { value: "muted", label: "Muted" },
-  { value: "contrast", label: "Contrast" },
 ] as const
 
 type CardGridEditorProps = ContentEditorProps & {
@@ -261,28 +245,12 @@ export function CardGridEditor({
       <Divider />
       <Text size="xs" c="dimmed" fw={500}>Layout & display</Text>
       <Select
-        label="Section variant"
+        label="Columns"
         comboboxProps={{ withinPortal: false }}
-        data={CARD_GRID_VARIANT_OPTIONS as unknown as { value: string; label: string }[]}
-        value={asString(content.sectionVariant, "default")}
-        onChange={(v: string) => onContentChange((c) => ({ ...c, sectionVariant: v || "default" }))}
+        data={CARD_GRID_COLUMNS_OPTIONS as unknown as { value: string; label: string }[]}
+        value={String(content.columns ?? "")}
+        onChange={(v: string) => onContentChange((c) => ({ ...c, columns: v ? Number(v) : undefined }))}
       />
-      <SimpleGrid cols={2}>
-        <Select
-          label="Columns"
-          comboboxProps={{ withinPortal: false }}
-          data={CARD_GRID_COLUMNS_OPTIONS as unknown as { value: string; label: string }[]}
-          value={String(content.columns ?? "")}
-          onChange={(v: string) => onContentChange((c) => ({ ...c, columns: v ? Number(v) : undefined }))}
-        />
-        <Select
-          label="Card tone"
-          comboboxProps={{ withinPortal: false }}
-          data={CARD_GRID_TONE_OPTIONS as unknown as { value: string; label: string }[]}
-          value={asString(content.cardTone, "default")}
-          onChange={(v: string) => onContentChange((c) => ({ ...c, cardTone: v || "default" }))}
-        />
-      </SimpleGrid>
 
       {/* Section-level card display defaults */}
       <Paper withBorder p="sm" radius="md">
