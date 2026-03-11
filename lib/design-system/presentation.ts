@@ -109,9 +109,9 @@ export const LABEL_STYLE_CLASSES: Record<LabelStyle, string> = {
 
 /** Subtitle size classes — responsive text scale for section subtitles. */
 export const SUBTITLE_SIZE_CLASSES: Record<SubtitleSize, string> = {
-  sm: "text-sm",
-  md: "text-base sm:text-lg",
-  lg: "text-lg sm:text-xl",
+  sm: "text-sm text-balance",
+  md: "text-base sm:text-lg text-balance",
+  lg: "text-lg sm:text-xl text-balance",
 }
 
 /** Default rhythm when unset per section type. */

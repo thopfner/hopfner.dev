@@ -114,8 +114,8 @@ export function ProofClusterSection({
         {/* Metrics row — sharp, data-forward, high-confidence */}
         {hasMetrics ? (
           <StaggerContainer className={cn("grid grid-cols-2 sm:grid-cols-3", GRID_GAP_CLASSES[gridGap])}>
-            {metrics.map((m) => (
-              <StaggerItem key={m.label} className="h-full">
+            {(() => { const smOrphan = metrics.length % 3 === 1; return metrics.map((m, idx) => (
+              <StaggerItem key={m.label} className={cn("h-full", smOrphan && idx === metrics.length - 1 && "sm:col-start-2")}>
                 <div className={cn(metricCard.cardClass, metricCard.spacing.rootPadding, "h-full flex flex-col items-center text-center")}>
                   {metricCard.isInlineAccent ? (
                     <div aria-hidden className="mx-auto mb-2 h-0.5 w-8 rounded-full bg-accent/50" />
@@ -135,7 +135,7 @@ export function ProofClusterSection({
                   <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-1")}>{m.label}</p>
                 </div>
               </StaggerItem>
-            ))}
+            )); })()}
           </StaggerContainer>
         ) : null}
 

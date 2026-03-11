@@ -127,11 +127,11 @@ export function FinalCtaSection({
                   ) : null}
                 </div>
                 <div className="flex flex-col items-start justify-center gap-3 sm:items-end">
-                  <Button size="sm" variant="gradient" asChild>
+                  <Button variant="gradient" asChild>
                     <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
                   </Button>
                   {secondaryCta.label ? (
-                    <Button size="sm" variant="outline" asChild>
+                    <Button variant="outline" asChild>
                       <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
                     </Button>
                   ) : null}
@@ -222,17 +222,17 @@ export function FinalCtaSection({
             <SectionHeading id={headingId} title={headline} headingTreatment={ui?.headingTreatment} />
             {bodyHtml?.trim() ? (
               <div
-                className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
+                className={cn("text-base text-muted-foreground", RICH_TEXT_CLASS)}
                 dangerouslySetInnerHTML={{ __html: bodyHtml }}
               />
             ) : (
-              <p className="text-sm text-muted-foreground">{body}</p>
+              <p className="text-base text-muted-foreground">{body}</p>
             )}
             <div className={cn("flex flex-wrap items-center gap-2", ctaJustify)}>
-              <Button size="sm" variant="gradient" asChild>
+              <Button variant="gradient" asChild>
                 <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
               </Button>
-              <Button size="sm" variant="outline" asChild>
+              <Button variant="outline" asChild>
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
             </div>

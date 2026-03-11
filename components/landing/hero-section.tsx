@@ -189,10 +189,10 @@ export function HeroSection({
   const renderCtasBlock = (delay: number, justify: string) => (
     <HeroEntrance key="ctas" delay={delay}>
       <div className={cn("flex flex-wrap items-center gap-2", justify)}>
-        <Button size="default" variant="gradient" className="btn-press px-6" asChild>
+        <Button size="lg" variant="gradient" asChild>
           <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
         </Button>
-        <Button size="default" variant="outline" className="btn-press px-6" asChild>
+        <Button size="lg" variant="outline" asChild>
           <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
         </Button>
       </div>
@@ -204,7 +204,7 @@ export function HeroSection({
         <div className={cn("flex flex-wrap gap-8 pt-4", justify)}>
           {heroStats!.map((stat, i) => (
             <div key={i} className="text-center">
-              <p className="text-metric text-2xl">{renderMetricValue(stat.value)}</p>
+              <p className="text-metric text-2xl sm:text-3xl">{renderMetricValue(stat.value)}</p>
               <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{stat.label}</p>
             </div>
           ))}
@@ -295,7 +295,7 @@ export function HeroSection({
           </h1>
           <p
             className={cn(
-              "text-pretty text-muted-foreground",
+              "text-muted-foreground",
               SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "md"],
               constrainClass
             )}
