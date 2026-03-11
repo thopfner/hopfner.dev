@@ -103,7 +103,7 @@ export const HEADING_TREATMENT_CLASSES: Record<HeadingTreatment, string> = {
 export const LABEL_STYLE_CLASSES: Record<LabelStyle, string> = {
   default: "text-[10px] font-semibold uppercase tracking-widest text-muted-foreground",
   mono: "text-label-mono text-muted-foreground",
-  pill: "rounded-full border border-accent/25 bg-accent/[0.08] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-accent/80",
+  pill: "rounded-full border border-accent/40 bg-accent/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-accent",
   micro: "text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80",
 }
 
