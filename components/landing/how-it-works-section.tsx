@@ -78,7 +78,7 @@ export function HowItWorksSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"], "text-muted-foreground")}>
+              <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>
                 {eyebrow}
               </p>
             ) : null}
@@ -164,7 +164,7 @@ export function HowItWorksSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"], "text-muted-foreground")}>
+              <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>
                 {eyebrow}
               </p>
             ) : null}

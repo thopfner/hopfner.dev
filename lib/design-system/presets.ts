@@ -9,6 +9,7 @@ import type {
   HeadingTreatment,
   LabelStyle,
   DividerMode,
+  SubtitleSize,
   CardFamily,
   CardChrome,
   AccentRule,
@@ -27,6 +28,7 @@ export type SectionPreset = {
     headingTreatment: HeadingTreatment
     labelStyle: LabelStyle
     dividerMode: DividerMode
+    subtitleSize?: SubtitleSize
   }
   component?: {
     family: CardFamily
@@ -49,6 +51,7 @@ export const SECTION_PRESETS: Record<string, SectionPreset> = {
       headingTreatment: "default",
       labelStyle: "pill",
       dividerMode: "strong",
+      subtitleSize: "md",
     },
     component: {
       family: "service",
@@ -69,6 +72,7 @@ export const SECTION_PRESETS: Record<string, SectionPreset> = {
       headingTreatment: "default",
       labelStyle: "default",
       dividerMode: "subtle",
+      subtitleSize: "sm",
     },
     component: {
       family: "proof",
@@ -88,6 +92,7 @@ export const SECTION_PRESETS: Record<string, SectionPreset> = {
       headingTreatment: "display",
       labelStyle: "default",
       dividerMode: "none",
+      subtitleSize: "md",
     },
   },
   process_flow: {
@@ -103,6 +108,7 @@ export const SECTION_PRESETS: Record<string, SectionPreset> = {
       headingTreatment: "default",
       labelStyle: "mono",
       dividerMode: "none",
+      subtitleSize: "sm",
     },
     component: {
       family: "process",
@@ -123,6 +129,7 @@ export const SECTION_PRESETS: Record<string, SectionPreset> = {
       headingTreatment: "default",
       labelStyle: "mono",
       dividerMode: "none",
+      subtitleSize: "sm",
     },
     component: {
       family: "logo_tile",
@@ -142,6 +149,7 @@ export const SECTION_PRESETS: Record<string, SectionPreset> = {
       headingTreatment: "display",
       labelStyle: "default",
       dividerMode: "none",
+      subtitleSize: "md",
     },
   },
 }

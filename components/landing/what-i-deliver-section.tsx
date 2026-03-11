@@ -112,7 +112,7 @@ export function WhatIDeliverSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "text-muted-foreground")}>
+              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
                 {eyebrow}
               </p>
             ) : null}

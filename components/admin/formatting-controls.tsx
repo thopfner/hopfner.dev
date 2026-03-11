@@ -524,6 +524,7 @@ const PresetSelector = memo(function PresetSelector({
           headingTreatment: preset.presentation.headingTreatment || f.headingTreatment || "",
           labelStyle: preset.presentation.labelStyle || f.labelStyle || "",
           dividerMode: preset.presentation.dividerMode || f.dividerMode || "",
+          subtitleSize: preset.presentation.subtitleSize || f.subtitleSize || "",
           cardFamily: preset.component?.family || f.cardFamily || "",
           cardChrome: preset.component?.chrome || f.cardChrome || "",
           accentRule: preset.component?.accentRule || f.accentRule || "",

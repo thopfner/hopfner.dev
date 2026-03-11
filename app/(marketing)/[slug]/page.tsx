@@ -30,8 +30,8 @@ import type { CSSProperties } from "react"
 
 export const dynamic = "force-dynamic"
 
-function asString(v: unknown, fallback = ""): string {
-  return typeof v === "string" ? v : fallback
+function asString(v: unknown): string {
+  return typeof v === "string" ? v : ""
 }
 
 function asRecord(v: unknown): Record<string, unknown> {
@@ -326,7 +326,7 @@ function sectionContainerProps(
 
   return {
     sectionId: sectionKey ?? undefined,
-    sectionClassName: cn(f.paddingY || (sectionType === "hero_cta" ? "py-0" : "py-6"), f.sectionClass),
+    sectionClassName: cn(f.paddingY, f.sectionClass),
     containerClassName: cn(
       widthMode === "full" ? "max-w-none" : f.maxWidth || "max-w-5xl",
       align === "left" ? "ml-0 mr-auto" : align === "right" ? "ml-auto mr-0" : "mx-auto",
@@ -429,6 +429,8 @@ export default async function MarketingPage({
     label: pickText(header?.published.cta_primary_label, headerDefaults?.default_cta_primary_label) || "Book a 15-min call",
     href: pickText(header?.published.cta_primary_href, headerDefaults?.default_cta_primary_href) || "#contact",
   }
+
+  const baseFormatting = deepMerge(siteFormattingSettings, pageFormattingOverride)
 
   const siteTokens = asRecord(siteFormattingSettings.tokens)
   const pageTokens = asRecord(pageFormattingOverride.tokens)
@@ -564,7 +566,7 @@ export default async function MarketingPage({
               sectionContainerProps(
                 deepMerge(
                   deepMerge(
-                    deepMerge(siteFormattingSettings, pageFormattingOverride),
+                    baseFormatting,
                     asRecord(headerDefaults?.default_formatting)
                   ),
                   deepMerge(asRecord(header.formatting_override), asRecord(header.published.formatting))
@@ -586,7 +588,7 @@ export default async function MarketingPage({
           )
           const formatting = deepMerge(
             deepMerge(
-              deepMerge(siteFormattingSettings, pageFormattingOverride),
+              baseFormatting,
               asRecord(defaults?.default_formatting)
             ),
             deepMerge(asRecord(section.formatting_override), asRecord(v.formatting))
@@ -629,7 +631,7 @@ export default async function MarketingPage({
                 const nextDefaults = defaultsFor(nextSection.section_type)
                 const nextFormatting = deepMerge(
                   deepMerge(
-                    deepMerge(siteFormattingSettings, pageFormattingOverride),
+                    baseFormatting,
                     asRecord(nextDefaults?.default_formatting)
                   ),
                   deepMerge(

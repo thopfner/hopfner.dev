@@ -2,7 +2,7 @@
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_NAME="$(basename "$APP_DIR")"
+APP_NAME="hopfner.dev"
 LOCK_FILE="/tmp/${APP_NAME}.deploy.lock"
 
 cd "$APP_DIR"
@@ -10,7 +10,7 @@ cd "$APP_DIR"
 # Source port from .env.local, default to 3010
 PORT="${PORT:-3010}"
 if [ -f .env.local ]; then
-  _port=$(grep -E '^PORT=' .env.local | tail -1 | cut -d= -f2 | tr -d '"' | tr -d "'")
+  _port=$(grep -E '^PORT=' .env.local | tail -1 | cut -d= -f2 | tr -d '"' | tr -d "'" || true)
   [ -n "$_port" ] && PORT="$_port"
 fi
 

@@ -28,7 +28,6 @@ export type CmsSectionTypeDefault = {
   default_background_media_url: string | null
   default_formatting: Record<string, unknown>
   default_content: Record<string, unknown>
-  capabilities: Record<string, unknown>
 }
 
 export type CmsSectionTypeDefaultsMap = Record<string, CmsSectionTypeDefault>

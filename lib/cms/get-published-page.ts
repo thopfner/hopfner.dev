@@ -137,7 +137,7 @@ export async function getPublishedPageBySlug(slug: string): Promise<{
 
   const { data: defaultsData, error: defaultsError } = await supabase
     .from("section_type_defaults")
-    .select("section_type, label, description, default_title, default_subtitle, default_cta_primary_label, default_cta_primary_href, default_cta_secondary_label, default_cta_secondary_href, default_background_media_url, default_formatting, default_content, capabilities")
+    .select("section_type, label, description, default_title, default_subtitle, default_cta_primary_label, default_cta_primary_href, default_cta_secondary_label, default_cta_secondary_href, default_background_media_url, default_formatting, default_content")
 
   if (defaultsError) throw new Error(defaultsError.message)
 

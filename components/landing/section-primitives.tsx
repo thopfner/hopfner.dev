@@ -40,7 +40,7 @@ export function SectionShell({
       aria-labelledby={labelledBy}
       className={cn(
         "scroll-mt-20",
-        rhythm ? RHYTHM_CLASSES[rhythm] : "py-8 sm:py-10",
+        RHYTHM_CLASSES[rhythm ?? "standard"],
         surface ? SURFACE_CLASSES[surface] : "",
         surface === "spotlight_stage" && "sig-obsidian-signal",
         surface === "grid_stage" && "sig-grid-rays",
@@ -63,7 +63,7 @@ export function SectionHeading({ id, title, headingTreatment }: { id: string; ti
       id={id}
       className={cn(
         "text-heading text-balance text-xl sm:text-2xl",
-        headingTreatment ? HEADING_TREATMENT_CLASSES[headingTreatment] : ""
+        HEADING_TREATMENT_CLASSES[headingTreatment ?? "default"]
       )}
       style={isGradient ? undefined : { color: "var(--foreground)" }}
     >

@@ -8,7 +8,7 @@ import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { GRID_GAP_CLASSES, SUBTITLE_SIZE_CLASSES } from "@/lib/design-system/presentation"
+import { DENSITY_ITEM_SPACING, GRID_GAP_CLASSES, SUBTITLE_SIZE_CLASSES } from "@/lib/design-system/presentation"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation, resolveCardSpacing, type CardSpacing } from "@/lib/design-system/component-families"
 import { cn } from "@/lib/utils"
@@ -535,7 +535,7 @@ export function ComposedSection({
   const gapClass = ui?.gridGap ? GRID_GAP_CLASSES[ui.gridGap] : GRID_GAP_CLASSES.standard
 
   // Column block spacing (content density)
-  const densityClass = ui?.density === "tight" ? "space-y-2" : ui?.density === "airy" ? "space-y-5" : "space-y-3"
+  const densityClass = DENSITY_ITEM_SPACING[ui?.density ?? "standard"]
 
   // Semantic context passed to renderBlock
   const semantics: SemanticContext = { headingTreatment: ui?.headingTreatment, labelStyle: ui?.labelStyle, contentDensity: ui?.density }

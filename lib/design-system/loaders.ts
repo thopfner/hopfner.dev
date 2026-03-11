@@ -54,6 +54,7 @@ function normalizePresetFromDb(
       headingTreatment: asString(pt.headingTreatment, "default") as SectionPreset["presentation"]["headingTreatment"],
       labelStyle: asString(pt.labelStyle, "default") as SectionPreset["presentation"]["labelStyle"],
       dividerMode: asString(pt.dividerMode, "none") as SectionPreset["presentation"]["dividerMode"],
+      subtitleSize: asString(pt.subtitleSize, "sm") as SectionPreset["presentation"]["subtitleSize"],
     },
     component: reg.component_family_key
       ? {

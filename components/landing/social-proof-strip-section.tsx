@@ -81,9 +81,14 @@ export function SocialProofStripSection({
               {hasTitle ? (
                 <p
                   className={cn(
-                    "text-sm font-medium tracking-wide text-muted-foreground",
+                    "text-sm font-medium tracking-wide",
                     HEADING_TREATMENT_CLASSES[headingTreatment]
                   )}
+                  style={
+                    headingTreatment === "gradient" || headingTreatment === "gradient_accent"
+                      ? undefined
+                      : { color: "var(--foreground)" }
+                  }
                 >
                   {title}
                 </p>
