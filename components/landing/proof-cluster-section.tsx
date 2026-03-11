@@ -97,7 +97,7 @@ export function ProofClusterSection({
         {/* Heading cluster */}
         {hasEyebrow || hasTitle || hasSubtitle ? (
           <FadeIn>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 text-left">
               {hasEyebrow ? (
                 <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
               ) : null}
@@ -155,7 +155,7 @@ export function ProofClusterSection({
                     <div className={cn("mt-5 flex flex-wrap gap-6 border-t pt-4", dividerBorder)}>
                       {proofCard!.stats.map((s) => (
                         <div key={s.label}>
-                          <p className="text-metric text-xl font-semibold">{s.value}</p>
+                          <p className="text-metric text-xl font-semibold text-foreground">{s.value}</p>
                           <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{s.label}</p>
                         </div>
                       ))}
