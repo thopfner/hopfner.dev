@@ -122,7 +122,7 @@ export function SocialProofStripSection({
                         className="h-8 max-w-[120px] object-contain opacity-70 transition-all duration-300 hover:opacity-100"
                       />
                     ) : (
-                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/55">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
                         {logo.label}
                       </span>
                     )}
@@ -144,7 +144,7 @@ export function SocialProofStripSection({
                   ) : (
                     <span
                       key={logo.label}
-                      className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 transition-colors hover:text-muted-foreground/70"
+                      className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/65 transition-colors hover:text-muted-foreground/85"
                     >
                       {logo.label}
                     </span>
@@ -171,7 +171,7 @@ export function SocialProofStripSection({
 
           {/* Trust note */}
           {hasTrustNote ? (
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/70">{trustNote}</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80">{trustNote}</p>
           ) : null}
         </div>
       </FadeIn>

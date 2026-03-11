@@ -101,10 +101,10 @@ export const HEADING_TREATMENT_CLASSES: Record<HeadingTreatment, string> = {
 
 /** Label style classes — applied to tags, badges, eyebrows, micro-labels. */
 export const LABEL_STYLE_CLASSES: Record<LabelStyle, string> = {
-  default: "text-[10px] font-semibold uppercase tracking-widest text-muted-foreground",
+  default: "text-[11px] font-semibold uppercase tracking-widest text-muted-foreground",
   mono: "text-label-mono text-muted-foreground",
-  pill: "rounded-full border border-accent/40 bg-accent/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-accent",
-  micro: "text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80",
+  pill: "rounded-full border border-accent/40 bg-accent/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-widest text-accent",
+  micro: "text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80",
 }
 
 /** Subtitle size classes — responsive text scale for section subtitles. */

@@ -83,6 +83,8 @@ export function WhatIDeliverSection({
 
   const resolved = resolveCardClasses(ui?.componentFamily, ui?.componentChrome, ui?.accentRule)
 
+  const xlOrphan = effectiveColumns >= 3 && cards.length % 3 === 1
+
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
   const hasSubtitle = (subtitle ?? "").trim().length > 0
 
@@ -152,7 +154,7 @@ export function WhatIDeliverSection({
             // Service family: enhanced internal structure
             if (isServiceFamily) {
               return (
-                <StaggerItem key={`${item.title}-${idx}`} className="h-full row-span-2 grid grid-rows-subgrid">
+                <StaggerItem key={`${item.title}-${idx}`} className={cn("h-full row-span-2 grid grid-rows-subgrid", xlOrphan && idx === cards.length - 1 && "xl:col-start-2")}>
                 <Card
                   className={cn(
                     "h-full grid grid-rows-subgrid row-span-2 gap-0 overflow-hidden",
@@ -272,7 +274,7 @@ export function WhatIDeliverSection({
 
             // Default / other families
             return (
-              <StaggerItem key={`${item.title}-${idx}`} className="h-full row-span-2 grid grid-rows-subgrid">
+              <StaggerItem key={`${item.title}-${idx}`} className={cn("h-full row-span-2 grid grid-rows-subgrid", xlOrphan && idx === cards.length - 1 && "xl:col-start-2")}>
               <Card
                 className={cn(
                   "h-full grid grid-rows-subgrid row-span-2",

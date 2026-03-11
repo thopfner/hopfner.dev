@@ -62,7 +62,7 @@ export function SectionHeading({ id, title, headingTreatment }: { id: string; ti
     <h2
       id={id}
       className={cn(
-        "text-heading text-balance text-xl sm:text-2xl",
+        "text-heading text-balance text-2xl sm:text-3xl",
         HEADING_TREATMENT_CLASSES[headingTreatment ?? "default"]
       )}
       style={isGradient ? undefined : { color: "var(--foreground)" }}
