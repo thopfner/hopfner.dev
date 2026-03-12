@@ -549,9 +549,11 @@ export function HeroSection({
                 <div className="flex flex-col justify-center">{textContent}</div>
                 <div className={cn("flex flex-col justify-center space-y-6", isRightCenter ? "text-center" : "text-left")}>
                   {proofContent ? (
-                    <HeroEntrance delay={0.6}>
-                      {proofContent}
-                    </HeroEntrance>
+                    <div className="hidden lg:block">
+                      <HeroEntrance delay={0.6}>
+                        {proofContent}
+                      </HeroEntrance>
+                    </div>
                   ) : null}
                   {resolvedOrder
                     .filter((k) => getSide(k) === "right")
