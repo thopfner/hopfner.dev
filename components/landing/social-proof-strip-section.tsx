@@ -105,52 +105,66 @@ export function SocialProofStripSection({
             layoutVariant === "marquee" ? (
               <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} />
             ) : layoutVariant === "grid" ? (
-              <div className={cn(
-                "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
-                GRID_GAP_CLASSES[gridGap]
-              )}>
-                {logos.map((logo) => (
-                  <div
-                    key={logo.label}
-                    className={cn(logoTile.cardClass, "px-5 py-3.5 transition-colors hover:bg-card/[0.08]")}
-                  >
-                    {logo.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={logo.imageUrl}
-                        alt={logo.alt || logo.label}
-                        className="h-8 max-w-[120px] object-contain opacity-70 transition-all duration-300 hover:opacity-100"
-                      />
-                    ) : (
-                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
-                        {logo.label}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <>
+                {/* Mobile: always marquee */}
+                <div className="sm:hidden">
+                  <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} />
+                </div>
+                {/* Desktop: admin-selected grid */}
+                <div className={cn(
+                  "hidden sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
+                  GRID_GAP_CLASSES[gridGap]
+                )}>
+                  {logos.map((logo) => (
+                    <div
+                      key={logo.label}
+                      className={cn(logoTile.cardClass, "px-5 py-3.5 transition-colors hover:bg-card/[0.08]")}
+                    >
+                      {logo.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={logo.imageUrl}
+                          alt={logo.alt || logo.label}
+                          className="h-8 max-w-[120px] object-contain opacity-70 transition-all duration-300 hover:opacity-100"
+                        />
+                      ) : (
+                        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+                          {logo.label}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               /* inline layout */
-              <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-5">
-                {logos.map((logo) =>
-                  logo.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={logo.label}
-                      src={logo.imageUrl}
-                      alt={logo.alt || logo.label}
-                      className="h-8 w-auto object-contain opacity-70 transition-all duration-300 hover:opacity-100"
-                    />
-                  ) : (
-                    <span
-                      key={logo.label}
-                      className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/65 transition-colors hover:text-muted-foreground/85"
-                    >
-                      {logo.label}
-                    </span>
-                  )
-                )}
-              </div>
+              <>
+                {/* Mobile: always marquee */}
+                <div className="sm:hidden">
+                  <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} />
+                </div>
+                {/* Desktop: admin-selected inline */}
+                <div className="hidden sm:flex flex-wrap items-center justify-center gap-x-12 gap-y-5">
+                  {logos.map((logo) =>
+                    logo.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={logo.label}
+                        src={logo.imageUrl}
+                        alt={logo.alt || logo.label}
+                        className="h-8 w-auto object-contain opacity-70 transition-all duration-300 hover:opacity-100"
+                      />
+                    ) : (
+                      <span
+                        key={logo.label}
+                        className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/65 transition-colors hover:text-muted-foreground/85"
+                      >
+                        {logo.label}
+                      </span>
+                    )
+                  )}
+                </div>
+              </>
             )
           ) : null}
 
