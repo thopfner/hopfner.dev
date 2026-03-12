@@ -55,6 +55,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${ibmPlexSans.variable} ${merriweather.variable} ${jetbrainsMono.variable} ${poppins.variable} ${manrope.variable} ${dmSans.variable} ${nunitoSans.variable} ${workSans.variable} ${sourceSans3.variable} ${roboto.variable} ${openSans.variable} ${lato.variable} ${montserrat.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable} min-h-dvh antialiased`}
       >
+        <div id="top" />
         {children}
       </body>
     </html>

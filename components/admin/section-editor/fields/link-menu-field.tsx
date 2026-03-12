@@ -205,7 +205,7 @@ export function LinkMenuField({
               disabled={!selectedPage}
               onClick={() => {
                 if (!selectedPage) return
-                setHref(buildHref({ kind: "page", pageSlug: selectedPage.slug }))
+                setHref(buildHref({ kind: "page_anchor", pageSlug: selectedPage.slug, anchor: "top" }))
               }}
             >
               Top of page
