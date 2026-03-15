@@ -1,3 +1,6 @@
+import { EditableLinkSlot } from "@/components/landing/editable-link-slot"
+import { EditableRichTextSlot } from "@/components/landing/editable-rich-text-slot"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { FadeIn } from "@/components/landing/motion-primitives"
@@ -90,13 +93,13 @@ export function CaseStudySplitSection({
             <FadeIn>
               <div className="space-y-1.5">
                 {hasEyebrow ? (
-                  <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+                  <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
                 ) : null}
                 {hasTitle ? (
-                  <SectionHeading id={headingId} title={title!} headingTreatment={ui?.headingTreatment} />
+                  <SectionHeading id={headingId} title={title!} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
                 ) : null}
                 {hasSubtitle ? (
-                  <p className={cn("max-w-lg text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+                  <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-lg text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
                 ) : null}
               </div>
             </FadeIn>
@@ -104,9 +107,10 @@ export function CaseStudySplitSection({
 
           {hasNarrative ? (
             <FadeIn delay={0.05}>
-              <div
+              <EditableRichTextSlot
+                richTextPath="content.narrativeRichText"
+                html={narrativeHtml!}
                 className={cn("text-sm leading-relaxed text-muted-foreground", RICH_TEXT_CLASS)}
-                dangerouslySetInnerHTML={{ __html: narrativeHtml! }}
               />
             </FadeIn>
           ) : null}
@@ -120,15 +124,15 @@ export function CaseStudySplitSection({
                   {card.isInlineAccent ? (
                     <div aria-hidden className="mb-2 h-0.5 w-5 rounded-full bg-red-400/40" />
                   ) : null}
-                  <p className={cn(
+                  <EditableTextSlot as="p" fieldPath="content.beforeLabel" className={cn(
                     LABEL_STYLE_CLASSES[labelStyle],
                     "mb-2.5 !text-red-400/70"
-                  )}>{bLabel}</p>
+                  )}>{bLabel}</EditableTextSlot>
                   <ul className="space-y-2">
                     {beforeItems.map((item, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground/70">
                         <span className="mt-0.5 shrink-0 text-red-400/50">✕</span>
-                        {item}
+                        <EditableTextSlot as="span" fieldPath={`content.beforeItems.${i}`}>{item}</EditableTextSlot>
                       </li>
                     ))}
                   </ul>
@@ -138,15 +142,15 @@ export function CaseStudySplitSection({
                   {card.isInlineAccent ? (
                     <div aria-hidden className="mb-2 h-0.5 w-5 rounded-full bg-green-400/40" />
                   ) : null}
-                  <p className={cn(
+                  <EditableTextSlot as="p" fieldPath="content.afterLabel" className={cn(
                     LABEL_STYLE_CLASSES[labelStyle],
                     "mb-2.5 !text-green-400/80"
-                  )}>{aLabel}</p>
+                  )}>{aLabel}</EditableTextSlot>
                   <ul className="space-y-2">
                     {afterItems.map((item, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                         <span className="mt-0.5 shrink-0 text-green-400/60">✓</span>
-                        {item}
+                        <EditableTextSlot as="span" fieldPath={`content.afterItems.${i}`}>{item}</EditableTextSlot>
                       </li>
                     ))}
                   </ul>
@@ -157,9 +161,11 @@ export function CaseStudySplitSection({
 
           {hasCta ? (
             <FadeIn delay={0.15}>
-              <a href={ctaHref} className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline">
-                {ctaLabel} &rarr;
-              </a>
+              <span className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline">
+                <EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">
+                  {ctaLabel} &rarr;
+                </EditableLinkSlot>
+              </span>
             </FadeIn>
           ) : null}
         </div>
@@ -174,7 +180,7 @@ export function CaseStudySplitSection({
                 ) : null}
                 {mediaTitle ? (
                   <div className="px-4 pt-4">
-                    <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{mediaTitle}</p>
+                    <EditableTextSlot as="p" fieldPath="content.mediaTitle" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{mediaTitle}</EditableTextSlot>
                   </div>
                 ) : null}
                 {mediaImageUrl ? (
@@ -195,7 +201,7 @@ export function CaseStudySplitSection({
           {hasStats ? (
             <FadeIn delay={0.15}>
               <div className={cn("grid grid-cols-2", stats.length > 2 && "sm:grid-cols-3", GRID_GAP_CLASSES[gridGap])}>
-                {stats.map((s) => (
+                {stats.map((s, sIdx) => (
                   <div
                     key={s.label}
                     className={cn(card.cardClass, card.spacing.rootPadding, "min-w-0 text-center")}
@@ -204,8 +210,8 @@ export function CaseStudySplitSection({
                     {card.isInlineAccent ? (
                       <div aria-hidden className="mx-auto mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                     ) : null}
-                    <p className="text-metric text-gradient text-xl font-semibold sm:text-2xl">{s.value}</p>
-                    <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-1.5")}>{s.label}</p>
+                    <EditableTextSlot as="p" fieldPath={`content.stats.${sIdx}.value`} className="text-metric text-gradient text-xl font-semibold sm:text-2xl">{s.value}</EditableTextSlot>
+                    <EditableTextSlot as="p" fieldPath={`content.stats.${sIdx}.label`} className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-1.5")}>{s.label}</EditableTextSlot>
                   </div>
                 ))}
               </div>

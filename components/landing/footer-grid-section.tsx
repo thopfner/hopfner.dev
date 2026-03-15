@@ -1,6 +1,8 @@
 import Link from "next/link"
 import type { CSSProperties } from "react"
 
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
+import { EditableLinkSlot } from "@/components/landing/editable-link-slot"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -89,10 +91,10 @@ export function FooterGridSection({
             return (
               <div key={idx} className="space-y-5" style={panelStyle}>
                 {title ? (
-                  <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
+                  <EditableTextSlot as="h3" fieldPath={`content.cards.${idx}.title`} className="text-base font-semibold tracking-tight text-foreground">{title}</EditableTextSlot>
                 ) : null}
                 {body ? (
-                  <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{body}</p>
+                  <EditableTextSlot as="p" fieldPath={`content.cards.${idx}.body`} className="max-w-sm text-sm leading-relaxed text-muted-foreground" multiline>{body}</EditableTextSlot>
                 ) : null}
 
                 {/* Grouped links */}
@@ -101,19 +103,24 @@ export function FooterGridSection({
                     {groups.map((group, groupIdx) => (
                       <div key={groupIdx} className="space-y-3">
                         {group.title ? (
-                          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                          <EditableTextSlot as="p" fieldPath={`content.cards.${idx}.groups.${groupIdx}.title`} className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
                             {group.title}
-                          </p>
+                          </EditableTextSlot>
                         ) : null}
                         <ul className="space-y-2">
-                          {group.links.map((lnk, i) => (
-                            <li key={i}>
-                              <Link
-                                href={lnk.href || "#"}
-                                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                          {group.links.map((lnk, lnkIdx) => (
+                            <li key={lnkIdx}>
+                              <EditableLinkSlot
+                                labelPath={`content.cards.${idx}.groups.${groupIdx}.links.${lnkIdx}.label`}
+                                hrefPath={`content.cards.${idx}.groups.${groupIdx}.links.${lnkIdx}.href`}
                               >
-                                {lnk.label}
-                              </Link>
+                                <Link
+                                  href={lnk.href || "#"}
+                                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                                >
+                                  {lnk.label}
+                                </Link>
+                              </EditableLinkSlot>
                             </li>
                           ))}
                         </ul>
@@ -122,14 +129,19 @@ export function FooterGridSection({
                   </div>
                 ) : hasLinks ? (
                   <ul className="space-y-2">
-                    {flatLinks.map((lnk, i) => (
-                      <li key={i}>
-                        <Link
-                          href={lnk.href || "#"}
-                          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    {flatLinks.map((lnk, lnkIdx) => (
+                      <li key={lnkIdx}>
+                        <EditableLinkSlot
+                          labelPath={`content.cards.${idx}.links.${lnkIdx}.label`}
+                          hrefPath={`content.cards.${idx}.links.${lnkIdx}.href`}
                         >
-                          {lnk.label}
-                        </Link>
+                          <Link
+                            href={lnk.href || "#"}
+                            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                          >
+                            {lnk.label}
+                          </Link>
+                        </EditableLinkSlot>
                       </li>
                     ))}
                   </ul>
@@ -146,7 +158,7 @@ export function FooterGridSection({
                       className="h-9 flex-1 rounded-md border border-border/50 bg-background/30 px-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus-visible:border-accent/50 focus-visible:ring-1 focus-visible:ring-accent/30"
                     />
                     <Button type="button" size="sm" variant="secondary" className="shrink-0">
-                      {subscribeButtonLabel}
+                      <EditableTextSlot as="span" fieldPath={`content.cards.${idx}.subscribe.buttonLabel`}>{subscribeButtonLabel}</EditableTextSlot>
                     </Button>
                   </div>
                 ) : null}
@@ -156,12 +168,12 @@ export function FooterGridSection({
                   <div className="flex flex-wrap items-center gap-2.5 pt-1">
                     {cta1Label && cta1Href ? (
                       <Button size="sm" variant="gradient" asChild>
-                        <Link href={cta1Href}>{cta1Label}</Link>
+                        <Link href={cta1Href}><EditableLinkSlot labelPath={`content.cards.${idx}.ctaPrimary.label`} hrefPath={`content.cards.${idx}.ctaPrimary.href`}>{cta1Label}</EditableLinkSlot></Link>
                       </Button>
                     ) : null}
                     {cta2Label && cta2Href ? (
                       <Button size="sm" variant="outline" asChild>
-                        <Link href={cta2Href}>{cta2Label}</Link>
+                        <Link href={cta2Href}><EditableLinkSlot labelPath={`content.cards.${idx}.ctaSecondary.label`} hrefPath={`content.cards.${idx}.ctaSecondary.href`}>{cta2Label}</EditableLinkSlot></Link>
                       </Button>
                     ) : null}
                   </div>
@@ -174,25 +186,30 @@ export function FooterGridSection({
         {/* Legal bar */}
         <div className="space-y-3 border-t border-border/30 pt-6">
           <div className="flex flex-col gap-2 text-[11px] tracking-wide text-muted-foreground/60 sm:flex-row sm:items-center sm:justify-between">
-            {legal?.copyright ? <p>{legal.copyright}</p> : null}
+            {legal?.copyright ? <EditableTextSlot as="p" fieldPath="content.legal.copyright">{legal.copyright}</EditableTextSlot> : null}
             {legalLinks.length > 0 ? (
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                {legalLinks.map((lnk, idx) => (
-                  <Link
-                    key={idx}
-                    href={lnk.href || "#"}
-                    className="transition-colors hover:text-muted-foreground"
+                {legalLinks.map((lnk, legalIdx) => (
+                  <EditableLinkSlot
+                    key={legalIdx}
+                    labelPath={`content.legal.links.${legalIdx}.label`}
+                    hrefPath={`content.legal.links.${legalIdx}.href`}
                   >
-                    {lnk.label}
-                  </Link>
+                    <Link
+                      href={lnk.href || "#"}
+                      className="transition-colors hover:text-muted-foreground"
+                    >
+                      {lnk.label}
+                    </Link>
+                  </EditableLinkSlot>
                 ))}
               </div>
             ) : null}
           </div>
           {brandText?.trim() ? (
-            <p className="pointer-events-none select-none text-4xl font-bold leading-none text-foreground/[0.06] sm:text-6xl">
+            <EditableTextSlot as="p" fieldPath="content.brandText" className="pointer-events-none select-none text-4xl font-bold leading-none text-foreground/[0.06] sm:text-6xl">
               {brandText}
-            </p>
+            </EditableTextSlot>
           ) : null}
         </div>
       </div>

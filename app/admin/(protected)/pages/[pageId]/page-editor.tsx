@@ -85,6 +85,7 @@ import { uploadMedia } from "@/lib/media/upload"
 import type { MediaItem } from "@/lib/media/types"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError } from "@/lib/cms/editor-error-message"
+import { VISUAL_EDITOR_ENABLED } from "@/components/admin/visual-editor/feature-flag"
 
 async function getImageSize(file: File): Promise<{ width?: number; height?: number }> {
   if (!file.type.startsWith("image/")) return {}
@@ -629,6 +630,7 @@ type BuiltinCmsSectionType =
   | "social_proof_strip"
   | "proof_cluster"
   | "case_study_split"
+  | "booking_scheduler"
 
 type CmsSectionType = BuiltinCmsSectionType | string
 
@@ -664,6 +666,7 @@ const SECTION_TYPES: BuiltinCmsSectionType[] = [
   "social_proof_strip",
   "proof_cluster",
   "case_study_split",
+  "booking_scheduler",
 ]
 
 const BUILTIN_SECTION_TYPE_SET = new Set<string>(SECTION_TYPES)
@@ -683,6 +686,7 @@ function normalizeSectionType(raw: string): CmsSectionType | null {
     case "social_proof_strip":
     case "proof_cluster":
     case "case_study_split":
+    case "booking_scheduler":
       return raw
     case "trust_strip":
       return "social_proof_strip"
@@ -896,9 +900,16 @@ function PageEditorHeader({ page }: { page: CmsPageRow | null }) {
           )}
         </Text>
       </div>
-      <Button size="sm" variant="default" component={Link} href="/admin">
-        Back
-      </Button>
+      <div style={{ display: "flex", gap: 8 }}>
+        {VISUAL_EDITOR_ENABLED && (
+          <Button size="sm" variant="light" component={Link} href={`/admin/pages/${page?.id}/visual`}>
+            Visual editor
+          </Button>
+        )}
+        <Button size="sm" variant="default" component={Link} href="/admin">
+          Back
+        </Button>
+      </div>
     </Group>
   )
 }

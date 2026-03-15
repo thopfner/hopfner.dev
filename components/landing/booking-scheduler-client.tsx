@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import { FadeIn } from "@/components/landing/motion-primitives"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
 import { BookingIntakeForm } from "./booking-intake-form"
 import { BookingCalEmbed } from "./booking-cal-embed"
 
@@ -46,9 +47,7 @@ export function BookingSchedulerClient({ calLink, formHeading, submitLabel, inta
       <>
         {formHeading && (
           <FadeIn>
-            <h3 className="text-lg font-semibold mb-6 text-foreground">
-              {formHeading}
-            </h3>
+            <EditableTextSlot as="h3" fieldPath="content.formHeading" className="text-lg font-semibold mb-6 text-foreground">{formHeading}</EditableTextSlot>
           </FadeIn>
         )}
         <FadeIn>

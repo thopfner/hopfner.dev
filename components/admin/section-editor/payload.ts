@@ -70,6 +70,7 @@ const BUILTIN_SECTION_TYPES = new Set<BuiltinCmsSectionType>([
   "social_proof_strip",
   "proof_cluster",
   "case_study_split",
+  "booking_scheduler",
 ])
 
 export function isBuiltinSectionType(type: string): type is BuiltinCmsSectionType {
@@ -91,6 +92,7 @@ export function normalizeSectionType(raw: string): string | null {
     case "social_proof_strip":
     case "proof_cluster":
     case "case_study_split":
+    case "booking_scheduler":
       return raw
     case "trust_strip":
       return "social_proof_strip"
@@ -184,6 +186,7 @@ export function normalizeFormatting(raw: Record<string, unknown>): FormattingSta
     dividerMode: (asString(raw.dividerMode) as FormattingState["dividerMode"]) || "",
     headingTreatment: (asString(raw.headingTreatment) as FormattingState["headingTreatment"]) || "",
     labelStyle: (asString(raw.labelStyle) as FormattingState["labelStyle"]) || "",
+    subtitleSize: (asString(raw.subtitleSize) as FormattingState["subtitleSize"]) || "",
     sectionPresetKey: asString(raw.sectionPresetKey) || "",
   }
   const hasMobile =
@@ -228,6 +231,7 @@ export function formattingToJsonb(state: FormattingState) {
     dividerMode: state.dividerMode || "",
     headingTreatment: state.headingTreatment || "",
     labelStyle: state.labelStyle || "",
+    subtitleSize: state.subtitleSize || "",
     sectionPresetKey: state.sectionPresetKey || "",
   }
   if (state.mobile) {

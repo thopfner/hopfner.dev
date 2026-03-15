@@ -16,6 +16,7 @@ import { NavLinksEditor } from "./editors/nav-links-editor"
 import { SocialProofStripEditor } from "./editors/social-proof-strip-editor"
 import { ProofClusterEditor } from "./editors/proof-cluster-editor"
 import { CaseStudySplitEditor } from "./editors/case-study-split-editor"
+import { BookingSchedulerEditor } from "./editors/booking-scheduler-editor"
 import { CustomComposerEditor } from "./editors/custom-composer-editor"
 import { asRecord } from "./payload"
 
@@ -147,6 +148,8 @@ export const ContentEditorRouter = memo(function ContentEditorRouter({
       return <ProofClusterEditor {...editorProps} />
     case "case_study_split":
       return <CaseStudySplitEditor {...editorProps} />
+    case "booking_scheduler":
+      return <BookingSchedulerEditor {...editorProps} />
     default:
       return (
         <Text c="dimmed" size="sm">

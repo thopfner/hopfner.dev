@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react"
 
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
 import { RHYTHM_CLASSES, SURFACE_CLASSES, HEADING_TREATMENT_CLASSES, DENSITY_SECTION_GAP } from "@/lib/design-system/presentation"
 import type { Rhythm, Surface, HeadingTreatment, ContentDensity } from "@/lib/design-system/tokens"
 import { cn } from "@/lib/utils"
@@ -56,16 +57,32 @@ export function SectionShell({
   )
 }
 
-export function SectionHeading({ id, title, headingTreatment }: { id: string; title: string; headingTreatment?: HeadingTreatment }) {
+export function SectionHeading({ id, title, headingTreatment, fieldPath }: {
+  id: string
+  title: string
+  headingTreatment?: HeadingTreatment
+  fieldPath?: string
+}) {
   const isGradient = headingTreatment === "gradient" || headingTreatment === "gradient_accent"
+  const cls = cn(
+    "text-heading text-balance text-2xl sm:text-3xl",
+    HEADING_TREATMENT_CLASSES[headingTreatment ?? "default"]
+  )
+  const sty = isGradient ? undefined : { color: "var(--foreground)" }
+
+  if (fieldPath) {
+    return (
+      <EditableTextSlot as="h2" id={id} fieldPath={fieldPath} className={cls} style={sty} multiline>
+        {title}
+      </EditableTextSlot>
+    )
+  }
+
   return (
     <h2
       id={id}
-      className={cn(
-        "text-heading text-balance text-2xl sm:text-3xl",
-        HEADING_TREATMENT_CLASSES[headingTreatment ?? "default"]
-      )}
-      style={isGradient ? undefined : { color: "var(--foreground)" }}
+      className={cls}
+      style={sty}
     >
       {title}
     </h2>

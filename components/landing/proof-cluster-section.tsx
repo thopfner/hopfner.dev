@@ -1,3 +1,5 @@
+import { EditableLinkSlot } from "@/components/landing/editable-link-slot"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { FadeIn, StaggerContainer, StaggerItem, AnimatedCounter } from "@/components/landing/motion-primitives"
 import { resolveCardPresentation, resolveCardClasses } from "@/lib/design-system/component-families"
@@ -99,13 +101,13 @@ export function ProofClusterSection({
           <FadeIn>
             <div className="space-y-1.5 text-left">
               {hasEyebrow ? (
-                <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+                <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
               ) : null}
               {hasTitle ? (
-                <SectionHeading id={headingId} title={title!} headingTreatment={ui?.headingTreatment} />
+                <SectionHeading id={headingId} title={title!} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
               ) : null}
               {hasSubtitle ? (
-                <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+                <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
               ) : null}
             </div>
           </FadeIn>
@@ -121,7 +123,7 @@ export function ProofClusterSection({
                     <div aria-hidden className="mx-auto mb-2 h-0.5 w-8 rounded-full bg-accent/50" />
                   ) : null}
                   {m.icon ? <span className="mb-1.5 block text-2xl">{m.icon}</span> : null}
-                  <p className="text-metric text-gradient text-3xl lg:text-4xl">
+                  <EditableTextSlot as="p" fieldPath={`content.metrics.${idx}.value`} className="text-metric text-gradient text-3xl lg:text-4xl">
                     {(() => {
                       const match = m.value.match(/^([^0-9]*)([\d,.]+)(.*)$/)
                       if (match) {
@@ -131,8 +133,8 @@ export function ProofClusterSection({
                       }
                       return m.value
                     })()}
-                  </p>
-                  <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-1")}>{m.label}</p>
+                  </EditableTextSlot>
+                  <EditableTextSlot as="p" fieldPath={`content.metrics.${idx}.label`} className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-1")}>{m.label}</EditableTextSlot>
                 </div>
               </StaggerItem>
             )); })()}
@@ -149,14 +151,14 @@ export function ProofClusterSection({
                   {proofCardStyle.isInlineAccent ? (
                     <div aria-hidden className="mb-2 h-0.5 w-6 rounded-full bg-accent/50" />
                   ) : null}
-                  <h3 className="text-base font-semibold tracking-tight text-foreground">{proofCard!.title}</h3>
-                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{proofCard!.body}</p>
+                  <EditableTextSlot as="h3" fieldPath="content.proofCard.title" className="text-base font-semibold tracking-tight text-foreground">{proofCard!.title}</EditableTextSlot>
+                  <EditableTextSlot as="p" fieldPath="content.proofCard.body" className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground" multiline>{proofCard!.body}</EditableTextSlot>
                   {proofCard!.stats.length > 0 ? (
                     <div className={cn("mt-5 flex flex-wrap gap-6 border-t pt-4", dividerBorder)}>
-                      {proofCard!.stats.map((s) => (
+                      {proofCard!.stats.map((s, sIdx) => (
                         <div key={s.label}>
-                          <p className="text-metric text-xl font-semibold text-foreground">{s.value}</p>
-                          <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{s.label}</p>
+                          <EditableTextSlot as="p" fieldPath={`content.proofCard.stats.${sIdx}.value`} className="text-metric text-xl font-semibold text-foreground">{s.value}</EditableTextSlot>
+                          <EditableTextSlot as="p" fieldPath={`content.proofCard.stats.${sIdx}.label`} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{s.label}</EditableTextSlot>
                         </div>
                       ))}
                     </div>
@@ -174,9 +176,9 @@ export function ProofClusterSection({
                   ) : null}
                   {/* Large quote mark — editorial treatment */}
                   <span aria-hidden className="pointer-events-none select-none text-5xl leading-none text-accent/25">&ldquo;</span>
-                  <blockquote className="mt-2 flex-1 text-sm italic leading-relaxed text-muted-foreground/90">
+                  <EditableTextSlot as="blockquote" fieldPath="content.testimonial.quote" className="mt-2 flex-1 text-sm italic leading-relaxed text-muted-foreground/90" multiline>
                     {testimonial!.quote}
-                  </blockquote>
+                  </EditableTextSlot>
                   <div className={cn("mt-5 flex items-center gap-3 border-t pt-4", dividerBorder)}>
                     {testimonial!.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -191,8 +193,8 @@ export function ProofClusterSection({
                       </div>
                     )}
                     <div>
-                      <p className="text-sm font-semibold tracking-tight text-foreground">{testimonial!.author}</p>
-                      <p className="text-[11px] tracking-wide text-muted-foreground/60">{testimonial!.role}</p>
+                      <EditableTextSlot as="p" fieldPath="content.testimonial.author" className="text-sm font-semibold tracking-tight text-foreground">{testimonial!.author}</EditableTextSlot>
+                      <EditableTextSlot as="p" fieldPath="content.testimonial.role" className="text-[11px] tracking-wide text-muted-foreground/60">{testimonial!.role}</EditableTextSlot>
                     </div>
                   </div>
                 </div>
@@ -205,9 +207,11 @@ export function ProofClusterSection({
         {hasCta ? (
           <FadeIn delay={0.2}>
             <div className="text-center">
-              <a href={ctaHref} className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline">
-                {ctaLabel} &rarr;
-              </a>
+              <span className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline">
+                <EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">
+                  {ctaLabel} &rarr;
+                </EditableLinkSlot>
+              </span>
             </div>
           </FadeIn>
         ) : null}

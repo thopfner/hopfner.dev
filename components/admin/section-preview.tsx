@@ -4,6 +4,7 @@ import React, { Suspense, useMemo, useState, useCallback, useRef, useEffect } fr
 import dynamic from "next/dynamic"
 import { resolveSectionUi } from "@/lib/design-system/resolve"
 import { SkipAnimationProvider } from "@/components/landing/motion-primitives"
+import { VisualEditingProvider, type FieldPath } from "@/components/landing/visual-editing-context"
 import { tiptapJsonToSanitizedHtml } from "@/lib/cms/rich-text"
 
 // ---------------------------------------------------------------------------
@@ -122,10 +123,26 @@ const CaseStudySplitSection = dynamic(
   { ssr: false }
 )
 
+const BookingSchedulerSection = dynamic(
+  () =>
+    import("@/components/landing/booking-scheduler-section").then((m) => ({
+      default: m.BookingSchedulerSection,
+    })),
+  { ssr: false }
+)
+
 const FooterGridSection = dynamic(
   () =>
     import("@/components/landing/footer-grid-section").then((m) => ({
       default: m.FooterGridSection,
+    })),
+  { ssr: false }
+)
+
+const SiteHeader = dynamic(
+  () =>
+    import("@/components/landing/site-header").then((m) => ({
+      default: m.SiteHeader,
     })),
   { ssr: false }
 )
@@ -328,6 +345,15 @@ type SectionPreviewProps = {
   colorMode?: "light" | "dark"
   /** Site-level design tokens — used to compute CSS custom properties matching the frontend. */
   siteTokens?: Record<string, unknown>
+  /** Visual editing adapter — when provided, wraps the preview in VisualEditingProvider */
+  visualEditing?: {
+    sectionId: string
+    getFieldValue: (path: FieldPath) => string
+    getStructuredFieldValue?: (path: FieldPath) => unknown
+    updateField: (path: FieldPath, value: string) => void
+    updateStructuredField?: (path: FieldPath, value: unknown) => void
+    linkResources?: import("@/components/landing/visual-editing-context").LinkResources
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -716,6 +742,28 @@ function SectionRenderer({
       )
     }
 
+    case "booking_scheduler": {
+      const intakeFields = asRecord(content.intakeFields)
+      const intakeFieldsTyped: Record<string, { label: string; helpText?: string }> = {}
+      for (const [k, v] of Object.entries(intakeFields)) {
+        const f = asRecord(v)
+        intakeFieldsTyped[k] = { label: s(f.label), helpText: s(f.helpText) }
+      }
+      return (
+        <BookingSchedulerSection
+          title={title}
+          subtitle={subtitle}
+          ctaLabel={ctaPrimaryLabel}
+          ctaHref={ctaPrimaryHref}
+          calLink={s(content.calLink)}
+          formHeading={s(content.formHeading)}
+          submitLabel={s(content.submitLabel)}
+          intakeFields={intakeFieldsTyped}
+          ui={ui}
+        />
+      )
+    }
+
     case "footer_grid": {
       const cards = asRecordArray(content.cards)
         .slice(0, 2)
@@ -771,6 +819,33 @@ function SectionRenderer({
       )
     }
 
+    case "nav_links": {
+      const links = asRecordArray(content.links).map((l) => ({
+        label: s(l.label),
+        href: s(l.href),
+        anchorId: s(l.anchorId) || undefined,
+      }))
+      const logoRaw = asRecord(content.logo)
+      const logoUrl = s(logoRaw.url).trim()
+      const logo = logoUrl
+        ? {
+            url: logoUrl,
+            alt: s(logoRaw.alt).trim() || "Site logo",
+            widthPx: Math.min(320, Math.max(60, Math.round(Number(logoRaw.widthPx) || 140))),
+          }
+        : undefined
+      return (
+        <SiteHeader
+          links={links}
+          logo={logo}
+          cta={{
+            label: ctaPrimaryLabel || "Book a call",
+            href: ctaPrimaryHref || "#contact",
+          }}
+        />
+      )
+    }
+
     default:
       return (
         <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
@@ -797,6 +872,7 @@ function SectionPreviewInner({
   embedded,
   colorMode,
   siteTokens,
+  visualEditing,
 }: SectionPreviewProps) {
   // All hooks must be called unconditionally (React rules of hooks).
   const [open, setOpen] = useState(false)
@@ -829,13 +905,20 @@ function SectionPreviewInner({
     [formatting.spacingTop, formatting.spacingBottom, formatting.outerSpacing]
   )
 
+  // paddingY class from formatting — applied at wrapper level to match public renderer
+  const paddingYClass = useMemo(() => {
+    const py = s(formatting.paddingY)
+    const allowed = new Set(["py-4", "py-6", "py-8", "py-10", "py-12"])
+    return allowed.has(py) ? py : ""
+  }, [formatting.paddingY])
+
   // Shared renderer element — wrapped in SkipAnimationProvider so scroll-triggered
   // animations (whileInView, IntersectionObserver) render immediately in the
   // scaled/overflow preview container where observers don't fire correctly.
   const rendererEl = (
     <SkipAnimationProvider value={true}>
       <Suspense fallback={<PreviewLoading />}>
-        <div style={spacingStyle}>
+        <div style={spacingStyle} className={paddingYClass}>
           <SectionRenderer
             sectionType={sectionType}
             content={content}
@@ -856,10 +939,42 @@ function SectionPreviewInner({
   // --- Embedded mode: always-visible, no collapsible wrapper ---
   if (embedded) {
     const themeClass = colorMode === "light" ? "light" : "dark"
+    // Use a ref to measure unscaled height and compute correct scaled container height
+    const embeddedRef = useRef<HTMLDivElement>(null)
+    const [embeddedHeight, setEmbeddedHeight] = useState(0)
+    useEffect(() => {
+      if (!embeddedRef.current) return
+      const el = embeddedRef.current
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setEmbeddedHeight(entry.contentRect.height)
+        }
+      })
+      observer.observe(el)
+      setEmbeddedHeight(el.scrollHeight)
+      return () => observer.disconnect()
+    }, [])
+
+    const rendererContent = visualEditing ? (
+      <VisualEditingProvider
+        sectionId={visualEditing.sectionId}
+        getFieldValue={visualEditing.getFieldValue}
+        getStructuredFieldValue={visualEditing.getStructuredFieldValue}
+        updateField={visualEditing.updateField}
+        updateStructuredField={visualEditing.updateStructuredField}
+        linkResources={visualEditing.linkResources}
+      >
+        {rendererEl}
+      </VisualEditingProvider>
+    ) : rendererEl
+
     return (
-      <div className={`${themeClass} bg-background text-foreground pointer-events-none`} style={{ colorScheme: colorMode || "dark", transformOrigin: "top left", ...tokenStyle }}>
-        <div style={{ transform: `scale(${scale})`, width: `${100 / scale}%`, transformOrigin: "top left" }}>
-          {rendererEl}
+      <div
+        className={`${themeClass} bg-background text-foreground ${visualEditing ? "" : "pointer-events-none"} overflow-hidden`}
+        style={{ colorScheme: colorMode || "dark", transformOrigin: "top left", ...tokenStyle, height: embeddedHeight ? embeddedHeight * scale : undefined }}
+      >
+        <div ref={embeddedRef} style={{ transform: `scale(${scale})`, width: `${100 / scale}%`, transformOrigin: "top left" }}>
+          {rendererContent}
         </div>
       </div>
     )

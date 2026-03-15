@@ -2,6 +2,8 @@ import Image from "next/image"
 import Link from "next/link"
 import type { CSSProperties } from "react"
 
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
+import { EditableLinkSlot } from "@/components/landing/editable-link-slot"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -190,10 +192,10 @@ export function HeroSection({
     <HeroEntrance key="ctas" delay={delay}>
       <div className={cn("flex flex-wrap items-center gap-2", justify)}>
         <Button size="lg" variant="gradient" asChild>
-          <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
+          <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
         </Button>
         <Button size="lg" variant="outline" asChild>
-          <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
+          <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
         </Button>
       </div>
     </HeroEntrance>
@@ -204,8 +206,8 @@ export function HeroSection({
         <div className={cn("flex flex-wrap gap-8 pt-4", justify)}>
           {heroStats!.map((stat, i) => (
             <div key={i} className="text-center">
-              <p className="text-metric text-2xl sm:text-3xl">{renderMetricValue(stat.value)}</p>
-              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{stat.label}</p>
+              <EditableTextSlot as="p" fieldPath={`content.heroStats.${i}.value`} className="text-metric text-2xl sm:text-3xl">{renderMetricValue(stat.value)}</EditableTextSlot>
+              <EditableTextSlot as="p" fieldPath={`content.heroStats.${i}.label`} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{stat.label}</EditableTextSlot>
             </div>
           ))}
         </div>
@@ -219,7 +221,7 @@ export function HeroSection({
             {trustItems!.map((item, i) => (
               <span key={i} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
                 {item.icon ? <span className="mr-1">{item.icon}</span> : null}
-                {item.text}
+                <EditableTextSlot as="span" fieldPath={`content.trustItems.${i}.text`}>{item.text}</EditableTextSlot>
               </span>
             ))}
           </div>
@@ -230,7 +232,7 @@ export function HeroSection({
               {trustItems!.map((item, i) => (
                 <span key={i} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
                   {item.icon ? <span className="mr-1">{item.icon}</span> : null}
-                  {item.text}
+                  <EditableTextSlot as="span" fieldPath={`content.trustItems.${i}.text`}>{item.text}</EditableTextSlot>
                 </span>
               ))}
             </div>
@@ -244,7 +246,7 @@ export function HeroSection({
           className={cn("mt-4", isCenter ? "text-center" : "text-left", trustLineColorValue ? undefined : "text-muted-foreground")}
           style={{ fontSize: `${trustLineSize}px`, color: trustLineColorValue || undefined }}
         >
-          {trustLine}
+          <EditableTextSlot as="span" fieldPath="content.trustLine">{trustLine}</EditableTextSlot>
         </p>
       </HeroEntrance>
     ) : inSplit && trustLine ? (
@@ -255,7 +257,7 @@ export function HeroSection({
             className={cn("mt-4", isCenter ? "text-center" : "text-left", trustLineColorValue ? undefined : "text-muted-foreground")}
             style={{ fontSize: `${trustLineSize}px`, color: trustLineColorValue || undefined }}
           >
-            {trustLine}
+            <EditableTextSlot as="span" fieldPath="content.trustLine">{trustLine}</EditableTextSlot>
           </p>
         </div>
       </HeroEntrance>
@@ -276,15 +278,17 @@ export function HeroSection({
     <>
       {hasEyebrow ? (
         <HeroEntrance delay={0}>
-          <p className={cn(LABEL_STYLE_CLASSES[labelStyle], autoMarginClass)}>
+          <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle], autoMarginClass)}>
             {eyebrow}
-          </p>
+          </EditableTextSlot>
         </HeroEntrance>
       ) : null}
 
       <HeroEntrance delay={hasEyebrow ? 0.15 : 0}>
         <div className="space-y-2">
-          <h1
+          <EditableTextSlot
+            as="h1"
+            fieldPath="meta.title"
             className={cn(
               "text-display text-display-xl text-pretty leading-tight",
               isSplit ? "lg:text-6xl" : "",
@@ -292,24 +296,29 @@ export function HeroSection({
             )}
           >
             {headline}
-          </h1>
-          <p
+          </EditableTextSlot>
+          <EditableTextSlot
+            as="p"
+            fieldPath="meta.subtitle"
             className={cn(
               "text-muted-foreground",
               SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "md"],
               constrainClass
             )}
+            multiline
           >
             {subheadline}
-          </p>
+          </EditableTextSlot>
         </div>
       </HeroEntrance>
 
       {bullets.length > 0 ? (
         <HeroEntrance delay={hasEyebrow ? 0.3 : 0.15}>
           <ul className={cn("space-y-1 text-sm text-muted-foreground", constrainClass)}>
-            {bullets.map((b) => (
-              <li key={b}>{b}</li>
+            {bullets.map((b, bIdx) => (
+              <li key={bIdx}>
+                <EditableTextSlot as="span" fieldPath={`content.bullets.${bIdx}`}>{b}</EditableTextSlot>
+              </li>
             ))}
           </ul>
         </HeroEntrance>
@@ -334,7 +343,7 @@ export function HeroSection({
       {proofPanel!.type === "stats" ? (
         <div className="w-full space-y-3">
           {proofPanel!.headline ? (
-            <p className="text-sm font-medium text-muted-foreground">{proofPanel!.headline}</p>
+            <EditableTextSlot as="p" fieldPath="content.proofPanel.headline" className="text-sm font-medium text-muted-foreground">{proofPanel!.headline}</EditableTextSlot>
           ) : null}
           <div className="grid grid-cols-2 gap-2">
             {(proofPanel!.items ?? []).map((item, i) => (
@@ -345,8 +354,8 @@ export function HeroSection({
                 {proofStatCard.isInlineAccent ? (
                   <div aria-hidden className="mx-auto mb-1 h-0.5 w-5 rounded-full bg-accent/50" />
                 ) : null}
-                <p className="text-metric text-xl">{renderMetricValue(item.value)}</p>
-                <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{item.label}</p>
+                <EditableTextSlot as="p" fieldPath={`content.proofPanel.items.${i}.value`} className="text-metric text-xl">{renderMetricValue(item.value)}</EditableTextSlot>
+                <EditableTextSlot as="p" fieldPath={`content.proofPanel.items.${i}.label`} className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{item.label}</EditableTextSlot>
               </div>
             ))}
           </div>
@@ -354,7 +363,7 @@ export function HeroSection({
       ) : proofPanel!.type === "mockup" ? (
         <div className="w-full">
           {proofPanel!.headline ? (
-            <p className="mb-2 text-sm font-medium text-muted-foreground">{proofPanel!.headline}</p>
+            <EditableTextSlot as="p" fieldPath="content.proofPanel.headline" className="mb-2 text-sm font-medium text-muted-foreground">{proofPanel!.headline}</EditableTextSlot>
           ) : null}
           {proofPanel!.imageUrl ? (
             <div className="overflow-hidden rounded-lg border border-border/40 bg-card/20 p-4">
@@ -380,11 +389,11 @@ export function HeroSection({
                       {item.label ? (
                         <div className={i > 0 ? "mt-2" : ""}>
                           <span className="text-green-400/80">$ </span>
-                          <span className="text-white/70">{item.label}</span>
+                          <EditableTextSlot as="span" fieldPath={`content.proofPanel.items.${i}.label`} className="text-white/70">{item.label}</EditableTextSlot>
                         </div>
                       ) : null}
                       {item.value ? (
-                        <div className="text-white/40 pl-4">{item.value}</div>
+                        <EditableTextSlot as="div" fieldPath={`content.proofPanel.items.${i}.value`} className="text-white/40 pl-4">{item.value}</EditableTextSlot>
                       ) : null}
                     </div>
                   ))
@@ -436,8 +445,8 @@ export function HeroSection({
                 {(proofPanel!.items ?? []).length > 0 ? (
                   proofPanel!.items!.map((item, i) => (
                     <div key={i} className="rounded-md border border-white/[0.06] bg-white/[0.03] p-3 text-center">
-                      <p className="text-lg font-semibold text-white/80 font-mono">{item.value}</p>
-                      <p className="text-[10px] text-white/30 font-mono mt-1">{item.label}</p>
+                      <EditableTextSlot as="p" fieldPath={`content.proofPanel.items.${i}.value`} className="text-lg font-semibold text-white/80 font-mono">{item.value}</EditableTextSlot>
+                      <EditableTextSlot as="p" fieldPath={`content.proofPanel.items.${i}.label`} className="text-[10px] text-white/30 font-mono mt-1">{item.label}</EditableTextSlot>
                     </div>
                   ))
                 ) : (

@@ -136,6 +136,7 @@ const BUILTIN_PREVIEWS = [
   { key: "social_proof_strip", label: "Social Proof Strip", desc: "Logo strip with trust badges" },
   { key: "proof_cluster", label: "Proof Cluster", desc: "Metrics, proof card, and testimonial" },
   { key: "case_study_split", label: "Case Study Split", desc: "Narrative + before/after comparison" },
+  { key: "booking_scheduler", label: "Booking Scheduler", desc: "Intake form + Cal.com scheduling" },
 ]
 
 type SegmentedItem = { label: string; value: string }

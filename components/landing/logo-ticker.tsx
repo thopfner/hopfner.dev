@@ -1,6 +1,8 @@
 "use client"
 
 import { useReducedMotion } from "framer-motion"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
+import { useVisualEditing } from "@/components/landing/visual-editing-context"
 import { cn } from "@/lib/utils"
 
 type LogoTickerItem = {
@@ -14,13 +16,18 @@ export function LogoTicker({
   speed = 30,
   pauseOnHover = true,
   className,
+  /** Field path prefix for editable labels (e.g. "content.items" or "content.logos") */
+  editablePathPrefix,
 }: {
   items: LogoTickerItem[]
   speed?: number
   pauseOnHover?: boolean
   className?: string
+  editablePathPrefix?: string
 }) {
   const reducedMotion = useReducedMotion()
+  const ctx = useVisualEditing()
+  const isVisualEditing = !!ctx
 
   if (!items.length) return null
 
@@ -41,14 +48,24 @@ export function LogoTicker({
           {item.icon}
         </span>
       ) : null}
-      <span className="whitespace-nowrap text-xs font-medium text-muted-foreground/70 transition-opacity duration-300">
-        {item.label}
-      </span>
+      {editablePathPrefix && isVisualEditing ? (
+        <EditableTextSlot
+          as="span"
+          fieldPath={`${editablePathPrefix}.${idx}.label`}
+          className="whitespace-nowrap text-xs font-medium text-muted-foreground/70 transition-opacity duration-300"
+        >
+          {item.label}
+        </EditableTextSlot>
+      ) : (
+        <span className="whitespace-nowrap text-xs font-medium text-muted-foreground/70 transition-opacity duration-300">
+          {item.label}
+        </span>
+      )}
     </div>
   )
 
-  // Static row for reduced-motion preference
-  if (reducedMotion) {
+  // Visual editing active OR reduced motion: render as stable editable row
+  if (reducedMotion || isVisualEditing) {
     return (
       <div
         role="marquee"
@@ -82,9 +99,7 @@ export function LogoTicker({
             animation: `logo-ticker-scroll ${speed}s linear infinite`,
           }}
         >
-          {/* First copy */}
           {items.map((item, idx) => renderItem(item, idx))}
-          {/* Second copy for seamless loop */}
           {items.map((item, idx) => renderItem(item, idx + items.length))}
         </div>
       </div>

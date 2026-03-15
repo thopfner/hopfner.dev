@@ -1,3 +1,4 @@
+import { BookingSchedulerSection } from "@/components/landing/booking-scheduler-section"
 import { CaseStudySplitSection } from "@/components/landing/case-study-split-section"
 import { ComposedSection } from "@/components/landing/composed-section"
 import { FaqSection } from "@/components/landing/faq-section"
@@ -14,6 +15,7 @@ import { WhatIDeliverSection } from "@/components/landing/what-i-deliver-section
 import { WhyThisApproachSection } from "@/components/landing/why-this-approach-section"
 import { WorkflowsSection } from "@/components/landing/workflows-section"
 import { getSafeFormatting } from "@/lib/cms/formatting"
+import { resolveSectionContainerProps } from "@/lib/cms/section-container-props"
 import { getPublishedPageBySlug } from "@/lib/cms/get-published-page"
 import { tiptapJsonToSanitizedHtml } from "@/lib/cms/rich-text"
 import type {
@@ -216,11 +218,22 @@ function spacingTokenToStyle(
   return style
 }
 
+/** @deprecated Use resolveSectionContainerProps from lib/cms/section-container-props */
 function sectionContainerProps(
   formatting: Record<string, unknown>,
   whitelist: Set<string>,
   sectionKey?: string | null,
   sectionType?: string
+) {
+  return resolveSectionContainerProps(formatting, whitelist, sectionKey, sectionType)
+}
+
+// Legacy inline helper kept for reference during transition — all logic is now in resolveSectionContainerProps
+function _legacySectionContainerProps(
+  formatting: Record<string, unknown>,
+  whitelist: Set<string>,
+  sectionKey?: string | null,
+  _sectionType?: string
 ) {
   const f = getSafeFormatting(formatting, whitelist)
   const backgroundType = asString(formatting.backgroundType)
@@ -1027,6 +1040,29 @@ export default async function MarketingPage({
                   testimonial={testimonial}
                   ctaLabel={pickText(v.cta_primary_label, defaults?.default_cta_primary_label)}
                   ctaHref={pickText(v.cta_primary_href, defaults?.default_cta_primary_href)}
+                />
+              )
+            }
+            case "booking_scheduler": {
+              const intakeFields = asRecord(content.intakeFields)
+              const intakeFieldsTyped: Record<string, { label: string; helpText?: string }> = {}
+              for (const [k, val] of Object.entries(intakeFields)) {
+                const f = asRecord(val)
+                intakeFieldsTyped[k] = { label: asString(f.label), helpText: asString(f.helpText) }
+              }
+              return (
+                <BookingSchedulerSection
+                  key={section.id}
+                  {...adjustedProps}
+                  ui={ui}
+                  title={pickText(v.title, defaults?.default_title)}
+                  subtitle={pickText(v.subtitle, defaults?.default_subtitle)}
+                  ctaLabel={pickText(v.cta_primary_label, defaults?.default_cta_primary_label)}
+                  ctaHref={pickText(v.cta_primary_href, defaults?.default_cta_primary_href)}
+                  calLink={asString(content.calLink)}
+                  formHeading={asString(content.formHeading)}
+                  submitLabel={asString(content.submitLabel)}
+                  intakeFields={intakeFieldsTyped}
                 />
               )
             }

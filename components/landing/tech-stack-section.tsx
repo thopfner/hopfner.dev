@@ -1,6 +1,7 @@
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { FadeIn, StaggerContainer, StaggerItem, AnimatedCounter } from "@/components/landing/motion-primitives"
 import { LogoTicker } from "@/components/landing/logo-ticker"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import {
@@ -63,13 +64,13 @@ export function TechStackSection({
       >
           {title ? (
             <FadeIn>
-              <p className="text-eyebrow mb-3 text-center text-muted-foreground">
+              <EditableTextSlot as="p" fieldPath="meta.title" className="text-eyebrow mb-3 text-center text-muted-foreground">
                 {title}
-              </p>
+              </EditableTextSlot>
             </FadeIn>
           ) : null}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            {items.map((item) => (
+            {items.map((item, idx) => (
               <div key={item.label} className="flex items-center gap-2">
                 {item.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -81,9 +82,9 @@ export function TechStackSection({
                 ) : item.icon ? (
                   <span className="text-sm">{item.icon}</span>
                 ) : null}
-                <span className="text-xs font-medium text-muted-foreground">{item.label}</span>
+                <EditableTextSlot as="span" fieldPath={`content.items.${idx}.label`} className="text-xs font-medium text-muted-foreground">{item.label}</EditableTextSlot>
                 {item.value ? (
-                  <span className="text-xs text-muted-foreground/60">{item.value}</span>
+                  <EditableTextSlot as="span" fieldPath={`content.items.${idx}.value`} className="text-xs text-muted-foreground/60">{item.value}</EditableTextSlot>
                 ) : null}
               </div>
             ))}
@@ -106,13 +107,13 @@ export function TechStackSection({
       >
           {title ? (
             <FadeIn>
-              <p className="text-eyebrow mb-3 text-center text-muted-foreground">
+              <EditableTextSlot as="p" fieldPath="meta.title" className="text-eyebrow mb-3 text-center text-muted-foreground">
                 {title}
-              </p>
+              </EditableTextSlot>
             </FadeIn>
           ) : null}
           <div className="flex flex-wrap items-center justify-center gap-6">
-            {items.map((item) =>
+            {items.map((item, idx) =>
               item.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -122,12 +123,14 @@ export function TechStackSection({
                   className="h-6 w-auto object-contain opacity-50 grayscale transition-opacity hover:opacity-80"
                 />
               ) : (
-                <span
+                <EditableTextSlot
                   key={item.label}
+                  as="span"
+                  fieldPath={`content.items.${idx}.label`}
                   className="text-xs font-medium text-muted-foreground/60"
                 >
                   {item.label}
-                </span>
+                </EditableTextSlot>
               )
             )}
           </div>
@@ -149,12 +152,12 @@ export function TechStackSection({
       >
         {title ? (
           <FadeIn>
-            <p className="text-eyebrow mb-3 text-center text-muted-foreground">
+            <EditableTextSlot as="p" fieldPath="meta.title" className="text-eyebrow mb-3 text-center text-muted-foreground">
               {title}
-            </p>
+            </EditableTextSlot>
           </FadeIn>
         ) : null}
-        <LogoTicker items={items} />
+        <LogoTicker items={items} editablePathPrefix="content.items" />
       </SectionShell>
     )
   }
@@ -175,17 +178,17 @@ export function TechStackSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+              <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
             ) : null}
-            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
             {hasSubtitle ? (
-              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+              <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
             ) : null}
           </div>
         </FadeIn>
 
         <div className="flex flex-wrap gap-2">
-          {items.map((item) => (
+          {items.map((item, idx) => (
             <span
               key={item.label}
               className={cn("inline-flex items-center gap-1.5", LABEL_STYLE_CLASSES[labelStyle])}
@@ -196,9 +199,9 @@ export function TechStackSection({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.imageUrl} alt="" className="h-3.5 w-auto object-contain" />
               ) : null}
-              {item.label}
+              <EditableTextSlot as="span" fieldPath={`content.items.${idx}.label`}>{item.label}</EditableTextSlot>
               {item.value ? (
-                <span className="text-muted-foreground">{item.value}</span>
+                <EditableTextSlot as="span" fieldPath={`content.items.${idx}.value`} className="text-muted-foreground">{item.value}</EditableTextSlot>
               ) : null}
             </span>
           ))}
@@ -223,11 +226,11 @@ export function TechStackSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+              <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
             ) : null}
-            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
             {hasSubtitle ? (
-              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+              <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
             ) : null}
           </div>
         </FadeIn>
@@ -237,7 +240,7 @@ export function TechStackSection({
           GRID_GAP_CLASSES[gridGap],
           compact ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         )}>
-          {items.map((item) => (
+          {items.map((item, idx) => (
             <StaggerItem key={item.label} className="h-full">
               <div
                 className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col text-center")}
@@ -247,7 +250,7 @@ export function TechStackSection({
                   <div aria-hidden className="mx-auto mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                 ) : null}
                 {item.icon ? <span className={cn("block text-xl", gridGap === "tight" ? "mb-0.5" : gridGap === "wide" ? "mb-2" : "mb-1")}>{item.icon}</span> : null}
-                <p className={cn("text-metric text-gradient", compact ? "text-xl" : "text-2xl lg:text-3xl")}>
+                <EditableTextSlot as="p" fieldPath={`content.items.${idx}.value`} className={cn("text-metric text-gradient", compact ? "text-xl" : "text-2xl lg:text-3xl")}>
                   {(() => {
                     const match = item.value.match(/^([^0-9]*)([\d,.]+)(.*)$/)
                     if (match) {
@@ -263,8 +266,8 @@ export function TechStackSection({
                     }
                     return item.value
                   })()}
-                </p>
-                <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-0.5")}>{item.label}</p>
+                </EditableTextSlot>
+                <EditableTextSlot as="p" fieldPath={`content.items.${idx}.label`} className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-0.5")}>{item.label}</EditableTextSlot>
               </div>
             </StaggerItem>
           ))}
@@ -289,17 +292,17 @@ export function TechStackSection({
       <FadeIn>
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+            <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
           ) : null}
-          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
           {hasSubtitle ? (
-            <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+            <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
           ) : null}
         </div>
       </FadeIn>
 
       <StaggerContainer className={cn("grid grid-cols-1 sm:grid-cols-2", GRID_GAP_CLASSES[gridGap])}>
-        {items.map((item) => (
+        {items.map((item, idx) => (
           <StaggerItem key={item.label} className="h-full">
             <div
               className={cn(card.cardClass, card.spacing.rootPadding, "h-full flex flex-col")}
@@ -309,8 +312,8 @@ export function TechStackSection({
                 <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
               ) : null}
               {item.icon ? <span>{item.icon}</span> : undefined}
-              <p className="text-muted-foreground">{item.value}</p>
-              <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-0.5")}>{item.label}</p>
+              <EditableTextSlot as="p" fieldPath={`content.items.${idx}.value`} className="text-muted-foreground">{item.value}</EditableTextSlot>
+              <EditableTextSlot as="p" fieldPath={`content.items.${idx}.label`} className={cn(LABEL_STYLE_CLASSES[labelStyle], "mt-auto pt-0.5")}>{item.label}</EditableTextSlot>
             </div>
           </StaggerItem>
         ))}

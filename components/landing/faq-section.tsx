@@ -5,6 +5,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
+import { EditableRichTextSlot } from "@/components/landing/editable-rich-text-slot"
+import { EditableLinkSlot } from "@/components/landing/editable-link-slot"
 import { FadeIn } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { DIVIDER_CLASSES, LABEL_STYLE_CLASSES, SUBTITLE_SIZE_CLASSES } from "@/lib/design-system/presentation"
@@ -60,11 +63,11 @@ export function FaqSection({
       <FadeIn>
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+            <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
           ) : null}
-          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
           {hasSubtitle ? (
-            <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+            <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
           ) : null}
         </div>
       </FadeIn>
@@ -75,19 +78,20 @@ export function FaqSection({
         className={cn(cardClass, spacing.rootPadding, dividerClass)}
         style={panelStyle}
       >
-        {items.map((item) => (
+        {items.map((item, idx) => (
           <AccordionItem key={item.question} value={item.question}>
             <AccordionTrigger className={cn("text-sm sm:text-base", spacing.headerPadding)}>
-              {item.question}
+              <EditableTextSlot as="span" fieldPath={`content.items.${idx}.question`}>{item.question}</EditableTextSlot>
             </AccordionTrigger>
             <AccordionContent className={cn("text-muted-foreground", spacing.bodyPadding)}>
               {item.answerHtml.trim() ? (
-                <div
+                <EditableRichTextSlot
+                  richTextPath={`content.items.${idx}.answerRichText`}
+                  html={item.answerHtml}
                   className={cn("text-sm", RICH_TEXT_CLASS)}
-                  dangerouslySetInnerHTML={{ __html: item.answerHtml }}
                 />
               ) : (
-                <p className="text-sm">{item.answer}</p>
+                <EditableTextSlot as="p" fieldPath={`content.items.${idx}.answer`} className="text-sm" multiline>{item.answer}</EditableTextSlot>
               )}
             </AccordionContent>
           </AccordionItem>

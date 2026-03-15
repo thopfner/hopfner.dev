@@ -2,7 +2,7 @@
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_NAME="hopfner.dev"
+APP_NAME="hopf.thapi.cc"
 LOCK_FILE="/tmp/${APP_NAME}.deploy.lock"
 
 cd "$APP_DIR"

@@ -9,6 +9,7 @@ export type SectionType =
   | "cta_block"
   | "nav_links"
   | "footer_grid"
+  | "booking_scheduler"
 
 export type SectionInput = {
   key: string | null
@@ -654,28 +655,35 @@ export const BLUEPRINT_PAGES: PageInput[] = [
         },
       },
       {
-        key: "qualification-fields",
-        section_type: "label_value_list",
+        key: "booking-scheduler",
+        section_type: "booking_scheduler",
         enabled: true,
         position: 1,
         version: {
           status: "published",
-          title: "Qualification Fields",
+          title: "Book Your Call",
           subtitle: null,
-          cta_primary_label: null,
+          cta_primary_label: "Continue to scheduling",
           cta_primary_href: null,
           cta_secondary_label: null,
           cta_secondary_href: null,
           background_media_url: null,
           formatting: F_LEFT,
           content: {
-            items: [
-              { label: "Company", value: "Required" },
-              { label: "Team size", value: "Required" },
-              { label: "Current tools", value: "Required" },
-              { label: "Main process bottleneck", value: "Required" },
-              { label: "Desired outcome in next 90 days", value: "Required" },
-            ],
+            calLink: "hopfner/workflow-review",
+            formHeading: "Tell us about your workflow",
+            submitLabel: "Continue to scheduling",
+            intakeFields: {
+              fullName: { label: "Full name", helpText: "" },
+              workEmail: { label: "Work email", helpText: "" },
+              company: { label: "Company", helpText: "" },
+              jobTitle: { label: "Job title", helpText: "" },
+              teamSize: { label: "Team size", helpText: "" },
+              functionArea: { label: "Function area", helpText: "operations, finance, treasury, founder, other" },
+              currentTools: { label: "Current tools", helpText: "" },
+              mainBottleneck: { label: "Main bottleneck", helpText: "" },
+              desiredOutcome90d: { label: "Desired outcome (90 days)", helpText: "" },
+            },
           },
         },
       },

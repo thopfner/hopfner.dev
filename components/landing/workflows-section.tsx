@@ -7,6 +7,8 @@ import {
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
+import { EditableRichTextSlot } from "@/components/landing/editable-rich-text-slot"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
 import { resolveCardPresentation } from "@/lib/design-system/component-families"
 import {
@@ -62,11 +64,11 @@ export function WorkflowsSection({
   const headerBlock = (
     <div className="space-y-1">
       {hasEyebrow ? (
-        <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+        <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
       ) : null}
-      <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+      <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
       {hasSubtitle ? (
-        <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+        <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</EditableTextSlot>
       ) : null}
     </div>
   )
@@ -95,14 +97,16 @@ export function WorkflowsSection({
                 {card.isInlineAccent ? (
                   <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                 ) : null}
-                <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                <EditableTextSlot as="p" fieldPath={`content.items.${idx}.title`} className="text-sm font-semibold text-foreground">{item.title}</EditableTextSlot>
                 {item.bodyHtml?.trim() ? (
-                  <div
+                  <EditableRichTextSlot
+                    richTextPath={`content.items.${idx}.bodyRichText`}
+
+                    html={item.bodyHtml}
                     className={cn(card.spacing.gap, "text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                    dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                   />
                 ) : item.body ? (
-                  <p className={cn(card.spacing.gap, "text-sm text-muted-foreground")}>{item.body}</p>
+                  <EditableTextSlot as="p" fieldPath={`content.items.${idx}.body`} className={cn(card.spacing.gap, "text-sm text-muted-foreground")} multiline>{item.body}</EditableTextSlot>
                 ) : null}
               </div>
             </StaggerItem>
@@ -136,14 +140,16 @@ export function WorkflowsSection({
                 {card.isInlineAccent ? (
                   <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                 ) : null}
-                <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                <EditableTextSlot as="p" fieldPath={`content.items.${idx}.title`} className="text-sm font-semibold text-foreground">{item.title}</EditableTextSlot>
                 {item.bodyHtml?.trim() ? (
-                  <div
+                  <EditableRichTextSlot
+                    richTextPath={`content.items.${idx}.bodyRichText`}
+
+                    html={item.bodyHtml}
                     className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                    dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                   />
                 ) : item.body ? (
-                  <p className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground")}>{item.body}</p>
+                  <EditableTextSlot as="p" fieldPath={`content.items.${idx}.body`} className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground")} multiline>{item.body}</EditableTextSlot>
                 ) : null}
               </div>
             </StaggerItem>
@@ -177,14 +183,16 @@ export function WorkflowsSection({
                 {card.isInlineAccent ? (
                   <div aria-hidden className="mb-1.5 h-0.5 w-6 rounded-full bg-accent/50" />
                 ) : null}
-                <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                <EditableTextSlot as="p" fieldPath={`content.items.${idx}.title`} className="text-sm font-semibold text-foreground">{item.title}</EditableTextSlot>
                 {item.bodyHtml?.trim() ? (
-                  <div
+                  <EditableRichTextSlot
+                    richTextPath={`content.items.${idx}.bodyRichText`}
+
+                    html={item.bodyHtml}
                     className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                    dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                   />
                 ) : item.body ? (
-                  <p className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground")}>{item.body}</p>
+                  <EditableTextSlot as="p" fieldPath={`content.items.${idx}.body`} className={cn(card.spacing.gap, "flex-1 text-sm text-muted-foreground")} multiline>{item.body}</EditableTextSlot>
                 ) : null}
               </div>
             </StaggerItem>
@@ -215,19 +223,20 @@ export function WorkflowsSection({
         className={cn(accordionCard.cardClass, accordionCard.spacing.rootPadding, dividerClass)}
         style={panelStyle}
       >
-        {items.map((item) => (
+        {items.map((item, idx) => (
           <AccordionItem key={item.title} value={item.title}>
             <AccordionTrigger className={cn("text-sm sm:text-base", accordionCard.spacing.headerPadding)}>
-              {item.title}
+              <EditableTextSlot as="span" fieldPath={`content.items.${idx}.title`}>{item.title}</EditableTextSlot>
             </AccordionTrigger>
             <AccordionContent className={cn("text-muted-foreground", accordionCard.spacing.bodyPadding)}>
               {item.bodyHtml?.trim() ? (
-                <div
+                <EditableRichTextSlot
+                  richTextPath={`content.items.${idx}.bodyRichText`}
+                  html={item.bodyHtml}
                   className={cn("text-sm", RICH_TEXT_CLASS)}
-                  dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                 />
               ) : (
-                <p className="text-sm">{item.body}</p>
+                <EditableTextSlot as="p" fieldPath={`content.items.${idx}.body`} className="text-sm" multiline>{item.body}</EditableTextSlot>
               )}
             </AccordionContent>
           </AccordionItem>

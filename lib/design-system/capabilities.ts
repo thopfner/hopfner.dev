@@ -106,6 +106,9 @@ export const SECTION_CAPABILITIES: Record<string, SectionCapability> = {
       "accentRule",
     ],
   },
+  booking_scheduler: {
+    supported: [...COMMON, "contentDensity", "headingTreatment", "subtitleSize"],
+  },
   composed: {
     supported: [
       ...COMMON,

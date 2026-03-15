@@ -1,3 +1,4 @@
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
 import { SectionShell } from "@/components/landing/section-primitives"
 import { FadeIn } from "@/components/landing/motion-primitives"
 import { LogoTicker } from "@/components/landing/logo-ticker"
@@ -75,11 +76,13 @@ export function SocialProofStripSection({
           {(hasEyebrow || hasTitle || hasSubtitle) ? (
             <div className="space-y-1.5">
               {hasEyebrow ? (
-                <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mx-auto")}>{eyebrow}</p>
+                <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle], "mx-auto")}>{eyebrow}</EditableTextSlot>
               ) : null}
 
               {hasTitle ? (
-                <p
+                <EditableTextSlot
+                  as="p"
+                  fieldPath="meta.title"
                   className={cn(
                     "text-sm font-medium tracking-wide",
                     HEADING_TREATMENT_CLASSES[headingTreatment]
@@ -91,11 +94,11 @@ export function SocialProofStripSection({
                   }
                 >
                   {title}
-                </p>
+                </EditableTextSlot>
               ) : null}
 
               {hasSubtitle ? (
-                <p className={cn(SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"], "text-muted-foreground")}>{subtitle}</p>
+                <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn(SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"], "text-muted-foreground")} multiline>{subtitle}</EditableTextSlot>
               ) : null}
             </div>
           ) : null}
@@ -103,19 +106,19 @@ export function SocialProofStripSection({
           {/* Logo display */}
           {hasLogos ? (
             layoutVariant === "marquee" ? (
-              <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} />
+              <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} editablePathPrefix="content.logos" />
             ) : layoutVariant === "grid" ? (
               <>
                 {/* Mobile: always marquee */}
                 <div className="sm:hidden">
-                  <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} />
+                  <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} editablePathPrefix="content.logos" />
                 </div>
                 {/* Desktop: admin-selected grid */}
                 <div className={cn(
                   "hidden sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
                   GRID_GAP_CLASSES[gridGap]
                 )}>
-                  {logos.map((logo) => (
+                  {logos.map((logo, logoIdx) => (
                     <div
                       key={logo.label}
                       className={cn(logoTile.cardClass, "px-5 py-3.5 transition-colors hover:bg-card/[0.08]")}
@@ -128,9 +131,9 @@ export function SocialProofStripSection({
                           className="h-8 max-w-[120px] object-contain opacity-70 transition-all duration-300 hover:opacity-100"
                         />
                       ) : (
-                        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+                        <EditableTextSlot as="span" fieldPath={`content.logos.${logoIdx}.label`} className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
                           {logo.label}
-                        </span>
+                        </EditableTextSlot>
                       )}
                     </div>
                   ))}
@@ -141,11 +144,11 @@ export function SocialProofStripSection({
               <>
                 {/* Mobile: always marquee */}
                 <div className="sm:hidden">
-                  <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} />
+                  <LogoTicker items={logos.map((l) => ({ label: l.label, value: "", imageUrl: l.imageUrl }))} editablePathPrefix="content.logos" />
                 </div>
                 {/* Desktop: admin-selected inline */}
                 <div className="hidden sm:flex flex-wrap items-center justify-center gap-x-12 gap-y-5">
-                  {logos.map((logo) =>
+                  {logos.map((logo, logoIdx) =>
                     logo.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -155,12 +158,14 @@ export function SocialProofStripSection({
                         className="h-8 w-auto object-contain opacity-70 transition-all duration-300 hover:opacity-100"
                       />
                     ) : (
-                      <span
+                      <EditableTextSlot
+                        as="span"
+                        fieldPath={`content.logos.${logoIdx}.label`}
                         key={logo.label}
                         className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/65 transition-colors hover:text-muted-foreground/85"
                       >
                         {logo.label}
-                      </span>
+                      </EditableTextSlot>
                     )
                   )}
                 </div>
@@ -171,13 +176,13 @@ export function SocialProofStripSection({
           {/* Trust badges */}
           {hasBadges ? (
             <div className="flex flex-wrap items-center justify-center gap-2.5">
-              {badges.map((badge) => (
+              {badges.map((badge, badgeIdx) => (
                 <span
                   key={badge.text}
                   className={cn("inline-flex items-center gap-1.5", LABEL_STYLE_CLASSES[labelStyle])}
                 >
                   {badge.icon ? <span className="text-xs">{badge.icon}</span> : null}
-                  {badge.text}
+                  <EditableTextSlot as="span" fieldPath={`content.badges.${badgeIdx}.text`}>{badge.text}</EditableTextSlot>
                 </span>
               ))}
             </div>
@@ -185,7 +190,7 @@ export function SocialProofStripSection({
 
           {/* Trust note */}
           {hasTrustNote ? (
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80">{trustNote}</p>
+            <EditableTextSlot as="p" fieldPath="content.trustNote" className="text-[10px] uppercase tracking-widest text-muted-foreground/80">{trustNote}</EditableTextSlot>
           ) : null}
         </div>
       </FadeIn>

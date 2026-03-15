@@ -18,6 +18,7 @@ export type BuiltinCmsSectionType =
   | "social_proof_strip"
   | "proof_cluster"
   | "case_study_split"
+  | "booking_scheduler"
 
 export type CmsSectionType = BuiltinCmsSectionType | string
 

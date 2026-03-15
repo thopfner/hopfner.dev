@@ -23,6 +23,8 @@ import CollectionsRoundedIcon from "@mui/icons-material/CollectionsRounded"
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded"
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded"
 import FolderRoundedIcon from "@mui/icons-material/FolderRounded"
+import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded"
+import EmailRoundedIcon from "@mui/icons-material/EmailRounded"
 import FeedRoundedIcon from "@mui/icons-material/FeedRounded"
 
 import { createClient } from "@/lib/supabase/browser"
@@ -45,6 +47,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/global-sections", label: "Global", aria: "Global sections", icon: FolderRoundedIcon },
   { href: "/admin/blog", label: "Blog", aria: "Blog", icon: FeedRoundedIcon },
   { href: "/admin/media", label: "Media", aria: "Media", icon: CollectionsRoundedIcon },
+  { href: "/admin/bookings", label: "Bookings", aria: "Bookings", icon: CalendarMonthRoundedIcon },
+  { href: "/admin/email-templates", label: "Emails", aria: "Email templates", icon: EmailRoundedIcon },
 ]
 
 function isNavItemActive(pathname: string, href: string) {

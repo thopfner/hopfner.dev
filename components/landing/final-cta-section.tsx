@@ -2,6 +2,9 @@ import Link from "next/link"
 import type { CSSProperties } from "react"
 
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
+import { EditableRichTextSlot } from "@/components/landing/editable-rich-text-slot"
+import { EditableLinkSlot } from "@/components/landing/editable-link-slot"
 import { FadeIn } from "@/components/landing/motion-primitives"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { Button } from "@/components/ui/button"
@@ -71,17 +74,17 @@ export function FinalCtaSection({
           >
             <div>
               {hasEyebrow ? (
-                <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+                <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
               ) : null}
-              <p className={cn("text-sm font-semibold text-foreground sm:text-base", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</p>
+              <EditableTextSlot as="p" fieldPath="meta.title" className={cn("text-sm font-semibold text-foreground sm:text-base", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</EditableTextSlot>
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
               <Button size="sm" variant="gradient" asChild>
-                <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
+                <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
               </Button>
               {secondaryCta.label ? (
                 <Button size="sm" variant="outline" asChild>
-                  <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
+                  <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
                 </Button>
               ) : null}
             </div>
@@ -114,25 +117,26 @@ export function FinalCtaSection({
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   {hasEyebrow ? (
-                    <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+                    <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
                   ) : null}
-                  <SectionHeading id={headingId} title={headline} headingTreatment={ui?.headingTreatment} />
+                  <SectionHeading id={headingId} title={headline} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
                   {bodyHtml?.trim() ? (
-                    <div
+                    <EditableRichTextSlot
+                      richTextPath="content.bodyRichText"
+                      html={bodyHtml}
                       className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                      dangerouslySetInnerHTML={{ __html: bodyHtml }}
                     />
                   ) : body ? (
-                    <p className="text-sm text-muted-foreground">{body}</p>
+                    <EditableTextSlot as="p" fieldPath="content.body" className="text-sm text-muted-foreground" multiline>{body}</EditableTextSlot>
                   ) : null}
                 </div>
                 <div className="flex flex-col items-start justify-center gap-3 sm:items-end">
                   <Button variant="gradient" asChild>
-                    <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
+                    <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
                   </Button>
                   {secondaryCta.label ? (
                     <Button variant="outline" asChild>
-                      <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
+                      <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
                     </Button>
                   ) : null}
                 </div>
@@ -168,24 +172,25 @@ export function FinalCtaSection({
             />
             <div className="relative space-y-4">
               {hasEyebrow ? (
-                <p className={cn(LABEL_STYLE_CLASSES[labelStyle], "mx-auto")}>{eyebrow}</p>
+                <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle], "mx-auto")}>{eyebrow}</EditableTextSlot>
               ) : null}
-              <h2 className={cn("text-balance text-2xl font-bold tracking-tight text-foreground sm:text-3xl", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</h2>
+              <EditableTextSlot as="h2" fieldPath="meta.title" className={cn("text-balance text-2xl font-bold tracking-tight text-foreground sm:text-3xl", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</EditableTextSlot>
               {bodyHtml?.trim() ? (
-                <div
+                <EditableRichTextSlot
+                  richTextPath="content.bodyRichText"
+                  html={bodyHtml}
                   className={cn("mx-auto max-w-xl text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                  dangerouslySetInnerHTML={{ __html: bodyHtml }}
                 />
               ) : body ? (
-                <p className="mx-auto max-w-xl text-sm text-muted-foreground">{body}</p>
+                <EditableTextSlot as="p" fieldPath="content.body" className="mx-auto max-w-xl text-sm text-muted-foreground" multiline>{body}</EditableTextSlot>
               ) : null}
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <Button variant="gradient" asChild>
-                  <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
+                  <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
                 </Button>
                 {secondaryCta.label ? (
                   <Button variant="outline" asChild>
-                    <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
+                    <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
                   </Button>
                 ) : null}
               </div>
@@ -217,23 +222,24 @@ export function FinalCtaSection({
           />
           <div className="relative space-y-3">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+              <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
             ) : null}
-            <SectionHeading id={headingId} title={headline} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={headline} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
             {bodyHtml?.trim() ? (
-              <div
+              <EditableRichTextSlot
+                richTextPath="content.bodyRichText"
+                html={bodyHtml}
                 className={cn("text-base text-muted-foreground", RICH_TEXT_CLASS)}
-                dangerouslySetInnerHTML={{ __html: bodyHtml }}
               />
             ) : (
-              <p className="text-base text-muted-foreground">{body}</p>
+              <EditableTextSlot as="p" fieldPath="content.body" className="text-base text-muted-foreground" multiline>{body}</EditableTextSlot>
             )}
             <div className={cn("flex flex-wrap items-center gap-2", ctaJustify)}>
               <Button variant="gradient" asChild>
-                <Link href={primaryCta.href}>{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></Link>
+                <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
+                <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
               </Button>
             </div>
           </div>

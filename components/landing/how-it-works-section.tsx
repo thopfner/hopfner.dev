@@ -2,6 +2,8 @@ import { Badge } from "@/components/ui/badge"
 import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/landing/motion-primitives"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
+import { EditableRichTextSlot } from "@/components/landing/editable-rich-text-slot"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
@@ -78,13 +80,13 @@ export function HowItWorksSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>
+              <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>
                 {eyebrow}
-              </p>
+              </EditableTextSlot>
             ) : null}
-            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
             {hasSubtitle ? (
-              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+              <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
             ) : null}
           </div>
         </FadeIn>
@@ -126,15 +128,17 @@ export function HowItWorksSection({
                             {idx + 1}
                           </span>
                         )}
-                        <p className="text-sm font-medium text-foreground sm:text-base">{step.title}</p>
+                        <EditableTextSlot as="p" fieldPath={`content.steps.${idx}.title`} className="text-sm font-medium text-foreground sm:text-base">{step.title}</EditableTextSlot>
                       </div>
                       {step.bodyHtml?.trim() ? (
-                        <div
+                        <EditableRichTextSlot
+                          richTextPath={`content.steps.${idx}.bodyRichText`}
+
+                          html={step.bodyHtml}
                           className={cn("pl-8 text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                          dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
                         />
                       ) : step.body ? (
-                        <p className="pl-8 text-sm text-muted-foreground">{step.body}</p>
+                        <EditableTextSlot as="p" fieldPath={`content.steps.${idx}.body`} className="pl-8 text-sm text-muted-foreground" multiline>{step.body}</EditableTextSlot>
                       ) : null}
                     </div>
                   </div>
@@ -164,13 +168,13 @@ export function HowItWorksSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>
+              <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>
                 {eyebrow}
-              </p>
+              </EditableTextSlot>
             ) : null}
-            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
             {hasSubtitle ? (
-              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+              <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
             ) : null}
           </div>
         </FadeIn>
@@ -200,14 +204,15 @@ export function HowItWorksSection({
                     {idx + 1}
                   </span>
                 )}
-                <p className="text-sm font-medium text-foreground">{step.title}</p>
+                <EditableTextSlot as="p" fieldPath={`content.steps.${idx}.title`} className="text-sm font-medium text-foreground">{step.title}</EditableTextSlot>
                 {step.bodyHtml?.trim() ? (
-                  <div
+                  <EditableRichTextSlot
+                    richTextPath={`content.steps.${idx}.bodyRichText`}
+                    html={step.bodyHtml}
                     className={cn("mt-1 text-xs text-muted-foreground", RICH_TEXT_CLASS)}
-                    dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
                   />
                 ) : step.body ? (
-                  <p className="mt-1 text-xs text-muted-foreground">{step.body}</p>
+                  <EditableTextSlot as="p" fieldPath={`content.steps.${idx}.body`} className="mt-1 text-xs text-muted-foreground" multiline>{step.body}</EditableTextSlot>
                 ) : null}
               </div>
               {idx < steps.length - 1 ? (
@@ -273,11 +278,11 @@ export function HowItWorksSection({
           <FadeIn>
             <div className="space-y-1.5">
               {hasEyebrow ? (
-                <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</p>
+                <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>{eyebrow}</EditableTextSlot>
               ) : null}
-              <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+              <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
               {hasSubtitle ? (
-                <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+                <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
               ) : null}
             </div>
           </FadeIn>
@@ -322,14 +327,15 @@ export function HowItWorksSection({
                       <span className="text-metric text-sm font-semibold text-accent/80">{step.stat}</span>
                     ) : null}
                   </div>
-                  <p className="text-sm font-semibold tracking-tight text-foreground">{step.title}</p>
+                  <EditableTextSlot as="p" fieldPath={`content.steps.${idx}.title`} className="text-sm font-semibold tracking-tight text-foreground">{step.title}</EditableTextSlot>
                   {step.bodyHtml?.trim() ? (
-                    <div
+                    <EditableRichTextSlot
+                      richTextPath={`content.steps.${idx}.bodyRichText`}
+                      html={step.bodyHtml}
                       className={cn("mt-1.5 flex-1 text-xs leading-relaxed text-muted-foreground", RICH_TEXT_CLASS)}
-                      dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
                     />
                   ) : step.body ? (
-                    <p className="mt-1.5 flex-1 text-xs leading-relaxed text-muted-foreground">{step.body}</p>
+                    <EditableTextSlot as="p" fieldPath={`content.steps.${idx}.body`} className="mt-1.5 flex-1 text-xs leading-relaxed text-muted-foreground" multiline>{step.body}</EditableTextSlot>
                   ) : null}
                 </div>
                 {/* Connector arrow (visible between cards on desktop) */}
@@ -368,11 +374,11 @@ export function HowItWorksSection({
       <FadeIn>
         <div className="space-y-1">
           {hasEyebrow ? (
-            <p className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>{eyebrow}</p>
+            <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[ui?.labelStyle ?? "default"])}>{eyebrow}</EditableTextSlot>
           ) : null}
-          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+          <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
           {hasSubtitle ? (
-            <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+            <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
           ) : null}
         </div>
       </FadeIn>
@@ -418,14 +424,15 @@ export function HowItWorksSection({
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-foreground sm:text-base">{step.title}</p>
+                    <EditableTextSlot as="p" fieldPath={`content.steps.${idx}.title`} className="text-sm font-medium text-foreground sm:text-base">{step.title}</EditableTextSlot>
                     {step.bodyHtml?.trim() ? (
-                      <div
+                      <EditableRichTextSlot
+                        richTextPath={`content.steps.${idx}.bodyRichText`}
+                        html={step.bodyHtml}
                         className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                        dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
                       />
                     ) : step.body ? (
-                      <p className="text-sm text-muted-foreground">{step.body}</p>
+                      <EditableTextSlot as="p" fieldPath={`content.steps.${idx}.body`} className="text-sm text-muted-foreground" multiline>{step.body}</EditableTextSlot>
                     ) : null}
                   </div>
                 </div>

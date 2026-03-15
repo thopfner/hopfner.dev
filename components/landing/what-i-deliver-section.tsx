@@ -4,6 +4,8 @@ import { RICH_TEXT_CLASS } from "@/components/landing/rich-text-class"
 import { SectionHeading, SectionShell } from "@/components/landing/section-primitives"
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/landing/motion-primitives"
 import { SectionIcon } from "@/components/landing/section-icon"
+import { EditableTextSlot } from "@/components/landing/editable-text-slot"
+import { EditableRichTextSlot } from "@/components/landing/editable-rich-text-slot"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 import type { ResolvedSectionUi } from "@/lib/design-system/tokens"
@@ -114,13 +116,13 @@ export function WhatIDeliverSection({
         <FadeIn>
           <div className="space-y-1">
             {hasEyebrow ? (
-              <p className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
+              <EditableTextSlot as="p" fieldPath="content.eyebrow" className={cn(LABEL_STYLE_CLASSES[labelStyle])}>
                 {eyebrow}
-              </p>
+              </EditableTextSlot>
             ) : null}
-            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} />
+            <SectionHeading id={headingId} title={title} headingTreatment={ui?.headingTreatment} fieldPath="meta.title" />
             {hasSubtitle ? (
-              <p className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])}>{subtitle}</p>
+              <EditableTextSlot as="p" fieldPath="meta.subtitle" className={cn("max-w-2xl text-muted-foreground", SUBTITLE_SIZE_CLASSES[ui?.subtitleSize ?? "sm"])} multiline>{subtitle}</EditableTextSlot>
             ) : null}
           </div>
         </FadeIn>
@@ -175,19 +177,19 @@ export function WhatIDeliverSection({
                       ) : null}
                       {hasTag ? (
                         <span className={cn("w-fit", LABEL_STYLE_CLASSES[labelStyle])}>
-                          {item.tag}
+                          <EditableTextSlot as="span" fieldPath={`content.cards.${idx}.tag`}>{item.tag}</EditableTextSlot>
                         </span>
                       ) : null}
                       {hasIcon ? (
                         <SectionIcon icon={item.icon} size={density === "tight" ? "sm" : "md"} />
                       ) : null}
                       {hasStat ? (
-                        <p className="text-metric text-2xl">{item.stat}</p>
+                        <p className="text-metric text-2xl"><EditableTextSlot as="span" fieldPath={`content.cards.${idx}.stat`}>{item.stat}</EditableTextSlot></p>
                       ) : null}
                       {item.display.showTitle ? (
-                        <h3 className={SERVICE_CARD_INNER.titleClass}>
+                        <EditableTextSlot as="h3" fieldPath={`content.cards.${idx}.title`} className={SERVICE_CARD_INNER.titleClass}>
                           {item.title}
-                        </h3>
+                        </EditableTextSlot>
                       ) : null}
                     </CardHeader>
 
@@ -214,12 +216,14 @@ export function WhatIDeliverSection({
                       ) : null}
                       {item.display.showText ? (
                         item.textHtml?.trim() ? (
-                          <div
+                          <EditableRichTextSlot
+                            richTextPath={`content.cards.${idx}.textRichText`}
+
+                            html={item.textHtml}
                             className={cn(SERVICE_CARD_INNER.bodyClass, RICH_TEXT_CLASS)}
-                            dangerouslySetInnerHTML={{ __html: item.textHtml }}
                           />
                         ) : (
-                          <p className={SERVICE_CARD_INNER.bodyClass}>{item.text}</p>
+                          <EditableTextSlot as="p" fieldPath={`content.cards.${idx}.text`} className={SERVICE_CARD_INNER.bodyClass} multiline>{item.text}</EditableTextSlot>
                         )
                       ) : null}
                     </div>
@@ -239,12 +243,19 @@ export function WhatIDeliverSection({
                               <dd>
                                 <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
                                   {item.youGet.map((entry, entryIndex) => (
-                                    <li key={`${entry}-${entryIndex}`}>{entry}</li>
+                                    <li key={`${entry}-${entryIndex}`}><EditableTextSlot as="span" fieldPath={`content.cards.${idx}.youGet.${entryIndex}`}>{entry}</EditableTextSlot></li>
                                   ))}
                                 </ul>
                               </dd>
                             ) : (
-                              <dd className="text-muted-foreground">{item.youGet.join(" · ")}</dd>
+                              <dd className="text-muted-foreground">
+                                {item.youGet.map((entry, entryIndex) => (
+                                  <span key={entryIndex}>
+                                    {entryIndex > 0 && <span className="mx-1 opacity-50">&middot;</span>}
+                                    <EditableTextSlot as="span" fieldPath={`content.cards.${idx}.youGet.${entryIndex}`}>{entry}</EditableTextSlot>
+                                  </span>
+                                ))}
+                              </dd>
                             )}
                           </div>
                         ) : null}
@@ -255,12 +266,12 @@ export function WhatIDeliverSection({
                               <dd>
                                 <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
                                   {item.bestForList.map((entry, entryIndex) => (
-                                    <li key={`${entry}-${entryIndex}`}>{entry}</li>
+                                    <li key={`${entry}-${entryIndex}`}><EditableTextSlot as="span" fieldPath={`content.cards.${idx}.bestForList.${entryIndex}`}>{entry}</EditableTextSlot></li>
                                   ))}
                                 </ul>
                               </dd>
                             ) : (
-                              <dd className="text-muted-foreground">{item.bestFor}</dd>
+                              <dd className="text-muted-foreground"><EditableTextSlot as="span" fieldPath={`content.cards.${idx}.bestFor`}>{item.bestFor}</EditableTextSlot></dd>
                             )}
                           </div>
                         ) : null}
@@ -308,28 +319,29 @@ export function WhatIDeliverSection({
                   <CardHeader className={cn(DENSITY_HEADER_PADDING[density], DENSITY_GAP[density])}>
                     {hasTag ? (
                       <span className={cn("w-fit", LABEL_STYLE_CLASSES[labelStyle])}>
-                        {item.tag}
+                        <EditableTextSlot as="span" fieldPath={`content.cards.${idx}.tag`}>{item.tag}</EditableTextSlot>
                       </span>
                     ) : null}
                     {hasIcon ? (
                       <SectionIcon icon={item.icon} size={density === "tight" ? "sm" : "md"} />
                     ) : null}
                     {hasStat ? (
-                      <p className="text-metric text-2xl">{item.stat}</p>
+                      <p className="text-metric text-2xl"><EditableTextSlot as="span" fieldPath={`content.cards.${idx}.stat`}>{item.stat}</EditableTextSlot></p>
                     ) : null}
                     {item.display.showTitle ? (
-                      <h3 className="text-sm font-semibold leading-none text-foreground">
+                      <EditableTextSlot as="h3" fieldPath={`content.cards.${idx}.title`} className="text-sm font-semibold leading-none text-foreground">
                         {item.title}
-                      </h3>
+                      </EditableTextSlot>
                     ) : null}
                     {item.display.showText ? (
                       item.textHtml?.trim() ? (
-                        <div
+                        <EditableRichTextSlot
+                          richTextPath={`content.cards.${idx}.textRichText`}
+                          html={item.textHtml}
                           className={cn("text-sm text-muted-foreground", RICH_TEXT_CLASS)}
-                          dangerouslySetInnerHTML={{ __html: item.textHtml }}
                         />
                       ) : (
-                        <p className="text-sm text-muted-foreground">{item.text}</p>
+                        <EditableTextSlot as="p" fieldPath={`content.cards.${idx}.text`} className="text-sm text-muted-foreground" multiline>{item.text}</EditableTextSlot>
                       )
                     ) : null}
                   </CardHeader>
@@ -346,12 +358,19 @@ export function WhatIDeliverSection({
                             <dd>
                               <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
                                 {item.youGet.map((entry, entryIndex) => (
-                                  <li key={`${entry}-${entryIndex}`}>{entry}</li>
+                                  <li key={`${entry}-${entryIndex}`}><EditableTextSlot as="span" fieldPath={`content.cards.${idx}.youGet.${entryIndex}`}>{entry}</EditableTextSlot></li>
                                 ))}
                               </ul>
                             </dd>
                           ) : (
-                            <dd className="text-muted-foreground">{item.youGet.join(" · ")}</dd>
+                            <dd className="text-muted-foreground">
+                              {item.youGet.map((entry, entryIndex) => (
+                                <span key={entryIndex}>
+                                  {entryIndex > 0 && <span className="mx-1 opacity-50">&middot;</span>}
+                                  <EditableTextSlot as="span" fieldPath={`content.cards.${idx}.youGet.${entryIndex}`}>{entry}</EditableTextSlot>
+                                </span>
+                              ))}
+                            </dd>
                           )}
                         </div>
                       ) : null}
@@ -362,12 +381,12 @@ export function WhatIDeliverSection({
                             <dd>
                               <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
                                 {item.bestForList.map((entry, entryIndex) => (
-                                  <li key={`${entry}-${entryIndex}`}>{entry}</li>
+                                  <li key={`${entry}-${entryIndex}`}><EditableTextSlot as="span" fieldPath={`content.cards.${idx}.bestForList.${entryIndex}`}>{entry}</EditableTextSlot></li>
                                 ))}
                               </ul>
                             </dd>
                           ) : (
-                            <dd className="text-muted-foreground">{item.bestFor}</dd>
+                            <dd className="text-muted-foreground"><EditableTextSlot as="span" fieldPath={`content.cards.${idx}.bestFor`}>{item.bestFor}</EditableTextSlot></dd>
                           )}
                         </div>
                       ) : null}

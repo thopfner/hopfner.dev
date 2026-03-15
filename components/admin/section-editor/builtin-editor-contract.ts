@@ -31,6 +31,7 @@ const BUILTIN_SECTION_TYPES = [
   "social_proof_strip",
   "proof_cluster",
   "case_study_split",
+  "booking_scheduler",
 ] as const
 
 export type BuiltinCmsSectionType = (typeof BUILTIN_SECTION_TYPES)[number]
@@ -49,6 +50,7 @@ export const BUILTIN_EDITOR_META_CONTRACT: Record<BuiltinCmsSectionType, Builtin
   social_proof_strip: { title: true,  subtitle: true,  ctaPrimary: false, ctaSecondary: false, backgroundMedia: false },
   proof_cluster:      { title: true,  subtitle: true,  ctaPrimary: true,  ctaSecondary: false, backgroundMedia: false },
   case_study_split:   { title: true,  subtitle: true,  ctaPrimary: true,  ctaSecondary: false, backgroundMedia: false },
+  booking_scheduler:  { title: true,  subtitle: true,  ctaPrimary: true,  ctaSecondary: false, backgroundMedia: false },
 }
 
 export function isBuiltinSectionType(type: string | null): type is BuiltinCmsSectionType {

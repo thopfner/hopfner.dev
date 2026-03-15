@@ -12,6 +12,7 @@ export type BuiltinCmsSectionType =
   | "social_proof_strip"
   | "proof_cluster"
   | "case_study_split"
+  | "booking_scheduler"
 
 export type CmsSectionType = BuiltinCmsSectionType | string
 
@@ -47,6 +48,7 @@ export function normalizeSectionType(raw: string): CmsSectionType | null {
     case "social_proof_strip":
     case "proof_cluster":
     case "case_study_split":
+    case "booking_scheduler":
       return raw
     case "trust_strip":
       return "social_proof_strip"

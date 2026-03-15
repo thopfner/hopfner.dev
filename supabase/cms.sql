@@ -124,7 +124,8 @@ create table if not exists public.sections (
       'rich_text_block',
       'label_value_list',
       'faq_list',
-      'cta_block'
+      'cta_block',
+      'booking_scheduler'
     )
   ),
   constraint sections_position_nonneg check (position >= 0)
