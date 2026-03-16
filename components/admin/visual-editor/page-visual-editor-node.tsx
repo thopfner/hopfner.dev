@@ -14,6 +14,8 @@ import {
 import { createClient } from "@/lib/supabase/browser"
 import { IconWorld, IconLock, IconPencil, IconAlertTriangle, IconArrowRight } from "@tabler/icons-react"
 import { SpacingHandles } from "./page-visual-editor-spacing-handles"
+import { SectionActionsMenu } from "./page-visual-editor-section-actions-menu"
+import { isComposedSectionSupported } from "./composed-support"
 import type { FieldPath, LinkResources } from "@/components/landing/visual-editing-context"
 import type { EditorDraft } from "@/components/admin/section-editor/types"
 import type { VisualSectionNode } from "./page-visual-editor-types"
@@ -219,58 +221,74 @@ function VisualSectionNodeInner({ node }: Props) {
     )
   }
 
-  const showUnsupportedBanner = node.isCustomComposed
+  // Shared composed-support decision (same logic used by inspector panel)
+  const hasComposerSchema = node.isCustomComposed && isComposedSectionSupported(pageState?.composerSchemas?.[node.sectionType])
+  const showUnsupportedBanner = node.isCustomComposed && !hasComposerSchema
 
-  return (
-    <div
-      className={`relative group cursor-pointer transition-all ${
-        isSelected
-          ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-[var(--mantine-color-dark-8)] z-10"
-          : "hover:ring-1 hover:ring-blue-400/40 hover:z-[5]"
-      } ${!node.enabled ? "opacity-40" : ""}`}
-      onClick={() => setSelection({ sectionId: node.sectionId })}
-    >
-      <div
-        className={`absolute -top-0 left-0 z-20 flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium rounded-br transition-opacity ${
+  // Chrome elements — rendered inside SectionPreview's surface via chromeSlot
+  const chromeEl = (
+    <>
+      {/* Surface-inset type pill */}
+      <span
+        data-chrome="type-pill"
+        className={`absolute top-2 left-2 z-20 flex items-center gap-1 px-2 py-0.5 text-[9px] font-medium rounded-full backdrop-blur-sm shadow-sm pointer-events-auto transition-opacity ${
           isSelected
-            ? "opacity-100 bg-blue-500 text-white"
-            : "opacity-0 group-hover:opacity-100 bg-[var(--mantine-color-dark-6)] text-[var(--mantine-color-text)] border-b border-r border-[var(--mantine-color-dark-4)]"
+            ? "opacity-100 bg-blue-500/90 text-white"
+            : "opacity-0 group-hover:opacity-90 bg-[var(--mantine-color-dark-7)]/90 text-[var(--mantine-color-dimmed)]"
         }`}
       >
         <span className="capitalize">{typeLabel}</span>
-        {node.isGlobal && <IconWorld size={10} className={isSelected ? "text-blue-200" : "text-blue-400"} />}
-        {node.isGlobal && <IconLock size={9} className={isSelected ? "text-yellow-200" : "text-yellow-400"} />}
-      </div>
-
-      <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 pointer-events-none">
-        {isDirty && (
-          <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-orange-500/20 text-orange-300 border border-orange-500/30 backdrop-blur-sm">
-            <IconPencil size={10} />
-            Edited
+        {node.isGlobal && (
+          <span className={`inline-flex items-center gap-0.5 ${isSelected ? "text-blue-200" : "text-blue-400"}`} title="Global · Locked">
+            <IconWorld size={9} />
+            <IconLock size={8} />
+            <span className="text-[8px]">Global</span>
           </span>
         )}
-        {node.isGlobal && !isDirty && (
-          <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 backdrop-blur-sm">
-            <IconLock size={10} />
-            Locked
-          </span>
-        )}
-      </div>
+        {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-orange-400" title="Unsaved" />}
+      </span>
 
+      {/* Top-right actions */}
+      {isSelected && (
+        <span className="absolute top-2 right-2 z-20 pointer-events-auto" data-chrome="actions">
+          <SectionActionsMenu node={node} />
+        </span>
+      )}
+
+      {/* Composed section info chip (schema-backed, not blocked) */}
+      {hasComposerSchema && (
+        <div className="absolute bottom-2 left-2 z-20 pointer-events-none">
+          <span className="flex items-center gap-1 px-1.5 py-0.5 text-[8px] font-medium rounded-full bg-purple-500/20 text-purple-300 backdrop-blur-sm shadow-sm">
+            Composed
+          </span>
+        </div>
+      )}
+    </>
+  )
+
+  return (
+    <div
+      className={`relative z-0 group cursor-pointer transition-all ${
+        isSelected
+          ? "ring-1 ring-blue-500/70 z-10"
+          : "hover:ring-1 hover:ring-blue-400/30 hover:z-[5]"
+      } ${!node.enabled ? "opacity-40" : ""}`}
+      onClick={() => setSelection({ sectionId: node.sectionId })}
+    >
+      {/* Unsupported banner — only for sections with NO schema (stays on node wrapper at z-30) */}
       {showUnsupportedBanner && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--mantine-color-dark-7)]/80 backdrop-blur-sm rounded">
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--mantine-color-dark-7)]/80 backdrop-blur-sm rounded">
           <div className="text-center px-6 py-4 max-w-xs">
-            <IconAlertTriangle size={24} className="mx-auto mb-2 text-yellow-400" />
-            <p className="text-sm font-medium text-[var(--mantine-color-text)] mb-1">Custom/Composed Section</p>
-            <p className="text-xs text-[var(--mantine-color-dimmed)] mb-3">
-              Visual editing is not available for custom sections. Use the form editor to make changes.
+            <IconAlertTriangle size={20} className="mx-auto mb-2 text-yellow-400" />
+            <p className="text-xs font-medium text-[var(--mantine-color-text)] mb-1">Custom Section</p>
+            <p className="text-[10px] text-[var(--mantine-color-dimmed)] mb-3">
+              No editor schema configured. Use the form editor.
             </p>
             <Link
               href={`/admin/pages/${node.pageId}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-[var(--mantine-color-dark-4)] text-[var(--mantine-color-text)] hover:bg-[var(--mantine-color-dark-6)] transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded border border-[var(--mantine-color-dark-4)] text-[var(--mantine-color-text)] hover:bg-[var(--mantine-color-dark-6)] transition-colors"
             >
-              Open form editor
-              <IconArrowRight size={12} />
+              Form editor <IconArrowRight size={10} />
             </Link>
           </div>
         </div>
@@ -290,6 +308,7 @@ function VisualSectionNodeInner({ node }: Props) {
         embedded
         colorMode={pageState.siteColorMode}
         siteTokens={pageState.siteTokens}
+        chromeSlot={chromeEl}
         visualEditing={visualEditing}
       />
 
