@@ -345,6 +345,8 @@ type SectionPreviewProps = {
   colorMode?: "light" | "dark"
   /** Site-level design tokens — used to compute CSS custom properties matching the frontend. */
   siteTokens?: Record<string, unknown>
+  /** Chrome elements (type pill, actions menu, composed chip) to render inside the preview surface */
+  chromeSlot?: React.ReactNode
   /** Visual editing adapter — when provided, wraps the preview in VisualEditingProvider */
   visualEditing?: {
     sectionId: string
@@ -872,6 +874,7 @@ function SectionPreviewInner({
   embedded,
   colorMode,
   siteTokens,
+  chromeSlot,
   visualEditing,
 }: SectionPreviewProps) {
   // All hooks must be called unconditionally (React rules of hooks).
@@ -968,13 +971,37 @@ function SectionPreviewInner({
       </VisualEditingProvider>
     ) : rendererEl
 
+    // Suppress anchor navigation inside the visual-editor preview.
+    // Covers both mouse click and keyboard activation (Enter/Space on anchors).
+    // Editor controls (EditableLinkSlot, EditableTextSlot) use stopPropagation
+    // so their interactions are not affected.
+    const suppressAnchorNav = useCallback((e: React.MouseEvent) => {
+      if (!visualEditing) return
+      const target = (e.target as HTMLElement).closest("a[href]")
+      if (target && !(target as HTMLElement).closest("[data-visual-editor-control]")) {
+        e.preventDefault()
+      }
+    }, [visualEditing])
+
+    const suppressAnchorKeyboard = useCallback((e: React.KeyboardEvent) => {
+      if (!visualEditing) return
+      if (e.key !== "Enter" && e.key !== " ") return
+      const target = (e.target as HTMLElement).closest("a[href]")
+      if (target && !(target as HTMLElement).closest("[data-visual-editor-control]")) {
+        e.preventDefault()
+      }
+    }, [visualEditing])
+
     return (
       <div
-        className={`${themeClass} bg-background text-foreground ${visualEditing ? "" : "pointer-events-none"} overflow-hidden`}
+        className={`${themeClass} relative text-foreground ${visualEditing ? "" : "pointer-events-none"} overflow-hidden`}
         style={{ colorScheme: colorMode || "dark", transformOrigin: "top left", ...tokenStyle, height: embeddedHeight ? embeddedHeight * scale : undefined }}
+        onClickCapture={suppressAnchorNav}
+        onKeyDownCapture={suppressAnchorKeyboard}
       >
-        <div ref={embeddedRef} style={{ transform: `scale(${scale})`, width: `${100 / scale}%`, transformOrigin: "top left" }}>
+        <div ref={embeddedRef} className="relative bg-background" style={{ transform: `scale(${scale})`, width: `${100 / scale}%`, transformOrigin: "top left" }}>
           {rendererContent}
+          {chromeSlot}
         </div>
       </div>
     )

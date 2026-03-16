@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useRef } from "react"
 import {
   DndContext,
   type DragEndEvent,
@@ -26,7 +26,10 @@ import {
   IconLock,
   IconEyeOff,
   IconSearch,
+  IconPlus,
 } from "@tabler/icons-react"
+import { SectionLibrary } from "./page-visual-editor-section-library"
+import { usePageCompositionActions } from "./use-page-composition-actions"
 import { useVisualEditorStore } from "./page-visual-editor-store"
 import {
   formatType,
@@ -103,58 +106,52 @@ function StructureItem({ node, isOverlay }: { node: VisualSectionNode; isOverlay
     <div
       ref={isOverlay ? undefined : setNodeRef}
       style={sty}
-      className={`flex items-center gap-1.5 px-2 py-1.5 rounded text-xs cursor-pointer transition-all ${
+      className={`group/row flex items-center gap-1.5 px-1.5 py-1.5 rounded text-xs cursor-pointer transition-all ${
         isOverlay
-          ? "bg-[var(--mantine-color-dark-5)] text-[var(--mantine-color-text)] shadow-lg ring-1 ring-blue-500/50 scale-[1.02]"
+          ? "bg-[var(--mantine-color-dark-5)] text-[var(--mantine-color-text)] shadow-lg ring-1 ring-blue-500/50"
           : isSelected
-          ? "bg-blue-500/15 text-[var(--mantine-color-text)] ring-1 ring-blue-500/40"
+          ? "bg-blue-500/10 text-[var(--mantine-color-text)] border-l-2 border-l-blue-500"
           : "text-[var(--mantine-color-dimmed)] hover:bg-[var(--mantine-color-dark-6)] hover:text-[var(--mantine-color-text)]"
-      } ${!node.enabled && !isOverlay ? "opacity-40" : ""}`}
+      } ${!node.enabled && !isOverlay ? "opacity-30" : ""}`}
       onClick={isOverlay ? undefined : () => setSelection({ sectionId: node.sectionId })}
     >
-      {/* Drag handle */}
+      {/* Drag handle — muted, reveals on row hover */}
       <button
         type="button"
-        className="text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] cursor-grab active:cursor-grabbing shrink-0"
+        className="text-[var(--mantine-color-dark-4)] opacity-40 group-hover/row:opacity-100 hover:!text-[var(--mantine-color-dimmed)] cursor-grab active:cursor-grabbing shrink-0 transition-opacity"
         {...(isOverlay ? {} : attributes)}
         {...(isOverlay ? {} : listeners)}
       >
-        <IconGripVertical size={12} />
+        <IconGripVertical size={11} />
       </button>
 
-      {/* Labels: title first, type second */}
-      <div className="flex-1 min-w-0">
+      {/* Labels: title first, type + semantics as secondary line */}
+      <div className="flex-1 min-w-0 leading-snug">
         {sectionTitle ? (
-          <>
-            <span className="block truncate text-[11px] leading-tight">{sectionTitle}</span>
-            <span className="block truncate text-[9px] text-[var(--mantine-color-dimmed)] leading-tight capitalize">{typeLabel}</span>
-          </>
+          <span className="block text-[11px] line-clamp-2" title={sectionTitle}>{sectionTitle}</span>
         ) : (
-          <span className="truncate block capitalize text-[11px]">{typeLabel}</span>
+          <span className="block truncate capitalize text-[11px] text-[var(--mantine-color-dimmed)]">{typeLabel}</span>
         )}
+        <span className="flex items-center gap-1 text-[9px] text-[var(--mantine-color-dark-2)] leading-tight">
+          <span className="capitalize truncate">{sectionTitle ? typeLabel : ""}</span>
+          {node.isGlobal && (
+            <span className="inline-flex items-center gap-0.5 text-blue-400 shrink-0">
+              <IconWorld size={9} />
+              <IconLock size={8} />
+              <span className="text-[8px]">Global</span>
+            </span>
+          )}
+          {!node.enabled && <IconEyeOff size={9} className="shrink-0" />}
+        </span>
       </div>
 
-      {/* Badges */}
-      <span className="flex items-center gap-1 shrink-0">
-        {node.isGlobal && (
-          <span title="Global section" className="text-blue-400">
-            <IconWorld size={11} />
-          </span>
+      {/* Minimal status: single indicator */}
+      <span className="shrink-0">
+        {isDirty ? (
+          <span className="w-1.5 h-1.5 rounded-full bg-orange-400 block" title="Unsaved" />
+        ) : (
+          <StatusDot node={node} />
         )}
-        {node.isGlobal && (
-          <span title="Editing locked" className="text-yellow-400">
-            <IconLock size={10} />
-          </span>
-        )}
-        {!node.enabled && (
-          <span title="Disabled" className="text-[var(--mantine-color-dimmed)]">
-            <IconEyeOff size={11} />
-          </span>
-        )}
-        {isDirty && (
-          <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse shrink-0" title="Unsaved edits" />
-        )}
-        {!isDirty && <StatusDot node={node} />}
       </span>
     </div>
   )
@@ -176,9 +173,13 @@ function DropIndicator() {
 
 export function VisualEditorStructure() {
   const { pageState, sectionOrder, setSectionOrder, orderDirty, getDirtyDraft } = useVisualEditorStore()
+  const { addSection } = usePageCompositionActions()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [addLibOpen, setAddLibOpen] = useState(false)
+  const addBtnRef = useRef<HTMLButtonElement>(null)
+  const [addAnchorRect, setAddAnchorRect] = useState<DOMRect | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -314,14 +315,30 @@ export function VisualEditorStructure() {
         )}
       </div>
 
-      {/* Section count */}
-      <div className="px-3 py-1.5 border-t border-[var(--mantine-color-dark-4)]">
+      {/* Footer: count + add button */}
+      <div className="px-2 py-1.5 border-t border-[var(--mantine-color-dark-4)] flex items-center justify-between">
         <span className="text-[10px] text-[var(--mantine-color-dimmed)]">
           {isFiltering
             ? `${filteredSections.length} of ${orderedSections.length}`
             : `${orderedSections.length} section${orderedSections.length !== 1 ? "s" : ""}`
           }
         </span>
+        <button
+          ref={addBtnRef}
+          type="button"
+          onClick={() => { if (addBtnRef.current) setAddAnchorRect(addBtnRef.current.getBoundingClientRect()); setAddLibOpen(true) }}
+          className="flex items-center gap-0.5 text-[10px] font-medium text-blue-300 hover:text-blue-200 transition-colors"
+          title="Add section"
+        >
+          <IconPlus size={11} />
+          Add
+        </button>
+        <SectionLibrary
+          onSelect={(type) => addSection(type)}
+          anchorRect={addAnchorRect}
+          open={addLibOpen}
+          onClose={() => setAddLibOpen(false)}
+        />
       </div>
     </div>
   )

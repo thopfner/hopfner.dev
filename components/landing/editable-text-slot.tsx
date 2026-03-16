@@ -4,10 +4,9 @@
  * EditableTextSlot — renders text as its original element in frontend mode.
  * In admin visual editor mode, adds editable affordances and in-place editing.
  *
- * For display-scale headings (h1/h2/h3/blockquote): anchored overlay editor
- * with intentionally reduced edit-mode typography for comfortable authoring.
- *
- * For single-line compact labels: inline input replacement.
+ * ALL plain-text fields use one unified anchored overlay editing system.
+ * Small text and large text behave identically — the overlay scales from
+ * the measured display element rect.
  *
  * Field-level no-op protection: commits are skipped when the value is unchanged.
  */
@@ -51,26 +50,21 @@ export function EditableTextSlot({
   )
 }
 
-/** Determine if a tag is display-scale heading text. */
+/** Determine if a tag is display-scale heading text (gets typography downshift). */
 function isLargeTextTag(tag: string): boolean {
   return tag === "h1" || tag === "h2" || tag === "h3" || tag === "blockquote"
 }
 
 // ---------------------------------------------------------------------------
-// Edit-mode typography mapping
-// Reduces oversized display classes to comfortable editing sizes.
-// Only applied to overlay-edited display text, not normal paragraphs.
+// Edit-mode typography mapping for oversized display text
 // ---------------------------------------------------------------------------
 const EDIT_TYPOGRAPHY_MAP: Record<string, string> = {
-  // Display XL → LG
   "text-display-xl": "text-2xl",
   "lg:text-6xl": "lg:text-3xl",
   "text-6xl": "text-3xl",
-  // Display LG → MD
   "text-display-lg": "text-xl",
   "lg:text-5xl": "lg:text-2xl",
   "text-5xl": "text-2xl",
-  // Large headings → one step smaller
   "sm:text-4xl": "sm:text-2xl",
   "text-4xl": "text-2xl",
   "sm:text-3xl": "sm:text-xl",
@@ -82,7 +76,6 @@ function editModeClassName(cls: string, tag: string): string {
   if (!isLargeTextTag(tag)) return cls
   let result = cls
   for (const [from, to] of Object.entries(EDIT_TYPOGRAPHY_MAP)) {
-    // Replace as whole word to avoid partial matches
     result = result.replace(new RegExp(`(^|\\s)${from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|\\s)`, "g"), `$1${to}$2`)
   }
   return result
@@ -94,14 +87,13 @@ function EditableTextSlotInner({
   const { focusedField, editingField, focusField, blurField, startEdit, commitEdit, cancelEdit, getFieldValue } = ctx
   const isFocused = focusedField === fieldPath
   const isEditing = editingField === fieldPath
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
+  const editorRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null)
   const displayRef = useRef<HTMLElement>(null)
   const lastRectRef = useRef<DOMRect | null>(null)
   const originalValueRef = useRef("")
   const [localValue, setLocalValue] = useState("")
-  const useOverlay = multiline || isLargeTextTag(as ?? "span")
 
-  // Track display element rect continuously while not editing
+  // Continuously track display element rect while not editing
   useLayoutEffect(() => {
     if (!isEditing && displayRef.current) {
       lastRectRef.current = displayRef.current.getBoundingClientRect()
@@ -115,10 +107,9 @@ function EditableTextSlotInner({
       setLocalValue(val)
       originalValueRef.current = val
       requestAnimationFrame(() => {
-        const el = inputRef.current
+        const el = editorRef.current
         if (!el) return
         el.focus()
-        // Force top-of-text visibility
         el.scrollTop = 0
         el.setSelectionRange(0, 0)
         if (el instanceof HTMLTextAreaElement) {
@@ -131,12 +122,12 @@ function EditableTextSlotInner({
 
   // Auto-resize textarea on value change
   useEffect(() => {
-    if (isEditing && useOverlay && inputRef.current instanceof HTMLTextAreaElement) {
-      const ta = inputRef.current
+    if (isEditing && editorRef.current instanceof HTMLTextAreaElement) {
+      const ta = editorRef.current
       ta.style.height = "auto"
       ta.style.height = ta.scrollHeight + "px"
     }
-  }, [localValue, isEditing, useOverlay])
+  }, [localValue, isEditing])
 
   const handleCommit = useCallback(() => {
     if (localValue === originalValueRef.current) {
@@ -150,121 +141,103 @@ function EditableTextSlotInner({
     cancelEdit()
   }, [cancelEdit])
 
+  // Multiline: Enter creates newlines, Cmd+Enter commits
+  // Single-line: Enter commits
+  const isMultilineEdit = multiline || isLargeTextTag(as ?? "span")
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     e.stopPropagation()
     if (e.key === "Escape") { e.preventDefault(); handleCancel(); return }
     if (e.key === "Enter") {
-      if ((multiline || useOverlay) && !e.metaKey && !e.ctrlKey) return
+      if (isMultilineEdit && !e.metaKey && !e.ctrlKey) return
       e.preventDefault(); handleCommit(); return
     }
     if (e.key === "Tab") { e.preventDefault(); handleCommit(); return }
-  }, [handleCommit, handleCancel, multiline, useOverlay])
+  }, [handleCommit, handleCancel, isMultilineEdit])
 
-  // --- Edit mode ---
+  // --- Edit mode: unified overlay for ALL plain-text fields ---
   if (isEditing) {
     const rect = lastRectRef.current
-
-    // Overlay editor for display-scale headings
-    if (useOverlay && rect) {
-      // Viewport clamping
-      const vh = typeof window !== "undefined" ? window.innerHeight : 800
-      const vw = typeof window !== "undefined" ? window.innerWidth : 1200
-      const pad = 16
-      const maxOverlayH = Math.min(vh * 0.6, vh - rect.top - pad)
-      const clampedLeft = Math.max(pad, Math.min(rect.left, vw - rect.width - pad))
-      const clampedTop = Math.max(pad, rect.top)
-
-      const overlayStyle: React.CSSProperties = {
-        position: "fixed",
-        top: clampedTop,
-        left: clampedLeft,
-        width: Math.min(rect.width, vw - pad * 2),
-        minHeight: Math.min(rect.height, maxOverlayH),
-        maxHeight: maxOverlayH,
-        zIndex: 9999,
-        boxSizing: "border-box",
-      }
-
-      // Edit-mode typography: reduce display classes for comfort
-      const editCls = editModeClassName(className ?? "", as ?? "span")
-
-      const overlay = (
-        <div style={overlayStyle}>
-          <textarea
-            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-            value={localValue}
-            onChange={(e) => setLocalValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleCommit}
-            className={`${editCls} outline-none ring-2 ring-blue-500/60 rounded-md bg-[#0c0e14]/97 shadow-[0_8px_32px_rgba(0,0,0,0.5)] cursor-text resize-none block`}
-            style={{
-              ...style,
-              width: "100%",
-              minHeight: Math.min(rect.height, maxOverlayH),
-              maxHeight: maxOverlayH,
-              overflowY: "auto",
-              padding: "0.75rem 1rem",
-              lineHeight: 1.5,
-            }}
-            placeholder={placeholder}
-            rows={1}
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          />
-        </div>
-      )
-
-      return (
-        <>
-          {createElement(as!, { id, className: `${className} invisible`, style }, children)}
-          {createPortal(overlay, document.body)}
-        </>
-      )
+    if (!rect) {
+      // Fallback: no rect measured yet, commit immediately
+      cancelEdit()
+      return null
     }
 
-    // Inline editor for small/single-line text
-    const mw = rect?.width ?? 0
-    const mh = rect?.height ?? 0
-    const editCls = `${className} outline-none ring-1 ring-blue-500/60 rounded-sm bg-transparent cursor-text min-w-[2ch]`
-    const editorStyle: React.CSSProperties = {
-      ...style,
-      minWidth: mw > 0 ? mw : undefined,
-      minHeight: mh > 0 ? mh : undefined,
-      width: mw > 0 ? mw + 8 : "100%",
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1200
+    const pad = 12
+
+    // Overlay sizing: use measured element width, clamp to viewport
+    const overlayWidth = Math.max(120, Math.min(rect.width + 16, vw - pad * 2))
+    const maxOverlayH = Math.min(vh * 0.6, vh - Math.max(pad, rect.top) - pad)
+    const clampedLeft = Math.max(pad, Math.min(rect.left - 8, vw - overlayWidth - pad))
+    const clampedTop = Math.max(pad, rect.top)
+
+    const overlayStyle: React.CSSProperties = {
+      position: "fixed",
+      top: clampedTop,
+      left: clampedLeft,
+      width: overlayWidth,
+      minHeight: Math.min(rect.height + 8, maxOverlayH),
+      maxHeight: maxOverlayH,
+      zIndex: 9999,
+      boxSizing: "border-box",
     }
 
-    if (multiline) {
-      return (
-        <textarea
-          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-          value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleCommit}
-          className={editCls + " resize-none block overflow-hidden"}
-          style={editorStyle}
-          placeholder={placeholder}
-          rows={1}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        />
-      )
-    }
+    // Typography: downshift for large display text, normalize for single-line
+    const editCls = editModeClassName(className ?? "", as ?? "span")
 
-    return (
+    // Single-line editor-safe treatment:
+    // - generous minimum width (at least 200px or measured + padding)
+    // - normalized font size (text-sm) for readability
+    // - avoid inheriting truncation/overflow/display-oriented classes
+    const singleLineWidth = Math.max(200, overlayWidth)
+    const singleLineLeft = Math.max(pad, Math.min(rect.left - 8, vw - singleLineWidth - pad))
+
+    const editorElement = isMultilineEdit ? (
+      <textarea
+        ref={editorRef as React.RefObject<HTMLTextAreaElement>}
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={handleCommit}
+        className={`${editCls} outline-none ring-2 ring-blue-500/60 rounded-md bg-[#0c0e14]/97 shadow-[0_6px_24px_rgba(0,0,0,0.45)] cursor-text resize-none block`}
+        style={{ ...style, width: "100%", minHeight: rect.height, maxHeight: maxOverlayH, overflowY: "auto", padding: "0.5rem 0.75rem", lineHeight: 1.5 }}
+        placeholder={placeholder}
+        rows={1}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      />
+    ) : (
       <input
-        ref={inputRef as React.RefObject<HTMLInputElement>}
+        ref={editorRef as React.RefObject<HTMLInputElement>}
         type="text"
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleCommit}
-        className={editCls}
-        style={editorStyle}
+        className="text-sm font-medium text-[var(--foreground,#e5e7eb)] outline-none ring-2 ring-blue-500/60 rounded-md bg-[#0c0e14]/97 shadow-[0_6px_24px_rgba(0,0,0,0.45)] cursor-text"
+        style={{ width: singleLineWidth, padding: "0.5rem 0.75rem" }}
         placeholder={placeholder}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       />
+    )
+
+    // For single-line, override overlay positioning with the wider width
+    const effectiveOverlayStyle = isMultilineEdit ? overlayStyle : {
+      ...overlayStyle,
+      left: singleLineLeft,
+      width: singleLineWidth,
+    }
+
+    return (
+      <>
+        {/* Keep display element in place for layout stability */}
+        {createElement(as!, { id, className: `${className} invisible`, style }, children)}
+        {createPortal(<div style={effectiveOverlayStyle}>{editorElement}</div>, document.body)}
+      </>
     )
   }
 

@@ -1,3 +1,4 @@
+import "@/app/globals.css"
 import Link from "next/link"
 import { PageVisualEditor } from "@/components/admin/visual-editor/page-visual-editor"
 import { VISUAL_EDITOR_ENABLED } from "@/components/admin/visual-editor/feature-flag"

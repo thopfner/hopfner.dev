@@ -139,6 +139,7 @@ function EditableLinkSlotInner({ labelPath, hrefPath, className, style, children
     <span
       className={`${className} relative group/cta`}
       style={{ ...style, pointerEvents: "auto" as const }}
+      data-visual-editor-control=""
       onMouseEnter={() => focusField(labelPath)} onMouseLeave={() => blurField()}
     >
       <span

@@ -80,9 +80,13 @@ export async function loadPageVisualState(pageId: string): Promise<VisualPageSta
 
   // Custom type registry — only non-builtin types
   const customTypeRegistry = new Set<string>()
-  for (const row of (customTypesRes.data ?? []) as Array<{ key: string; source: string }>) {
+  const composerSchemas: Record<string, unknown> = {}
+  for (const row of (customTypesRes.data ?? []) as Array<{ key: string; source: string; composer_schema: unknown }>) {
     if (row.source !== "builtin") {
       customTypeRegistry.add(row.key)
+    }
+    if (row.composer_schema) {
+      composerSchemas[row.key] = row.composer_schema
     }
   }
 
@@ -183,5 +187,6 @@ export async function loadPageVisualState(pageId: string): Promise<VisualPageSta
     capabilities,
     tailwindWhitelist: whitelist,
     customTypeRegistry,
+    composerSchemas,
   }
 }

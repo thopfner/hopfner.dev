@@ -28,6 +28,12 @@ import {
   resolveMetaFieldVisibility,
 } from "@/components/admin/section-editor/builtin-editor-contract"
 import type { EditorDraft } from "@/components/admin/section-editor/types"
+import { PagePanel as PagePanelInline } from "./page-visual-editor-page-panel"
+import { HistoryPanel } from "./page-visual-editor-history-panel"
+import { GlobalSectionPanel } from "./page-visual-editor-global-section-panel"
+import { ComposedSectionPanel } from "./page-visual-editor-composed-section-panel"
+import { MediaField } from "./page-visual-editor-media-field"
+import { TipTapJsonEditor } from "@/components/admin/section-editor/fields/tiptap-json-editor"
 import type { VisualSectionNode } from "./page-visual-editor-types"
 
 // ---------------------------------------------------------------------------
@@ -102,7 +108,7 @@ const SPACING_BOTTOM_OPTIONS = [
   { value: "", label: "Default" }, { value: "pb-0", label: "None" }, { value: "pb-2", label: "pb-2" },
   { value: "pb-4", label: "pb-4" }, { value: "pb-6", label: "pb-6" }, { value: "pb-8", label: "pb-8" },
   { value: "pb-10", label: "pb-10" }, { value: "pb-12", label: "pb-12" }, { value: "pb-16", label: "pb-16" },
-  { value: "pb-20", label: "pb-20" },
+  { value: "pb-20", label: "pb-20" }, { value: "pb-24", label: "pb-24" },
 ]
 const OUTER_SPACING_OPTIONS = [
   { value: "", label: "Default" }, { value: "my-2", label: "my-2" }, { value: "my-4", label: "my-4" },
@@ -317,14 +323,88 @@ function SectionContentPanel({ sectionType, content, onContentChange }: {
         <InspectorSelect label="Layout Variant" value={s(content.layoutVariant)} options={[{ value: "", label: "Default" }, ...layoutOptions]} onChange={(v) => onContentChange("layoutVariant", v)} />
       )}
 
+      {/* Hero CTA */}
+      {sectionType === "hero_cta" && (
+        <>
+          <ContentArrayEditor label="Bullets" items={strArr(content.bullets).map((t) => ({ text: t }))}
+            fields={[{ key: "text", label: "Bullet" }]}
+            onUpdate={(items) => onContentChange("bullets", items.map((i) => i.text))} />
+          <InspectorInput label="Trust Line" value={s(content.trustLine)} onChange={(v) => onContentChange("trustLine", v)} multiline />
+          <ContentArrayEditor label="Trust Items" items={arr(content.trustItems)}
+            fields={[{ key: "text", label: "Text" }]}
+            onUpdate={(items) => onContentChange("trustItems", items)} />
+          <ContentArrayEditor label="Hero Stats" items={arr(content.heroStats)}
+            fields={[{ key: "value", label: "Value" }, { key: "label", label: "Label" }]}
+            onUpdate={(items) => onContentChange("heroStats", items)} />
+          <InspectorDivider label="Proof Panel" />
+          <InspectorSelect label="Proof Panel Type" value={s((content.proofPanel as Record<string, unknown> | undefined)?.type as string ?? "")}
+            options={[{ value: "", label: "None" }, { value: "stats", label: "Stats grid" }, { value: "mockup", label: "Mockup" }, { value: "image", label: "Image" }]}
+            onChange={(v) => onContentChange("proofPanel", { ...(content.proofPanel && typeof content.proofPanel === "object" ? content.proofPanel as Record<string, unknown> : {}), type: v || undefined })} />
+          {content.proofPanel && typeof content.proofPanel === "object" && (content.proofPanel as Record<string, unknown>).type && (
+            <>
+              <InspectorInput label="Proof Headline" value={s((content.proofPanel as Record<string, unknown>).headline)} onChange={(v) => onContentChange("proofPanel", { ...(content.proofPanel as Record<string, unknown>), headline: v })} />
+              {(content.proofPanel as Record<string, unknown>).type === "stats" && (
+                <ContentArrayEditor label="Proof Stats" items={arr((content.proofPanel as Record<string, unknown>).items)}
+                  fields={[{ key: "value", label: "Value" }, { key: "label", label: "Label" }]}
+                  onUpdate={(items) => onContentChange("proofPanel", { ...(content.proofPanel as Record<string, unknown>), items })} />
+              )}
+              {(content.proofPanel as Record<string, unknown>).type === "mockup" && (
+                <InspectorSelect label="Mockup Variant" value={s((content.proofPanel as Record<string, unknown>).mockupVariant)}
+                  options={[{ value: "dashboard", label: "Dashboard" }, { value: "workflow", label: "Workflow" }, { value: "terminal", label: "Terminal" }]}
+                  onChange={(v) => onContentChange("proofPanel", { ...(content.proofPanel as Record<string, unknown>), mockupVariant: v })} />
+              )}
+              {((content.proofPanel as Record<string, unknown>).type === "image" || (content.proofPanel as Record<string, unknown>).type === "mockup") && (
+                <InspectorInput label="Proof Image URL" value={s((content.proofPanel as Record<string, unknown>).imageUrl)} onChange={(v) => onContentChange("proofPanel", { ...(content.proofPanel as Record<string, unknown>), imageUrl: v })} />
+              )}
+            </>
+          )}
+          <InspectorDivider label="Content Block Order" />
+          <ContentArrayEditor label="Block Order" items={strArr(content.heroContentOrder).map((t) => ({ key: t }))}
+            fields={[{ key: "key", label: "Block key (ctas/stats/trust)" }]}
+            onUpdate={(items) => onContentChange("heroContentOrder", items.map((i) => i.key))} />
+          {(s(content.layoutVariant) === "split" || s(content.layoutVariant) === "split_reversed") && strArr(content.heroContentOrder).length > 0 && (
+            <>
+              <InspectorDivider label="Block Sides" />
+              {strArr(content.heroContentOrder).map((key) => {
+                const sides = content.heroContentSides && typeof content.heroContentSides === "object" ? content.heroContentSides as Record<string, unknown> : {}
+                return (
+                  <InspectorSelect key={key} label={`${key} side`} value={s(sides[key]) || "left"}
+                    options={[{ value: "left", label: "Left" }, { value: "right", label: "Right" }]}
+                    onChange={(v) => onContentChange("heroContentSides", { ...sides, [key]: v })} />
+                )
+              })}
+            </>
+          )}
+        </>
+      )}
+
       {/* Card Grid */}
       {sectionType === "card_grid" && (
         <>
           <InspectorSelect label="Columns" value={s(content.columns)} options={[
             { value: "", label: "Auto" }, { value: "2", label: "2" }, { value: "3", label: "3" }, { value: "4", label: "4" },
           ]} onChange={(v) => onContentChange("columns", v ? Number(v) : undefined)} />
+          <InspectorDivider label="Default Card Fields" />
+          {(["showTitle", "showText", "showImage", "showYouGet", "showBestFor"] as const).map((key) => {
+            const display = content.cardDisplay && typeof content.cardDisplay === "object" ? content.cardDisplay as Record<string, unknown> : {}
+            return (
+              <InspectorSelect key={key} label={key.replace("show", "Show ")}
+                value={display[key] === false ? "off" : "on"}
+                options={[{ value: "on", label: "On" }, { value: "off", label: "Off" }]}
+                onChange={(v) => onContentChange("cardDisplay", { ...display, [key]: v === "on" })} />
+            )
+          })}
           <ContentArrayEditor label="Cards" items={arr(content.cards)}
-            fields={[{ key: "title", label: "Title" }, { key: "text", label: "Description", multiline: true }, { key: "icon", label: "Icon (emoji)" }, { key: "stat", label: "Stat" }, { key: "tag", label: "Tag" }]}
+            fields={[
+              { key: "title", label: "Title" },
+              { key: "text", label: "Description", multiline: true },
+              { key: "icon", label: "Icon (emoji)" },
+              { key: "stat", label: "Stat" },
+              { key: "tag", label: "Tag" },
+              { key: "imageUrl", label: "Image URL" },
+              { key: "alt", label: "Image Alt" },
+              { key: "bestFor", label: "Best for" },
+            ]}
             onUpdate={(items) => onContentChange("cards", items)} />
         </>
       )}
@@ -352,9 +432,14 @@ function SectionContentPanel({ sectionType, content, onContentChange }: {
 
       {/* Label Value List */}
       {sectionType === "label_value_list" && (
-        <ContentArrayEditor label="Items" items={arr(content.items)}
-          fields={[{ key: "label", label: "Label" }, { key: "value", label: "Value" }, { key: "icon", label: "Icon (emoji)" }, { key: "imageUrl", label: "Image URL" }]}
-          onUpdate={(items) => onContentChange("items", items)} />
+        <>
+          <ContentArrayEditor label="Items" items={arr(content.items)}
+            fields={[{ key: "label", label: "Label" }, { key: "value", label: "Value" }, { key: "icon", label: "Icon (emoji)" }, { key: "imageUrl", label: "Image URL" }]}
+            onUpdate={(items) => onContentChange("items", items)} />
+          <InspectorSelect label="Compact Mode" value={content.compact === true ? "on" : "off"}
+            options={[{ value: "off", label: "Off" }, { value: "on", label: "On" }]}
+            onChange={(v) => onContentChange("compact", v === "on")} />
+        </>
       )}
 
       {/* CTA Block */}
@@ -364,21 +449,67 @@ function SectionContentPanel({ sectionType, content, onContentChange }: {
 
       {/* Rich Text Block */}
       {sectionType === "rich_text_block" && (
-        <p className="text-[10px] text-[var(--mantine-color-dimmed)]">Rich text content is best edited in the form editor.</p>
+        <>
+          {content.bodyRichText && typeof content.bodyRichText === "object" ? (
+            <TipTapJsonEditor
+              label="Body (rich text)"
+              value={content.bodyRichText as Record<string, unknown>}
+              onChange={(next) => onContentChange("bodyRichText", next)}
+            />
+          ) : (
+            <InspectorInput label="Body" value={s(content.body)} onChange={(v) => onContentChange("body", v)} multiline />
+          )}
+        </>
       )}
 
       {/* Social Proof Strip */}
-      {sectionType === "social_proof_strip" && (
-        <>
-          <InspectorInput label="Trust Note" value={s(content.trustNote)} onChange={(v) => onContentChange("trustNote", v)} />
-          <ContentArrayEditor label="Logos" items={arr(content.logos)}
-            fields={[{ key: "label", label: "Label" }, { key: "imageUrl", label: "Image URL" }, { key: "alt", label: "Alt text" }, { key: "href", label: "Link (optional)" }]}
-            onUpdate={(items) => onContentChange("logos", items)} />
-          <ContentArrayEditor label="Badges" items={arr(content.badges)}
-            fields={[{ key: "text", label: "Text" }, { key: "icon", label: "Icon (emoji)" }]}
-            onUpdate={(items) => onContentChange("badges", items)} />
-        </>
-      )}
+      {sectionType === "social_proof_strip" && (() => {
+        const logos = arr(content.logos)
+        const updateLogo = (idx: number, key: string, value: string) => {
+          const next = [...logos]
+          next[idx] = { ...next[idx], [key]: value }
+          onContentChange("logos", next)
+        }
+        const moveLogo = (idx: number, dir: -1 | 1) => {
+          const target = idx + dir
+          if (target < 0 || target >= logos.length) return
+          const next = [...logos]
+          ;[next[idx], next[target]] = [next[target], next[idx]]
+          onContentChange("logos", next)
+        }
+        const removeLogo = (idx: number) => onContentChange("logos", logos.filter((_, i) => i !== idx))
+        const addLogo = () => onContentChange("logos", [...logos, { label: "", imageUrl: "", alt: "", href: "" }])
+
+        return (
+          <>
+            <InspectorInput label="Trust Note" value={s(content.trustNote)} onChange={(v) => onContentChange("trustNote", v)} />
+            <InspectorDivider label="Logos" />
+            {logos.map((logo, idx) => (
+              <CollapsibleGroup key={idx} label={s(logo.label) || `Logo ${idx + 1}`} defaultOpen={false}>
+                <InspectorInput label="Label" value={s(logo.label)} onChange={(v) => updateLogo(idx, "label", v)} />
+                <MediaField label="Logo Image" value={s(logo.imageUrl)} onChange={(v) => updateLogo(idx, "imageUrl", v)} />
+                <InspectorInput label="Alt Text" value={s(logo.alt)} onChange={(v) => updateLogo(idx, "alt", v)} />
+                <InspectorInput label="Link" value={s(logo.href)} onChange={(v) => updateLogo(idx, "href", v)} placeholder="Optional URL" />
+                <div className="flex gap-1 pt-1">
+                  <button type="button" onClick={() => moveLogo(idx, -1)} disabled={idx === 0}
+                    className="text-[10px] text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30">Move up</button>
+                  <button type="button" onClick={() => moveLogo(idx, 1)} disabled={idx === logos.length - 1}
+                    className="text-[10px] text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30">Move down</button>
+                  <button type="button" onClick={() => removeLogo(idx)}
+                    className="text-[10px] text-red-400/60 hover:text-red-400 ml-auto">Remove</button>
+                </div>
+              </CollapsibleGroup>
+            ))}
+            <button type="button" onClick={addLogo}
+              className="flex items-center gap-0.5 text-[10px] text-blue-400 hover:text-blue-300 transition-colors">
+              <IconPlus size={10} /> Add Logo
+            </button>
+            <ContentArrayEditor label="Badges" items={arr(content.badges)}
+              fields={[{ key: "text", label: "Text" }, { key: "icon", label: "Icon (emoji)" }]}
+              onUpdate={(items) => onContentChange("badges", items)} />
+          </>
+        )
+      })()}
 
       {/* Proof Cluster */}
       {sectionType === "proof_cluster" && (
@@ -386,14 +517,17 @@ function SectionContentPanel({ sectionType, content, onContentChange }: {
           <ContentArrayEditor label="Metrics" items={arr(content.metrics)}
             fields={[{ key: "value", label: "Value" }, { key: "label", label: "Label" }, { key: "icon", label: "Icon (emoji)" }]}
             onUpdate={(items) => onContentChange("metrics", items)} />
-          {content.testimonial && typeof content.testimonial === "object" && (
-            <>
-              <InspectorDivider label="Testimonial" />
-              <InspectorInput label="Quote" value={s((content.testimonial as Record<string, unknown>).quote)} onChange={(v) => onContentChange("testimonial", { ...(content.testimonial as Record<string, unknown>), quote: v })} multiline />
-              <InspectorInput label="Author" value={s((content.testimonial as Record<string, unknown>).author)} onChange={(v) => onContentChange("testimonial", { ...(content.testimonial as Record<string, unknown>), author: v })} />
-              <InspectorInput label="Role" value={s((content.testimonial as Record<string, unknown>).role)} onChange={(v) => onContentChange("testimonial", { ...(content.testimonial as Record<string, unknown>), role: v })} />
-            </>
-          )}
+          <InspectorDivider label="Proof Card" />
+          <InspectorInput label="Proof Card Title" value={s((content.proofCard as Record<string, unknown> | undefined)?.title as string ?? "")} onChange={(v) => onContentChange("proofCard", { ...(content.proofCard && typeof content.proofCard === "object" ? content.proofCard as Record<string, unknown> : {}), title: v })} />
+          <InspectorInput label="Proof Card Body" value={s((content.proofCard as Record<string, unknown> | undefined)?.body as string ?? "")} onChange={(v) => onContentChange("proofCard", { ...(content.proofCard && typeof content.proofCard === "object" ? content.proofCard as Record<string, unknown> : {}), body: v })} multiline />
+          <ContentArrayEditor label="Proof Card Stats" items={arr((content.proofCard as Record<string, unknown> | undefined)?.stats)}
+            fields={[{ key: "value", label: "Value" }, { key: "label", label: "Label" }]}
+            onUpdate={(items) => onContentChange("proofCard", { ...(content.proofCard && typeof content.proofCard === "object" ? content.proofCard as Record<string, unknown> : {}), stats: items })} />
+          <InspectorDivider label="Testimonial" />
+          <InspectorInput label="Quote" value={s((content.testimonial as Record<string, unknown> | undefined)?.quote as string ?? "")} onChange={(v) => onContentChange("testimonial", { ...(content.testimonial && typeof content.testimonial === "object" ? content.testimonial as Record<string, unknown> : {}), quote: v })} multiline />
+          <InspectorInput label="Author" value={s((content.testimonial as Record<string, unknown> | undefined)?.author as string ?? "")} onChange={(v) => onContentChange("testimonial", { ...(content.testimonial && typeof content.testimonial === "object" ? content.testimonial as Record<string, unknown> : {}), author: v })} />
+          <InspectorInput label="Role" value={s((content.testimonial as Record<string, unknown> | undefined)?.role as string ?? "")} onChange={(v) => onContentChange("testimonial", { ...(content.testimonial && typeof content.testimonial === "object" ? content.testimonial as Record<string, unknown> : {}), role: v })} />
+          <InspectorInput label="Image URL" value={s((content.testimonial as Record<string, unknown> | undefined)?.imageUrl as string ?? "")} onChange={(v) => onContentChange("testimonial", { ...(content.testimonial && typeof content.testimonial === "object" ? content.testimonial as Record<string, unknown> : {}), imageUrl: v })} />
         </>
       )}
 
@@ -412,17 +546,46 @@ function SectionContentPanel({ sectionType, content, onContentChange }: {
           <ContentArrayEditor label="Stats" items={arr(content.stats)}
             fields={[{ key: "value", label: "Value" }, { key: "label", label: "Label" }]}
             onUpdate={(items) => onContentChange("stats", items)} />
+          <InspectorDivider label="Media" />
+          <InspectorInput label="Media Title" value={s(content.mediaTitle)} onChange={(v) => onContentChange("mediaTitle", v)} />
+          <MediaField label="Media Image" value={s(content.mediaImageUrl)} onChange={(v) => onContentChange("mediaImageUrl", v)} />
         </>
       )}
 
       {/* Booking Scheduler */}
-      {sectionType === "booking_scheduler" && (
-        <>
-          <InspectorInput label="Cal.com Link" value={s(content.calLink)} onChange={(v) => onContentChange("calLink", v)} placeholder="hopfner/workflow-review" />
-          <InspectorInput label="Form Heading" value={s(content.formHeading)} onChange={(v) => onContentChange("formHeading", v)} />
-          <InspectorInput label="Submit Label" value={s(content.submitLabel)} onChange={(v) => onContentChange("submitLabel", v)} />
-        </>
-      )}
+      {sectionType === "booking_scheduler" && (() => {
+        const intakeFields = content.intakeFields && typeof content.intakeFields === "object" && !Array.isArray(content.intakeFields) ? content.intakeFields as Record<string, unknown> : {}
+        const INTAKE_KEYS = ["fullName", "workEmail", "company", "jobTitle", "teamSize", "functionArea", "currentTools", "mainBottleneck", "desiredOutcome90d"] as const
+        const INTAKE_DEFAULTS: Record<string, { label: string; helpText: string }> = {
+          fullName: { label: "Full name", helpText: "" },
+          workEmail: { label: "Work email", helpText: "" },
+          company: { label: "Company", helpText: "" },
+          jobTitle: { label: "Job title", helpText: "" },
+          teamSize: { label: "Team size", helpText: "" },
+          functionArea: { label: "Function area", helpText: "operations, finance, treasury, founder, other" },
+          currentTools: { label: "Current tools", helpText: "" },
+          mainBottleneck: { label: "Main bottleneck", helpText: "" },
+          desiredOutcome90d: { label: "Desired outcome (90 days)", helpText: "" },
+        }
+        return (
+          <>
+            <InspectorInput label="Cal.com Link" value={s(content.calLink)} onChange={(v) => onContentChange("calLink", v)} placeholder="hopfner/workflow-review" />
+            <InspectorInput label="Form Heading" value={s(content.formHeading)} onChange={(v) => onContentChange("formHeading", v)} />
+            <InspectorInput label="Submit Label" value={s(content.submitLabel)} onChange={(v) => onContentChange("submitLabel", v)} />
+            <InspectorDivider label="Intake Fields" />
+            {INTAKE_KEYS.map((key) => {
+              const field = intakeFields[key] && typeof intakeFields[key] === "object" ? intakeFields[key] as Record<string, unknown> : {}
+              const defaults = INTAKE_DEFAULTS[key]
+              return (
+                <CollapsibleGroup key={key} label={key.replace(/([A-Z])/g, " $1").trim()} defaultOpen={false}>
+                  <InspectorInput label="Label" value={s(field.label) || defaults.label} onChange={(v) => onContentChange("intakeFields", { ...intakeFields, [key]: { ...defaults, ...field, label: v } })} />
+                  <InspectorInput label="Help Text" value={s(field.helpText) || defaults.helpText} onChange={(v) => onContentChange("intakeFields", { ...intakeFields, [key]: { ...defaults, ...field, helpText: v } })} />
+                </CollapsibleGroup>
+              )
+            })}
+          </>
+        )
+      })()}
     </>
   )
 }
@@ -465,6 +628,13 @@ export function VisualEditorInspector() {
   const updateFormatting = useCallback((key: string, value: unknown) => {
     if (!selectedNode || !effectiveDraft || !originalDraft) return
     const newFormatting = { ...effectiveDraft.formatting, [key]: value }
+    const newDraft: EditorDraft = { ...effectiveDraft, formatting: normalizeFormatting(newFormatting as unknown as Record<string, unknown>) }
+    setDirtyDraft(selectedNode.sectionId, newDraft, originalDraft)
+  }, [selectedNode, effectiveDraft, originalDraft, setDirtyDraft])
+
+  const updateFormattingBatch = useCallback((updates: Record<string, unknown>) => {
+    if (!selectedNode || !effectiveDraft || !originalDraft) return
+    const newFormatting = { ...effectiveDraft.formatting, ...updates }
     const newDraft: EditorDraft = { ...effectiveDraft, formatting: normalizeFormatting(newFormatting as unknown as Record<string, unknown>) }
     setDirtyDraft(selectedNode.sectionId, newDraft, originalDraft)
   }, [selectedNode, effectiveDraft, originalDraft, setDirtyDraft])
@@ -522,22 +692,7 @@ export function VisualEditorInspector() {
         <div className="px-3 py-2 border-b border-[var(--mantine-color-dark-4)]">
           <span className="text-xs font-semibold text-[var(--mantine-color-dimmed)] uppercase tracking-wider">Inspector</span>
         </div>
-        {pageState && (
-          <div className="px-3 py-2.5 border-b border-[var(--mantine-color-dark-4)] space-y-1.5">
-            <div className="text-[10px] font-medium text-[var(--mantine-color-dimmed)] uppercase tracking-wider">Page</div>
-            <div className="text-xs font-medium text-[var(--mantine-color-text)]">{pageState.pageTitle}</div>
-            <div className="text-[10px] text-[var(--mantine-color-dimmed)]">/{pageState.pageSlug}</div>
-            <div className="text-[10px] text-[var(--mantine-color-dimmed)]">
-              {pageState.sections.length} section{pageState.sections.length !== 1 ? "s" : ""}
-              {pageState.sections.filter(s => s.isGlobal).length > 0 && (
-                <span> ({pageState.sections.filter(s => s.isGlobal).length} global)</span>
-              )}
-            </div>
-          </div>
-        )}
-        <div className="flex-1 flex items-center justify-center text-xs text-[var(--mantine-color-dimmed)] px-6 text-center leading-relaxed">
-          Select a section to inspect and edit.
-        </div>
+        <PagePanelInline />
       </div>
     )
   }
@@ -556,24 +711,31 @@ export function VisualEditorInspector() {
   // ---------------------------------------------------------------------------
   if (selectedNode.isGlobal) {
     return (
-      <div className="w-72 border-l border-[var(--mantine-color-dark-4)] bg-[var(--mantine-color-dark-7)] flex flex-col shrink-0">
+      <div className="w-72 border-l border-[var(--mantine-color-dark-4)] bg-[var(--mantine-color-dark-7)] flex flex-col shrink-0 overflow-hidden">
         <div className="px-3 py-2 border-b border-[var(--mantine-color-dark-4)]">
           <span className="text-xs font-semibold text-[var(--mantine-color-dimmed)] uppercase tracking-wider">Inspector</span>
         </div>
-        <div className="p-3 space-y-3">
-          <div className="text-sm font-medium text-[var(--mantine-color-text)] capitalize">{typeLabel}</div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded bg-blue-500/10 border border-blue-500/20">
-            <IconWorld size={14} className="text-blue-400 shrink-0" />
-            <span className="text-xs text-blue-300">Global section shared across pages.</span>
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <GlobalSectionPanel node={selectedNode} />
+          <div className="border-t border-[var(--mantine-color-dark-4)] pt-3">
+            <HistoryPanel sectionId={selectedNode.sectionId} />
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded bg-yellow-500/10 border border-yellow-500/20">
-            <IconLock size={14} className="text-yellow-400 shrink-0" />
-            <span className="text-xs text-yellow-300">Edit from the global section editor.</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (selectedNode.isCustomComposed) {
+    return (
+      <div className="w-72 border-l border-[var(--mantine-color-dark-4)] bg-[var(--mantine-color-dark-7)] flex flex-col shrink-0 overflow-hidden">
+        <div className="px-3 py-2 border-b border-[var(--mantine-color-dark-4)]">
+          <span className="text-xs font-semibold text-[var(--mantine-color-dimmed)] uppercase tracking-wider">Inspector</span>
+        </div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <ComposedSectionPanel node={selectedNode} />
+          <div className="border-t border-[var(--mantine-color-dark-4)] pt-3">
+            <HistoryPanel sectionId={selectedNode.sectionId} />
           </div>
-          <Link href="/admin/global-sections"
-            className="flex items-center justify-center gap-1.5 w-full px-3 py-2 text-xs font-medium rounded border border-[var(--mantine-color-dark-4)] text-[var(--mantine-color-text)] hover:bg-[var(--mantine-color-dark-6)] transition-colors">
-            Open global sections <IconArrowRight size={12} />
-          </Link>
         </div>
       </div>
     )
@@ -621,7 +783,25 @@ export function VisualEditorInspector() {
         </div>
 
         {/* Preset */}
-        <PresetSelector sectionType={selectedNode.sectionType} currentKey={f.sectionPresetKey ?? ""} onChange={(v) => updateFormatting("sectionPresetKey", v)} />
+        <PresetSelector sectionType={selectedNode.sectionType} currentKey={f.sectionPresetKey ?? ""} onChange={(key) => {
+          const preset = pageState?.presets?.[key]
+          updateFormattingBatch({
+            sectionPresetKey: key,
+            ...(preset ? {
+              sectionRhythm: preset.presentation.rhythm,
+              sectionSurface: preset.presentation.surface,
+              contentDensity: preset.presentation.density,
+              gridGap: preset.presentation.gridGap,
+              headingTreatment: preset.presentation.headingTreatment,
+              labelStyle: preset.presentation.labelStyle,
+              dividerMode: preset.presentation.dividerMode,
+              subtitleSize: preset.presentation.subtitleSize ?? "",
+              cardFamily: preset.component?.family ?? "",
+              cardChrome: preset.component?.chrome ?? "",
+              accentRule: preset.component?.accentRule ?? "",
+            } : {}),
+          })
+        }} />
 
         {/* ── CONTENT ── */}
         <CollapsibleGroup label="Content" defaultOpen>
@@ -653,7 +833,7 @@ export function VisualEditorInspector() {
               </>
             )}
             {metaVisibility.backgroundMedia && (
-              <InspectorInput label="Background Media URL" value={effectiveDraft.meta.backgroundMediaUrl} onChange={(v) => updateMeta("backgroundMediaUrl", v)} placeholder="/images/bg.jpg" />
+              <MediaField label="Background Media" value={effectiveDraft.meta.backgroundMediaUrl} onChange={(v) => updateMeta("backgroundMediaUrl", v)} />
             )}
           </CollapsibleGroup>
         )}
@@ -682,7 +862,7 @@ export function VisualEditorInspector() {
             <InspectorSelect label="Shadow" value={f.shadowMode} options={SHADOW_MODE_OPTIONS} onChange={(v) => updateFormatting("shadowMode", v)} />
             <InspectorSelect label="Inner Shadow" value={f.innerShadowMode} options={SHADOW_MODE_OPTIONS} onChange={(v) => updateFormatting("innerShadowMode", v)} />
             {f.innerShadowMode === "on" && (
-              <InspectorSlider label="Strength" value={f.innerShadowStrength} min={0} max={1.8} step={0.1} onChange={(v) => updateFormatting("innerShadowStrength", v)} />
+              <InspectorSlider label="Strength" value={f.innerShadowStrength} min={0} max={1.8} step={0.05} onChange={(v) => updateFormatting("innerShadowStrength", v)} />
             )}
           </CollapsibleGroup>
         )}
@@ -714,6 +894,11 @@ export function VisualEditorInspector() {
               Open form editor <IconArrowRight size={12} />
             </Link>
           </div>
+        </CollapsibleGroup>
+
+        {/* ── HISTORY ── */}
+        <CollapsibleGroup label="History" defaultOpen={false}>
+          <HistoryPanel sectionId={selectedNode.sectionId} />
         </CollapsibleGroup>
       </div>
 

@@ -59,6 +59,8 @@ export type VisualPageState = {
   capabilities: Record<string, SectionCapability>
   tailwindWhitelist: Set<string>
   customTypeRegistry: Set<string>
+  /** Composer schemas for custom/composed section types (keyed by section_type) */
+  composerSchemas: Record<string, unknown>
 }
 
 // ---------------------------------------------------------------------------

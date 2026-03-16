@@ -44,6 +44,15 @@ export type VisualEditorStoreValue = {
 
   viewport: "desktop" | "tablet" | "mobile"
   setViewport: (vp: "desktop" | "tablet" | "mobile") => void
+
+  undo: () => void
+  redo: () => void
+  canUndo: boolean
+  canRedo: boolean
+
+  /** Unsaved page-level settings draft for live preview */
+  pageSettingsDraft: { bgImageUrl: string; formattingOverride: Record<string, unknown> } | null
+  setPageSettingsDraft: (draft: { bgImageUrl: string; formattingOverride: Record<string, unknown> } | null) => void
 }
 
 // ---------------------------------------------------------------------------

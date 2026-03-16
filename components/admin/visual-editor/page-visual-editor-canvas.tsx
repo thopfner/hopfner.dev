@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useEffect } from "react"
+import { useMemo, useRef, useEffect } from "react"
 import { useVisualEditorStore } from "./page-visual-editor-store"
 import { VisualSectionNodeView } from "./page-visual-editor-node"
 import type { VisualSectionNode } from "./page-visual-editor-types"
@@ -10,6 +10,23 @@ const VIEWPORT_WIDTHS = {
   tablet: "768px",
   mobile: "375px",
 } as const
+
+/**
+ * Scroll a target element into view within a specific scroll container.
+ * Does NOT use element.scrollIntoView — that can escape to the wrong container.
+ */
+export function scrollContainerToElement(
+  container: HTMLElement,
+  target: HTMLElement,
+  behavior: ScrollBehavior = "smooth"
+) {
+  const containerRect = container.getBoundingClientRect()
+  const targetRect = target.getBoundingClientRect()
+  const relativeTop = targetRect.top - containerRect.top + container.scrollTop
+  const targetCenter = relativeTop - containerRect.height / 2 + targetRect.height / 2
+
+  container.scrollTo({ top: Math.max(0, targetCenter), behavior })
+}
 
 export function VisualEditorCanvas() {
   const { pageState, sectionOrder, viewport, selection } = useVisualEditorStore()
@@ -25,12 +42,12 @@ export function VisualEditorCanvas() {
 
   const canvasWidth = VIEWPORT_WIDTHS[viewport]
 
-  // Auto-scroll to selected section
+  // Auto-scroll: explicit canvas-container scroll when selection changes
   useEffect(() => {
     if (!selection?.sectionId || !canvasRef.current) return
-    const el = canvasRef.current.querySelector(`[data-section-id="${selection.sectionId}"]`)
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    const target = canvasRef.current.querySelector(`[data-section-id="${selection.sectionId}"]`) as HTMLElement | null
+    if (target) {
+      scrollContainerToElement(canvasRef.current, target)
     }
   }, [selection?.sectionId])
 

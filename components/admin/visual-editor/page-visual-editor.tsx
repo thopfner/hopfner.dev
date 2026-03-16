@@ -31,6 +31,7 @@ export function PageVisualEditor({ pageId }: { pageId: string }) {
   const [saveStatus, setSaveStatusRaw] = useState<VisualEditorSaveStatus>("idle")
   const [saveError, setSaveError] = useState<string | null>(null)
   const [viewport, setViewport] = useState<"desktop" | "tablet" | "mobile">("desktop")
+  const [pageSettingsDraft, setPageSettingsDraft] = useState<{ bgImageUrl: string; formattingOverride: Record<string, unknown> } | null>(null)
 
   // Auto-clear save status after delay
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -273,12 +274,19 @@ export function PageVisualEditor({ pageId }: { pageId: string }) {
     setSaveStatus,
     viewport,
     setViewport,
+    undo,
+    redo,
+    canUndo: undoStackRef.current.length > 0,
+    canRedo: redoStackRef.current.length > 0,
+    pageSettingsDraft,
+    setPageSettingsDraft,
   }), [
     pageState, loading, error, loadData,
     selection, setSelection, sectionOrder, setSectionOrder, orderDirty,
     dirtyStates, getDirtyDraft, setDirtyDraft, clearDirtyDraft, isSectionDirty,
     saveStatus, saveError, setSaveStatus,
-    viewport,
+    viewport, undo, redo,
+    pageSettingsDraft, setPageSettingsDraft,
   ])
 
   // ---------------------------------------------------------------------------
@@ -286,7 +294,7 @@ export function PageVisualEditor({ pageId }: { pageId: string }) {
   // ---------------------------------------------------------------------------
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[var(--mantine-color-dark-8)]">
+      <div className="flex items-center justify-center h-[calc(100dvh-56px)] bg-[var(--mantine-color-dark-8)]">
         <div className="text-center space-y-3">
           <div className="animate-spin w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full mx-auto" />
           <p className="text-sm text-[var(--mantine-color-dimmed)]">Loading visual editor...</p>
@@ -297,7 +305,7 @@ export function PageVisualEditor({ pageId }: { pageId: string }) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[var(--mantine-color-dark-8)]">
+      <div className="flex items-center justify-center h-[calc(100dvh-56px)] bg-[var(--mantine-color-dark-8)]">
         <div className="text-center space-y-3 max-w-md px-6">
           <p className="text-sm text-red-400 font-medium">Failed to load page</p>
           <p className="text-xs text-[var(--mantine-color-dimmed)]">{error}</p>
@@ -318,7 +326,9 @@ export function PageVisualEditor({ pageId }: { pageId: string }) {
   // ---------------------------------------------------------------------------
   return (
     <VisualEditorContext.Provider value={storeValue}>
-      <div className="flex flex-col h-screen overflow-hidden bg-[var(--mantine-color-dark-8)]">
+      {/* Negative margin to counteract admin shell padding */}
+      <div className="-m-3 sm:-m-[18px]">
+      <div className="flex flex-col h-[calc(100dvh-56px)] overflow-hidden bg-[var(--mantine-color-dark-8)]">
         <VisualEditorToolbar />
         <div className="flex flex-1 overflow-hidden">
           <VisualEditorStructure />
@@ -334,6 +344,7 @@ export function PageVisualEditor({ pageId }: { pageId: string }) {
           onConfirm={confirmSelectionChange}
         />
       )}
+    </div>
     </VisualEditorContext.Provider>
   )
 }

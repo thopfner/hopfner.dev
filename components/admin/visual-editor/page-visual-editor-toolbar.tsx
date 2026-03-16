@@ -17,12 +17,17 @@ import {
   IconDeviceFloppy,
   IconUpload,
   IconTrash,
+  IconPlus,
+  IconArrowBackUp,
+  IconArrowForwardUp,
 } from "@tabler/icons-react"
 import { createClient } from "@/lib/supabase/browser"
 import { FloatingSurface } from "./floating-surface"
+import { SectionLibrary } from "./page-visual-editor-section-library"
 import { useVisualEditorStore } from "./page-visual-editor-store"
 import { useVisualSectionPersistence } from "./use-visual-section-persistence"
 import { useSelectedSectionActions } from "./use-selected-section-actions"
+import { usePageCompositionActions } from "./use-page-composition-actions"
 import { formatType } from "@/components/admin/section-editor/payload"
 
 // ---------------------------------------------------------------------------
@@ -137,10 +142,14 @@ function PageChooser({ currentPageId, currentTitle }: {
 // ---------------------------------------------------------------------------
 
 export function VisualEditorToolbar() {
-  const { pageState, viewport, setViewport, orderDirty, sectionOrder, saveStatus, saveError, setSaveStatus, reload } = useVisualEditorStore()
+  const { pageState, viewport, setViewport, orderDirty, sectionOrder, saveStatus, saveError, setSaveStatus, reload, undo, redo, canUndo, canRedo } = useVisualEditorStore()
   const { saveOrder } = useVisualSectionPersistence(pageState)
   const { selectedNode, isDirty, handleSave, handlePublish, handleDiscard } = useSelectedSectionActions()
+  const { addSection } = usePageCompositionActions()
   const [savingOrder, setSavingOrder] = useState(false)
+  const [addLibOpen, setAddLibOpen] = useState(false)
+  const addBtnRef = useRef<HTMLButtonElement>(null)
+  const [addAnchorRect, setAddAnchorRect] = useState<DOMRect | null>(null)
 
   const handleSaveOrder = useCallback(async () => {
     setSavingOrder(true)
@@ -184,9 +193,34 @@ export function VisualEditorToolbar() {
         >
           <IconExternalLink size={11} />
         </Link>
+        <div className="w-px h-4 bg-[var(--mantine-color-dark-4)] shrink-0" />
+        <button
+          ref={addBtnRef}
+          type="button"
+          onClick={() => { if (addBtnRef.current) setAddAnchorRect(addBtnRef.current.getBoundingClientRect()); setAddLibOpen(true) }}
+          className="flex items-center gap-1 text-[10px] font-medium text-blue-300 hover:text-blue-200 transition-colors shrink-0"
+        >
+          <IconPlus size={12} />
+          Add
+        </button>
+        <SectionLibrary
+          onSelect={(type) => addSection(type)}
+          anchorRect={addAnchorRect}
+          open={addLibOpen}
+          onClose={() => setAddLibOpen(false)}
+        />
       </div>
 
-      {/* Center: viewport switcher */}
+      {/* Center: undo/redo + viewport switcher */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0.5">
+          <button type="button" onClick={undo} disabled={!canUndo} className="p-1 rounded text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Undo (⌘Z)">
+            <IconArrowBackUp size={15} />
+          </button>
+          <button type="button" onClick={redo} disabled={!canRedo} className="p-1 rounded text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Redo (⌘⇧Z)">
+            <IconArrowForwardUp size={15} />
+          </button>
+        </div>
       <div className="flex items-center gap-0.5 rounded-md border border-[var(--mantine-color-dark-4)] p-0.5 bg-[var(--mantine-color-dark-8)]">
         {([
           { value: "desktop" as const, icon: IconDeviceDesktop },
@@ -207,6 +241,7 @@ export function VisualEditorToolbar() {
             <Icon size={14} />
           </button>
         ))}
+      </div>
       </div>
 
       {/* Right: section actions + status */}
