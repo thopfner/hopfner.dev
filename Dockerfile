@@ -10,9 +10,38 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js inlines NEXT_PUBLIC_* at build time — export them from .env.local
-# Use grep/eval to handle values that contain spaces or special characters
-RUN set -a && eval "$(grep -v '^\s*#' .env.local | sed '/^\s*$/d')" && npm run build
+# Constrain V8 heap for resource-limited Docker VMs (Colima, Docker Desktop).
+# Default 1024 MB is safe for 4 GB VMs; override via --build-arg NODE_HEAP_MB=2048.
+ARG NODE_HEAP_MB=1024
+ENV NODE_OPTIONS="--max-old-space-size=${NODE_HEAP_MB}"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Next.js inlines NEXT_PUBLIC_* at build time — export them from .env.local.
+# Exit-code wrapper distinguishes OOM kills (137) from source/config errors.
+RUN set -a \
+    && eval "$(grep -v '^\s*#' .env.local | sed '/^\s*$/d')" \
+    && npm run build \
+    ; rc=$? \
+    ; if [ $rc -ne 0 ]; then \
+        echo "" ; \
+        if [ $rc -eq 137 ] || [ $rc -eq 9 ]; then \
+          echo "================================================================" ; \
+          echo "BUILD KILLED (exit $rc) — out of memory" ; \
+          echo "The Next.js build worker was SIGKILL'd by the kernel OOM killer." ; \
+          echo "This is an environment/resource issue, NOT a source-code error." ; \
+          echo "" ; \
+          echo "Fixes:" ; \
+          echo "  colima : colima stop && colima start --memory 6" ; \
+          echo "  Desktop: Settings > Resources > increase Memory" ; \
+          echo "  Or:      docker compose build --build-arg NODE_HEAP_MB=768" ; \
+          echo "================================================================" ; \
+        else \
+          echo "================================================================" ; \
+          echo "BUILD FAILED (exit $rc) — review TypeScript / webpack errors above" ; \
+          echo "================================================================" ; \
+        fi ; \
+        exit $rc ; \
+      fi
 
 # Stage 3: Production runner
 FROM node:20-alpine AS runner

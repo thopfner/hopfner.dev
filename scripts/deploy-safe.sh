@@ -22,6 +22,13 @@ fi
 
 echo "[$(date -u +%FT%TZ)] starting safe deploy for ${APP_NAME}"
 
+# Preflight: ensure node_modules matches the current lockfile.
+# Prevents "module not found" failures after git pull changes dependencies.
+if [ ! -d node_modules ] || [ package-lock.json -nt node_modules/.package-lock.json ]; then
+  echo "[$(date -u +%FT%TZ)] node_modules stale or missing — running npm ci"
+  npm ci
+fi
+
 rm -rf .next
 npm run build
 systemctl restart "${APP_NAME}.service"

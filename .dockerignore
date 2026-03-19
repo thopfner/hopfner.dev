@@ -2,8 +2,14 @@ node_modules
 .next
 .git
 enhancements_v*
+admin_enhancements_v*
+visual-editor_v*
 fine_tuning_v*.md
 formatting_readme.md
+screencapture-*
 *.md
 !package.json
 .env
+tests
+_server-config
+scripts
