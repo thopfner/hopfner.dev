@@ -86,6 +86,7 @@ import type { MediaItem } from "@/lib/media/types"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError } from "@/lib/cms/editor-error-message"
 import { VISUAL_EDITOR_ENABLED } from "@/components/admin/visual-editor/feature-flag"
+import { WorkspaceHeader, PageWorkspaceModeTabs } from "@/components/admin/ui"
 
 async function getImageSize(file: File): Promise<{ width?: number; height?: number }> {
   if (!file.type.startsWith("image/")) return {}
@@ -885,32 +886,24 @@ function ConfirmModal({
 
 function PageEditorHeader({ page }: { page: CmsPageRow | null }) {
   return (
-    <Group justify="space-between" align="start" wrap="wrap" gap="xs">
-      <div>
-        <Title order={2} size="h3">
-          Page Editor
-        </Title>
-        <Text c="dimmed" size="sm" style={{ lineHeight: 1.6 }}>
-          {page ? (
-            <>
-              Editing <b>{page.title}</b> (<code>{page.slug}</code>)
-            </>
-          ) : (
-            "Loading…"
-          )}
-        </Text>
-      </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        {VISUAL_EDITOR_ENABLED && (
-          <Button size="sm" variant="light" component={Link} href={`/admin/pages/${page?.id}/visual`}>
-            Visual editor
-          </Button>
-        )}
-        <Button size="sm" variant="default" component={Link} href="/admin">
-          Back
-        </Button>
-      </div>
-    </Group>
+    <WorkspaceHeader
+      title={page ? `${page.title}` : "Page Editor"}
+      backHref="/admin"
+      backLabel="Back to pages"
+      status={
+        page ? (
+          <>
+            <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+              /{page.slug}
+            </Typography>
+            {VISUAL_EDITOR_ENABLED && (
+              <PageWorkspaceModeTabs pageId={page.id} activeMode="form" />
+            )}
+          </>
+        ) : undefined
+      }
+      sx={{ mx: -2, mt: -2, mb: 1 }}
+    />
   )
 }
 

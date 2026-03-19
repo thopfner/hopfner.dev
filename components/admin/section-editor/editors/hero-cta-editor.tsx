@@ -29,6 +29,12 @@ import { HeroTrustItemRow } from "./hero-trust-item-row"
 import { HeroStatRow } from "./hero-stat-row"
 import { HeroProofPanelRow } from "./hero-proof-panel-row"
 import { useBufferedField } from "../hooks/use-buffered-field"
+import {
+  ALL_BLOCK_KEYS,
+  type BlockKey,
+  BLOCK_LABELS,
+  resolveHeroBlockOrder,
+} from "@/lib/admin/hero-block-order"
 
 const HERO_LAYOUT_OPTIONS = [
   { value: "centered", label: "Centered" },
@@ -49,17 +55,6 @@ const HERO_MOCKUP_VARIANT_OPTIONS = [
   { value: "terminal", label: "Terminal" },
 ] as const
 
-const ALL_BLOCK_KEYS = ["ctas", "stats", "trust"] as const
-type BlockKey = (typeof ALL_BLOCK_KEYS)[number]
-const BLOCK_LABELS: Record<BlockKey, string> = { ctas: "CTAs", stats: "Stats", trust: "Trust" }
-
-function resolveBlockOrder(raw: string[]): BlockKey[] {
-  const valid = raw.filter((k): k is BlockKey => (ALL_BLOCK_KEYS as readonly string[]).includes(k))
-  for (const k of ALL_BLOCK_KEYS) {
-    if (!valid.includes(k)) valid.push(k)
-  }
-  return valid
-}
 
 export function HeroCtaEditor({ content, onContentChange, setContentPath, loading }: ContentEditorProps) {
   const heroBullets = asArray<string>(content.bullets)
@@ -71,14 +66,14 @@ export function HeroCtaEditor({ content, onContentChange, setContentPath, loadin
   const heroStats = asArray<Record<string, unknown>>(content.heroStats)
 
   // --- Content block order ---
-  const blockOrder = resolveBlockOrder(asStringArray(content.heroContentOrder))
+  const blockOrder = resolveHeroBlockOrder(asStringArray(content.heroContentOrder))
   const blockSides = asRecord(content.heroContentSides) as Record<string, string>
   const isSplitLayout = heroLayoutVariant === "split" || heroLayoutVariant === "split_reversed"
 
   const moveBlock = useCallback(
     (from: number, to: number) => {
       onContentChange((c) => {
-        const order = resolveBlockOrder(asStringArray(c.heroContentOrder))
+        const order = resolveHeroBlockOrder(asStringArray(c.heroContentOrder))
         const [item] = order.splice(from, 1)
         order.splice(to, 0, item)
         return { ...c, heroContentOrder: order }

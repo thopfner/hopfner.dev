@@ -35,6 +35,7 @@ import { ComposedSectionPanel } from "./page-visual-editor-composed-section-pane
 import { MediaField } from "./page-visual-editor-media-field"
 import { TipTapJsonEditor } from "@/components/admin/section-editor/fields/tiptap-json-editor"
 import type { VisualSectionNode } from "./page-visual-editor-types"
+import { resolveHeroBlockOrder, BLOCK_LABELS } from "@/lib/admin/hero-block-order"
 
 // ---------------------------------------------------------------------------
 // Option sets (matching form editor)
@@ -359,22 +360,45 @@ function SectionContentPanel({ sectionType, content, onContentChange }: {
             </>
           )}
           <InspectorDivider label="Content Block Order" />
-          <ContentArrayEditor label="Block Order" items={strArr(content.heroContentOrder).map((t) => ({ key: t }))}
-            fields={[{ key: "key", label: "Block key (ctas/stats/trust)" }]}
-            onUpdate={(items) => onContentChange("heroContentOrder", items.map((i) => i.key))} />
-          {(s(content.layoutVariant) === "split" || s(content.layoutVariant) === "split_reversed") && strArr(content.heroContentOrder).length > 0 && (
-            <>
-              <InspectorDivider label="Block Sides" />
-              {strArr(content.heroContentOrder).map((key) => {
-                const sides = content.heroContentSides && typeof content.heroContentSides === "object" ? content.heroContentSides as Record<string, unknown> : {}
-                return (
-                  <InspectorSelect key={key} label={`${key} side`} value={s(sides[key]) || "left"}
-                    options={[{ value: "left", label: "Left" }, { value: "right", label: "Right" }]}
-                    onChange={(v) => onContentChange("heroContentSides", { ...sides, [key]: v })} />
-                )
-              })}
-            </>
-          )}
+          {(() => {
+            const order = resolveHeroBlockOrder(strArr(content.heroContentOrder))
+            const sides = content.heroContentSides && typeof content.heroContentSides === "object"
+              ? content.heroContentSides as Record<string, unknown> : {}
+            const isSplit = s(content.layoutVariant) === "split" || s(content.layoutVariant) === "split_reversed"
+            const move = (idx: number, dir: -1 | 1) => {
+              const target = idx + dir
+              if (target < 0 || target >= order.length) return
+              const next = [...order]
+              ;[next[idx], next[target]] = [next[target], next[idx]]
+              onContentChange("heroContentOrder", next)
+            }
+            return (
+              <div className="space-y-1">
+                {order.map((key, idx) => (
+                  <div key={key} className="flex items-center gap-1.5 px-2 py-1.5 rounded border border-[var(--mantine-color-dark-4)] bg-[var(--mantine-color-dark-6)]">
+                    <div className="flex items-center gap-0.5">
+                      <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0}
+                        className="text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30">
+                        <IconArrowUp size={12} />
+                      </button>
+                      <button type="button" onClick={() => move(idx, 1)} disabled={idx === order.length - 1}
+                        className="text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30">
+                        <IconArrowDown size={12} />
+                      </button>
+                    </div>
+                    <span className="flex-1 text-[11px] font-medium text-[var(--mantine-color-text)]">
+                      {BLOCK_LABELS[key]}
+                    </span>
+                    {isSplit && (
+                      <InspectorSelect label="" value={s(sides[key]) || "left"}
+                        options={[{ value: "left", label: "L" }, { value: "right", label: "R" }]}
+                        onChange={(v) => onContentChange("heroContentSides", { ...sides, [key]: v })} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
         </>
       )}
 

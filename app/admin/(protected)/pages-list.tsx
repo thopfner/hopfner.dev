@@ -28,7 +28,7 @@ import {
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 
-import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
+import { AdminPanel, AdminEmptyState, AdminErrorState, AdminLoadingState, CollectionPageHeader, CollectionToolbar, ADMIN_SURFACES, ADMIN_BORDERS, ADMIN_BLUR } from "@/components/admin/ui"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError, toEditorErrorMessage } from "@/lib/cms/editor-error-message"
 
@@ -332,34 +332,14 @@ export function PagesList() {
   }, [pages, search, sortMode])
 
   return (
-    <Stack spacing={2.25}>
-      <AdminPageHeader
+    <Stack spacing={2}>
+      <CollectionPageHeader
         title="Pages"
         description="Manage pages and their sections. Public site renders only published section versions."
-        sx={{
-          p: { xs: 1.5, sm: 2 },
-          border: "1px solid",
-          borderColor: "rgba(140,157,255,0.22)",
-          borderRadius: 2,
-          background: "linear-gradient(140deg, rgba(16,24,39,0.78), rgba(10,15,27,0.68))",
-          backdropFilter: "blur(6px)",
-        }}
-      />
-
-      <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-          <Stack spacing={0.25}>
-            <Typography variant="body2" fontWeight={700}>
-              Page creation
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Open the Create Page sidebar to add a new page without disrupting list context.
-            </Typography>
-          </Stack>
+        actions={
           <Button
             variant="contained"
             size="small"
-            color="primary"
             onClick={() => {
               setCreateError(null)
               setCreateDrawerOpen(true)
@@ -367,53 +347,44 @@ export function PagesList() {
           >
             Create page
           </Button>
-        </Box>
-      </AdminPanel>
+        }
+      />
 
-      {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
+      {error && <AdminErrorState message={error} />}
 
-      <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
-        <Stack spacing={1.5}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 1.25, pb: 0.25, borderBottom: "1px solid", borderColor: "rgba(140,157,255,0.14)" }}>
-            <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-              <Typography fontWeight={700} variant="body2">
-                All pages
-              </Typography>
-              <Chip size="small" variant="outlined" label={`Total: ${pages.length}`} />
-              <Chip size="small" color="success" variant="outlined" label={`Published: ${publishedCount}`} />
-              <Chip size="small" color="warning" variant="outlined" label={`Unpublished: ${unpublishedCount}`} />
-            </Box>
-            <Button
-              size="small"
-              variant="contained"
-              color="secondary"
-              onClick={() => setPublishAllOpen(true)}
-              disabled={loading || !pages.length}
-            >
-              Publish All
-            </Button>
-          </Box>
+      <CollectionToolbar>
+        <TextField
+          label="Search"
+          placeholder="Search pages…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          size="small"
+          sx={{ flex: "1 1 240px", minWidth: 0 }}
+        />
+        <Chip size="small" variant="outlined" label={`Total: ${pages.length}`} />
+        <Chip size="small" color="success" variant="outlined" label={`Published: ${publishedCount}`} />
+        <Chip size="small" color="warning" variant="outlined" label={`Unpublished: ${unpublishedCount}`} />
+        <Button size="small" variant="outlined" startIcon={<MoreVertIcon fontSize="small" />} onClick={() => setFilterDialogOpen(true)}>
+          Filters
+        </Button>
+        <Button
+          size="small"
+          variant="contained"
+          color="secondary"
+          onClick={() => setPublishAllOpen(true)}
+          disabled={loading || !pages.length}
+        >
+          Publish All
+        </Button>
+      </CollectionToolbar>
 
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.25 }}>
-            <TextField
-              label="Search"
-              placeholder="Search pages…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              size="small"
-              sx={{ flex: "1 1 240px", minWidth: 0 }}
-            />
-            <Button size="small" variant="outlined" startIcon={<MoreVertIcon fontSize="small" />} onClick={() => setFilterDialogOpen(true)}>
-              Filters
-            </Button>
-          </Box>
-
+      <AdminPanel sx={{ p: 0 }}>
           <TableContainer
             sx={{
               border: "1px solid",
               borderColor: "divider",
               borderRadius: 1.5,
-              background: "rgba(10,15,27,0.56)",
+              background: ADMIN_SURFACES.inset,
               display: { xs: "none", sm: "block" },
             }}
           >
@@ -431,14 +402,12 @@ export function PagesList() {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5}>
-                      <Typography variant="body2" color="text.secondary">
-                        Loading…
-                      </Typography>
+                      <AdminLoadingState />
                     </TableCell>
                   </TableRow>
                 ) : filteredPages.length ? (
                   filteredPages.map((p) => (
-                    <TableRow key={p.id} hover sx={{ "& td": { borderColor: "rgba(140,157,255,0.12)" } }}>
+                    <TableRow key={p.id} hover>
                       <TableCell>
                         <Typography variant="body2" fontWeight={700} sx={{ wordBreak: "break-word" }}>
                           {p.slug}
@@ -476,9 +445,7 @@ export function PagesList() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5}>
-                      <Typography variant="body2" color="text.secondary">
-                        No pages match current search.
-                      </Typography>
+                      <AdminEmptyState title="No pages found" description="No pages match your current search." />
                     </TableCell>
                   </TableRow>
                 )}
@@ -486,14 +453,12 @@ export function PagesList() {
             </Table>
           </TableContainer>
 
-          <Stack spacing={1} sx={{ display: { xs: "flex", sm: "none" } }}>
+          <Stack spacing={1} sx={{ display: { xs: "flex", sm: "none" }, p: 1.25 }}>
             {loading ? (
-              <Typography variant="body2" color="text.secondary">
-                Loading…
-              </Typography>
+              <AdminLoadingState />
             ) : filteredPages.length ? (
               filteredPages.map((p) => (
-                <Paper key={p.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2, background: "rgba(10,15,27,0.56)", borderColor: "rgba(140,157,255,0.24)" }}>
+                <Paper key={p.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2, background: ADMIN_SURFACES.inset, borderColor: ADMIN_BORDERS.default }}>
                   <Stack spacing={0.75}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "flex-start" }}>
                       <Box sx={{ minWidth: 0 }}>
@@ -525,12 +490,9 @@ export function PagesList() {
                 </Paper>
               ))
             ) : (
-              <Typography variant="body2" color="text.secondary">
-                No pages match current search.
-              </Typography>
+              <AdminEmptyState title="No pages found" description="No pages match your current search." />
             )}
           </Stack>
-        </Stack>
       </AdminPanel>
 
       <Drawer
@@ -555,9 +517,9 @@ export function PagesList() {
             width: { xs: "100%", sm: 420 },
             p: 2,
             borderLeft: "1px solid",
-            borderColor: "rgba(140,157,255,0.22)",
-            background: "rgba(10,15,27,0.94)",
-            backdropFilter: "blur(6px)",
+            borderColor: ADMIN_BORDERS.default,
+            background: ADMIN_SURFACES.overlay,
+            backdropFilter: ADMIN_BLUR.overlay,
           },
         }}
       >

@@ -238,8 +238,9 @@ describe("Gap 1: hero_cta heroContentSides (split layout block assignment)", () 
     expect(inspectorSource).toContain("heroContentSides")
   })
 
-  it("shows Block Sides divider for split layouts", () => {
-    expect(inspectorSource).toContain('"Block Sides"')
+  it("side selects are inline per block row (no separate divider)", () => {
+    // v23 moved side controls inline — no "Block Sides" divider
+    expect(inspectorSource).not.toContain('"Block Sides"')
   })
 
   it("only renders side selects when layout is split or split_reversed", () => {
@@ -248,8 +249,8 @@ describe("Gap 1: hero_cta heroContentSides (split layout block assignment)", () 
   })
 
   it("offers left/right options per block", () => {
-    expect(inspectorSource).toMatch(/value: "left".*label: "Left"/)
-    expect(inspectorSource).toMatch(/value: "right".*label: "Right"/)
+    expect(inspectorSource).toMatch(/value: "left".*label: "L"/)
+    expect(inspectorSource).toMatch(/value: "right".*label: "R"/)
   })
 })
 

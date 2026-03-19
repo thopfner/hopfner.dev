@@ -48,7 +48,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { IconArrowsMaximize, IconTrash } from "@tabler/icons-react"
 
 import { MediaLibraryModal } from "@/components/media-library-modal"
-import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
+import { AdminPanel, AdminLoadingState, AdminEmptyState, ADMIN_SURFACES, ADMIN_BORDERS, WorkspaceHeader } from "@/components/admin/ui"
 import {
   AdminActionIcon as ActionIcon,
   normalizeSelectData,
@@ -1397,25 +1397,24 @@ export function SectionLibraryPage() {
 
   return (
     <Stack gap="md">
-      <AdminPageHeader
+      <WorkspaceHeader
         title="Section Library"
-        description="Preview built-in section types and compose custom reusable sections for pages and globals."
+        actions={
+          <Button size="xs" variant="light" onClick={() => setCreateOpen(true)}>
+            New custom type
+          </Button>
+        }
       />
 
-      <AdminPanel compact>
-        <Stack gap="sm">
-          <Group justify="space-between" align="center">
-            <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>
-              <Tabs.List>
-                <Tabs.Tab value="catalog">Catalog</Tabs.Tab>
-                <Tabs.Tab value="composer">Composer</Tabs.Tab>
-              </Tabs.List>
-            </Tabs>
-            <Button onClick={() => setCreateOpen(true)}>New custom section type</Button>
-          </Group>
+      <AdminPanel>
+        <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>
+          <Tabs.List>
+            <Tabs.Tab value="catalog">Catalog</Tabs.Tab>
+            <Tabs.Tab value="composer">Composer</Tabs.Tab>
+          </Tabs.List>
 
           {activeTab === "catalog" ? (
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.25 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.25, pt: 1.5 }}>
               <TextField
                 label="Search"
                 placeholder="Search section types…"
@@ -1450,53 +1449,23 @@ export function SectionLibraryPage() {
           ) : null}
 
           {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
-        </Stack>
-      </AdminPanel>
 
-      <Tabs value={activeTab} onChange={(v) => setActiveTab((v as "catalog" | "composer") ?? "catalog")}>
-        <Tabs.Panel value="catalog" pt="sm">
-          <AdminPanel>
+          <Tabs.Panel value="catalog" pt="sm">
             <Stack spacing={1.5}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-                  <Typography fontWeight={700} variant="body2">
-                    Section types
-                  </Typography>
-                  <MuiChip
-                    size="small"
-                    clickable
-                    onClick={() => setCatalogSource("all")}
-                    color={catalogSource === "all" ? "primary" : "default"}
-                    variant={catalogSource === "all" ? "filled" : "outlined"}
-                    label={`Total: ${catalogRows.length}`}
-                  />
-                  <MuiChip
-                    size="small"
-                    clickable
-                    onClick={() => setCatalogSource("builtin")}
-                    color={catalogSource === "builtin" ? "primary" : "default"}
-                    variant={catalogSource === "builtin" ? "filled" : "outlined"}
-                    label={`Built-in: ${BUILTIN_PREVIEWS.length}`}
-                  />
-                  <MuiChip
-                    size="small"
-                    clickable
-                    onClick={() => setCatalogSource("custom")}
-                    color={catalogSource === "custom" ? "secondary" : "default"}
-                    variant={catalogSource === "custom" ? "filled" : "outlined"}
-                    label={`Custom: ${customRows.length}`}
-                  />
-                </Box>
-                <Button size="sm" variant="default" onClick={() => setCreateOpen(true)}>
-                  New custom section type
-                </Button>
-              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8125rem" }}>
+                {catalogRows.length} types
+                <Box component="span" sx={{ mx: 0.75, color: "text.disabled" }}>&middot;</Box>
+                {BUILTIN_PREVIEWS.length} built-in
+                <Box component="span" sx={{ mx: 0.75, color: "text.disabled" }}>&middot;</Box>
+                {customRows.length} custom
+              </Typography>
 
               <TableContainer
                 sx={{
                   border: "1px solid",
-                  borderColor: "divider",
+                  borderColor: ADMIN_BORDERS.default,
                   borderRadius: 1,
+                  background: ADMIN_SURFACES.inset,
                   display: { xs: "none", md: "block" },
                 }}
               >
@@ -1513,7 +1482,7 @@ export function SectionLibraryPage() {
                     {loading ? (
                       <TableRow>
                         <TableCell colSpan={4}>
-                          <Typography variant="body2" color="text.secondary">Loading…</Typography>
+                          <AdminLoadingState message="Loading section types…" />
                         </TableCell>
                       </TableRow>
                     ) : catalogRows.length ? (
@@ -1569,7 +1538,7 @@ export function SectionLibraryPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={4}>
-                          <Typography variant="body2" color="text.secondary">No section types match current search.</Typography>
+                          <AdminEmptyState title="No matching section types" description="Try adjusting your search or filter criteria." />
                         </TableCell>
                       </TableRow>
                     )}
@@ -1579,10 +1548,10 @@ export function SectionLibraryPage() {
 
               <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
                 {loading ? (
-                  <Typography variant="body2" color="text.secondary">Loading…</Typography>
+                  <AdminLoadingState message="Loading section types…" />
                 ) : catalogRows.length ? (
                   catalogRows.map((item) => (
-                    <MuiPaper key={item.key} variant="outlined" sx={{ p: 1.25 }}>
+                    <MuiPaper key={item.key} variant="outlined" sx={{ p: 1.25, background: ADMIN_SURFACES.inset, borderColor: ADMIN_BORDERS.default, borderRadius: 2 }}>
                       <Stack spacing={0.75}>
                         <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "flex-start" }}>
                           <Box sx={{ minWidth: 0 }}>
@@ -1608,15 +1577,13 @@ export function SectionLibraryPage() {
                     </MuiPaper>
                   ))
                 ) : (
-                  <Typography variant="body2" color="text.secondary">No section types match current search.</Typography>
+                  <AdminEmptyState title="No matching section types" description="Try adjusting your search or filter criteria." />
                 )}
               </Stack>
             </Stack>
-          </AdminPanel>
-        </Tabs.Panel>
+          </Tabs.Panel>
 
-        <Tabs.Panel value="composer" pt="sm">
-          <AdminPanel>
+          <Tabs.Panel value="composer" pt="sm">
           <Stack gap="xs" mb="sm">
             <Text size="sm" c="dimmed">Compose sections with rows and up to 3 columns, then reuse across any page.</Text>
           </Stack>
@@ -2059,9 +2026,9 @@ export function SectionLibraryPage() {
               </Paper>
             </Grid.Col>
           </Grid>
-          </AdminPanel>
-        </Tabs.Panel>
-      </Tabs>
+          </Tabs.Panel>
+        </Tabs>
+      </AdminPanel>
 
       <Modal opened={fullscreenPreviewOpen} onClose={() => setFullscreenPreviewOpen(false)} title="Section preview" size="xl" centered>
         <SchemaPreview schema={schema} mobile={previewMode === "mobile"} />

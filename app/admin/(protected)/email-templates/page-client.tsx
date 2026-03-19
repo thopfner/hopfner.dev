@@ -18,6 +18,7 @@ import {
   Chip,
   Stack,
 } from "@mui/material"
+import { WorkspaceHeader, WorkspacePanel, AdminErrorState, AdminEmptyState, AdminSubgroupHeader } from "@/components/admin/ui"
 import { MediaPickerMenu } from "@/components/media-picker-menu"
 import { MediaLibraryModal } from "@/components/media-library-modal"
 import { uploadMedia } from "@/lib/media/upload"
@@ -253,24 +254,40 @@ export function EmailTemplatesPageClient() {
     : ""
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-        Email Templates
-      </Typography>
+    <Stack spacing={2}>
+      <WorkspaceHeader
+        title="Email Templates"
+        actions={
+          selectedId && version && tab === 0 ? (
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button variant="outlined" size="small" onClick={handleSaveVersion} disabled={saving}>
+                Save draft
+              </Button>
+              <Button variant="contained" size="small" onClick={handlePublish} disabled={saving}>
+                Publish
+              </Button>
+            </Box>
+          ) : tab === 1 ? (
+            <Button variant="contained" size="small" onClick={handleSaveTheme} disabled={saving}>
+              Save branding
+            </Button>
+          ) : undefined
+        }
+      />
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+      {error && <AdminErrorState message={error} />}
+      {success && <Alert severity="success" variant="outlined">{success}</Alert>}
+
+      <Tabs value={tab} onChange={(_, v) => setTab(v)}>
         <Tab label="Templates" />
         <Tab label="Branding" />
       </Tabs>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-
       {tab === 0 && (
-        <Box sx={{ display: "flex", gap: 3, minHeight: 600 }}>
+        <Box sx={{ display: "flex", gap: 2, minHeight: 600 }}>
           {/* Template list sidebar */}
-          <Paper sx={{ width: 280, flexShrink: 0 }}>
-            <List dense>
+          <WorkspacePanel title="Templates" compact sx={{ width: 280, flexShrink: 0 }}>
+            <List dense sx={{ mx: -1.5, my: -1.5 }}>
               {templates.map((tpl) => (
                 <ListItemButton
                   key={tpl.id}
@@ -295,99 +312,94 @@ export function EmailTemplatesPageClient() {
                 </ListItemButton>
               ))}
             </List>
-          </Paper>
+          </WorkspacePanel>
 
           {/* Editor pane */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {selectedId && version ? (
-              <Stack spacing={2}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography variant="subtitle2">Version {version.version}</Typography>
+              <WorkspacePanel
+                title={`Version ${version.version}`}
+                actions={
                   <Chip
                     label={version.status}
                     size="small"
                     color={version.status === "published" ? "success" : "default"}
+                    variant="outlined"
                   />
-                </Box>
-
-                <TextField
-                  label="Subject"
-                  fullWidth
-                  size="small"
-                  value={version.subject || ""}
-                  onChange={(e) => setVersion((v) => v ? { ...v, subject: e.target.value } : v)}
-                />
-                <TextField
-                  label="Preview text"
-                  fullWidth
-                  size="small"
-                  value={version.preview_text || ""}
-                  onChange={(e) => setVersion((v) => v ? { ...v, preview_text: e.target.value } : v)}
-                />
-                <TextField
-                  label="Body (JSON blocks)"
-                  fullWidth
-                  multiline
-                  rows={10}
-                  size="small"
-                  value={bodyText}
-                  onChange={(e) => {
-                    try {
-                      const parsed = JSON.parse(e.target.value)
-                      setVersion((v) => v ? { ...v, body_json: parsed } : v)
-                    } catch {
-                      // Keep raw text until valid JSON
-                      setVersion((v) => v ? { ...v, body_json: e.target.value } : v)
-                    }
-                  }}
-                />
-                <Box sx={{ display: "flex", gap: 2 }}>
+                }
+              >
+                <Stack spacing={2}>
+                  <AdminSubgroupHeader label="Email Metadata" description="Subject line and preview text" />
                   <TextField
-                    label="CTA label"
+                    label="Subject"
+                    fullWidth
                     size="small"
-                    value={version.cta_label || ""}
-                    onChange={(e) => setVersion((v) => v ? { ...v, cta_label: e.target.value } : v)}
-                    sx={{ flex: 1 }}
+                    value={version.subject || ""}
+                    onChange={(e) => setVersion((v) => v ? { ...v, subject: e.target.value } : v)}
                   />
                   <TextField
-                    label="CTA href"
+                    label="Preview text"
+                    fullWidth
                     size="small"
-                    value={version.cta_href || ""}
-                    onChange={(e) => setVersion((v) => v ? { ...v, cta_href: e.target.value } : v)}
-                    sx={{ flex: 1 }}
+                    value={version.preview_text || ""}
+                    onChange={(e) => setVersion((v) => v ? { ...v, preview_text: e.target.value } : v)}
                   />
-                </Box>
 
-                <Divider />
+                  <Divider />
+                  <AdminSubgroupHeader label="Template Source" description="JSON block structure defining the email body" />
+                  <TextField
+                    label="Body blocks (JSON)"
+                    fullWidth
+                    multiline
+                    rows={10}
+                    size="small"
+                    value={bodyText}
+                    onChange={(e) => {
+                      try {
+                        const parsed = JSON.parse(e.target.value)
+                        setVersion((v) => v ? { ...v, body_json: parsed } : v)
+                      } catch {
+                        setVersion((v) => v ? { ...v, body_json: e.target.value } : v)
+                      }
+                    }}
+                  />
 
-                <Typography variant="caption" color="text.secondary">
-                  Available variables
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {TEMPLATE_VARIABLES.map((v) => (
-                    <Chip key={v} label={v} size="small" variant="outlined" sx={{ fontSize: 11 }} />
-                  ))}
-                </Box>
+                  <Divider />
+                  <AdminSubgroupHeader label="Call-to-Action" />
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <TextField
+                      label="CTA label"
+                      size="small"
+                      value={version.cta_label || ""}
+                      onChange={(e) => setVersion((v) => v ? { ...v, cta_label: e.target.value } : v)}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      label="CTA href"
+                      size="small"
+                      value={version.cta_href || ""}
+                      onChange={(e) => setVersion((v) => v ? { ...v, cta_href: e.target.value } : v)}
+                      sx={{ flex: 1 }}
+                    />
+                  </Box>
 
-                <Divider />
+                  <Divider />
+                  <AdminSubgroupHeader label="Variables Reference" description="Available merge tags for dynamic content" />
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {TEMPLATE_VARIABLES.map((v) => (
+                      <Chip key={v} label={v} size="small" variant="outlined" sx={{ fontSize: 11 }} />
+                    ))}
+                  </Box>
 
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Button variant="outlined" size="small" onClick={handleSaveVersion} disabled={saving}>
-                    Save draft
-                  </Button>
-                  <Button variant="contained" size="small" onClick={handlePublish} disabled={saving}>
-                    Publish
-                  </Button>
-                  <Button variant="text" size="small" onClick={loadPreview} disabled={saving}>
-                    Refresh preview
-                  </Button>
-                </Box>
+                  <Divider />
+                  <AdminSubgroupHeader label="Preview" description="Rendered preview with sample data" />
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button variant="text" size="small" onClick={loadPreview} disabled={saving}>
+                      Refresh preview
+                    </Button>
+                  </Box>
 
-                {/* Preview iframe */}
-                {previewHtml && (
-                  <>
-                    <Divider />
-                    <Typography variant="subtitle2">Preview</Typography>
+                  {previewHtml && (
                     <Box
                       sx={{
                         border: "1px solid",
@@ -404,25 +416,19 @@ export function EmailTemplatesPageClient() {
                         sandbox="allow-same-origin"
                       />
                     </Box>
-                  </>
-                )}
-              </Stack>
+                  )}
+                </Stack>
+              </WorkspacePanel>
             ) : (
-              <Typography color="text.secondary" sx={{ mt: 4, textAlign: "center" }}>
-                Select a template to edit
-              </Typography>
+              <AdminEmptyState title="Select a template" description="Choose a template from the sidebar to edit." />
             )}
           </Box>
         </Box>
       )}
 
       {tab === 1 && theme && (
-        <Paper sx={{ p: 3, maxWidth: 500 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-            Email Branding
-          </Typography>
+        <WorkspacePanel title="Email Branding" sx={{ maxWidth: 500 }}>
           <Stack spacing={2}>
-            {/* Logo picker */}
             <Typography variant="subtitle2">Logo</Typography>
             {theme.logo_url ? (
               <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
@@ -476,9 +482,6 @@ export function EmailTemplatesPageClient() {
               value={theme.footer_text || ""}
               onChange={(e) => setTheme((t) => t ? { ...t, footer_text: e.target.value } : t)}
             />
-            <Button variant="contained" size="small" onClick={handleSaveTheme} disabled={saving}>
-              Save branding
-            </Button>
           </Stack>
 
           <MediaLibraryModal
@@ -487,8 +490,8 @@ export function EmailTemplatesPageClient() {
             onSelect={handleLogoSelect}
             title="Choose email logo"
           />
-        </Paper>
+        </WorkspacePanel>
       )}
-    </Box>
+    </Stack>
   )
 }

@@ -74,7 +74,7 @@ describe("PagesList create modal", () => {
 
     render(<PagesList />)
 
-    await screen.findByText("All pages")
+    await screen.findByText("Total: 1")
 
     await userEvent.click(screen.getByRole("button", { name: /create page/i }))
 
@@ -93,7 +93,7 @@ describe("PagesList create modal", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okJson(initialOverview)) as any)
 
     render(<PagesList />)
-    await screen.findByText("All pages")
+    await screen.findByText("Total: 1")
 
     await userEvent.click(screen.getByRole("button", { name: /create page/i }))
     const dialog = await screen.findByRole("dialog", { name: /create page/i })
@@ -116,7 +116,7 @@ describe("PagesList create modal", () => {
 
     render(<PagesList />)
 
-    await screen.findByText("All pages")
+    await screen.findByText("Total: 1")
 
     const editLinks = screen.getAllByRole("link", { name: /edit/i })
     expect(editLinks.length).toBeGreaterThan(0)
@@ -153,7 +153,7 @@ describe("PagesList create modal", () => {
     vi.stubGlobal("fetch", fetchMock as any)
 
     render(<PagesList />)
-    await screen.findByText("All pages")
+    await screen.findByText("Total: 1")
 
     await userEvent.click(screen.getByRole("button", { name: /create page/i }))
     const dialog = await screen.findByRole("dialog", { name: /create page/i })

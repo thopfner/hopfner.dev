@@ -27,7 +27,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert"
 import useMediaQuery from "@mui/material/useMediaQuery"
 import { useTheme } from "@mui/material/styles"
 
-import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
+import { AdminPanel, AdminEmptyState, AdminErrorState, AdminLoadingState, CollectionPageHeader, CollectionToolbar, ADMIN_SURFACES, ADMIN_BORDERS } from "@/components/admin/ui"
 import { BlogContentPreview } from "@/components/blog/blog-content-preview"
 
 type BlogListItem = {
@@ -378,38 +378,36 @@ export function BlogPageClient() {
 
   return (
     <Stack spacing={2}>
-      <AdminPageHeader
+      <CollectionPageHeader
         title="Blog"
         description="Review drafts, approve, publish, and reject with reason."
       />
 
-      {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
+      {error && <AdminErrorState message={error} />}
 
-      <AdminPanel>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }}>
-          <TextField
-            size="small"
-            label="Search"
-            value={query}
-            onChange={(e) => setQuery(e.currentTarget.value)}
-            fullWidth
-          />
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<MoreVertIcon fontSize="small" />} onClick={() => setFilterDialogOpen(true)}>
-              Filters{statusFilter !== "all" ? " (1)" : ""}
-            </Button>
-            <Button variant="outlined" onClick={() => void load()} disabled={loading}>
-              Refresh
-            </Button>
-          </Stack>
-        </Stack>
-      </AdminPanel>
+      <CollectionToolbar>
+        <TextField
+          size="small"
+          label="Search"
+          value={query}
+          onChange={(e) => setQuery(e.currentTarget.value)}
+          sx={{ flex: "1 1 240px", minWidth: 0 }}
+        />
+        <Button size="small" variant="outlined" startIcon={<MoreVertIcon fontSize="small" />} onClick={() => setFilterDialogOpen(true)}>
+          Filters{statusFilter !== "all" ? " (1)" : ""}
+        </Button>
+        <Button size="small" variant="outlined" onClick={() => void load()} disabled={loading}>
+          Refresh
+        </Button>
+      </CollectionToolbar>
 
       <AdminPanel sx={{ p: 0 }}>
-        {isMobile ? (
+        {loading ? (
+          <AdminLoadingState message="Loading articles…" />
+        ) : isMobile ? (
           <Stack spacing={1.25} sx={{ p: 1.25 }}>
             {rows.map((row) => (
-              <Paper key={row.versionId} variant="outlined" sx={{ p: 1.25 }}>
+              <Paper key={row.versionId} variant="outlined" sx={{ p: 1.25, background: ADMIN_SURFACES.inset, borderColor: ADMIN_BORDERS.default }}>
                 <Stack spacing={1}>
                   <Typography variant="body2" fontWeight={700} sx={{ overflowWrap: "anywhere" }}>
                     {row.title}
@@ -435,11 +433,7 @@ export function BlogPageClient() {
                 </Stack>
               </Paper>
             ))}
-            {empty ? (
-              <Typography variant="body2" color="text.secondary">
-                No blog articles found.
-              </Typography>
-            ) : null}
+            {empty && <AdminEmptyState title="No articles found" description="No blog articles match your current filters." />}
           </Stack>
         ) : (
           <TableContainer sx={{ overflowX: "auto" }}>
@@ -486,15 +480,13 @@ export function BlogPageClient() {
                     <TableCell align="right">{renderActionMenuButton(row)}</TableCell>
                   </TableRow>
                 ))}
-                {empty ? (
+                {empty && (
                   <TableRow>
                     <TableCell colSpan={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        No blog articles found.
-                      </Typography>
+                      <AdminEmptyState title="No articles found" description="No blog articles match your current filters." />
                     </TableCell>
                   </TableRow>
-                ) : null}
+                )}
               </TableBody>
             </Table>
           </TableContainer>

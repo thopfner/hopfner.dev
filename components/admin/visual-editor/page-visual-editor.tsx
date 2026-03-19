@@ -1,12 +1,20 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import dynamic from "next/dynamic"
 import { VisualEditorContext, type VisualEditorStoreValue } from "./page-visual-editor-store"
 import { VisualEditorToolbar } from "./page-visual-editor-toolbar"
-import { VisualEditorStructure } from "./page-visual-editor-structure"
 import { VisualEditorCanvas } from "./page-visual-editor-canvas"
-import { VisualEditorInspector } from "./page-visual-editor-inspector"
 import { VisualEditorDirtyDialog } from "./page-visual-editor-dirty-dialog"
+
+const VisualEditorStructure = dynamic(
+  () => import("./page-visual-editor-structure").then((m) => ({ default: m.VisualEditorStructure })),
+  { ssr: false },
+)
+const VisualEditorInspector = dynamic(
+  () => import("./page-visual-editor-inspector").then((m) => ({ default: m.VisualEditorInspector })),
+  { ssr: false },
+)
 import { loadPageVisualState } from "@/lib/admin/visual-editor/load-page-visual-state"
 import type {
   VisualEditorSelection,

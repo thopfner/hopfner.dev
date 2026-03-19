@@ -22,7 +22,7 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import UploadRoundedIcon from "@mui/icons-material/UploadRounded"
 
-import { AdminPageHeader, AdminPanel } from "@/components/admin/ui"
+import { AdminPanel, AdminEmptyState, AdminErrorState, AdminLoadingState, CollectionPageHeader, CollectionToolbar, ADMIN_SURFACES, ADMIN_BORDERS } from "@/components/admin/ui"
 import { MediaLibraryModal } from "@/components/media-library-modal"
 import { deleteMedia } from "@/lib/media/delete"
 import { listMedia } from "@/lib/media/list"
@@ -158,31 +158,12 @@ export function MediaPageClient() {
   }
 
   return (
-    <Stack spacing={2.25}>
-      <AdminPageHeader
+    <Stack spacing={2}>
+      <CollectionPageHeader
         title="Media"
         description="Upload images and manage your media library. Removing images from sections will not delete files here."
-      />
-
-      <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
-        <Stack spacing={1.5}>
-          <Box sx={{ display: "flex", alignItems: "flex-end", flexWrap: "wrap", gap: 1.25 }}>
-            <TextField
-              label="Search"
-              placeholder="Search by file path..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              size="small"
-              sx={{ flex: "1 1 260px", minWidth: 0 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchRoundedIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-
+        actions={
+          <>
             <input
               ref={fileRef}
               type="file"
@@ -194,10 +175,8 @@ export function MediaPageClient() {
                 void onUpload(file)
               }}
             />
-
             <Button
               size="small"
-              color="primary"
               variant="contained"
               startIcon={<UploadRoundedIcon fontSize="small" />}
               onClick={() => fileRef.current?.click()}
@@ -205,34 +184,46 @@ export function MediaPageClient() {
             >
               {uploading ? "Uploading…" : "Upload"}
             </Button>
+          </>
+        }
+      />
 
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<RefreshRoundedIcon fontSize="small" />}
-              onClick={() => void load(query)}
-              disabled={loading}
-            >
-              Refresh
-            </Button>
-          </Box>
+      {error && <AdminErrorState message={error} />}
 
-          {error ? <Alert severity="error" variant="outlined">{error}</Alert> : null}
+      <CollectionToolbar>
+        <TextField
+          label="Search"
+          placeholder="Search by file path..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          size="small"
+          sx={{ flex: "1 1 260px", minWidth: 0 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchRoundedIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <Chip size="small" variant="outlined" label={`Items: ${items.length}`} />
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<RefreshRoundedIcon fontSize="small" />}
+          onClick={() => void load(query)}
+          disabled={loading}
+        >
+          Refresh
+        </Button>
+        <Button size="small" variant="text" color="secondary" onClick={() => setLibraryOpen(true)}>
+          Open full library modal
+        </Button>
+      </CollectionToolbar>
 
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
-            <Chip size="small" variant="outlined" label={`Items: ${items.length}`} />
-            <Button size="small" variant="text" color="secondary" onClick={() => setLibraryOpen(true)}>
-              Open full library modal
-            </Button>
-          </Box>
-        </Stack>
-      </AdminPanel>
-
-      <AdminPanel sx={{ background: "rgba(16,24,39,0.72)", borderColor: "rgba(140,157,255,0.22)", backdropFilter: "blur(6px)" }}>
+      <AdminPanel>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-            <CircularProgress size={20} />
-          </Box>
+          <AdminLoadingState />
         ) : items.length ? (
           <Box
             sx={{
@@ -249,9 +240,9 @@ export function MediaPageClient() {
             {items.map((item) => {
               const name = item.path.split("/").pop() || item.path
               return (
-                <Paper key={item.id} variant="outlined" sx={{ p: 1.25, borderRadius: 2, background: "rgba(10,15,27,0.56)", borderColor: "rgba(140,157,255,0.24)" }}>
+                <Paper key={item.id} variant="outlined" sx={{ p: 1.25, borderRadius: 2, background: ADMIN_SURFACES.inset, borderColor: ADMIN_BORDERS.default }}>
                   <Stack spacing={1}>
-                    <Paper variant="outlined" sx={{ borderRadius: 1.5, overflow: "hidden", borderColor: "rgba(140,157,255,0.22)" }}>
+                    <Paper variant="outlined" sx={{ borderRadius: 1.5, overflow: "hidden", borderColor: ADMIN_BORDERS.subtle }}>
                       {item.url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -285,7 +276,7 @@ export function MediaPageClient() {
                         <Tooltip title="Copy URL">
                           <span>
                             <IconButton
-                              sx={{ background: "rgba(124,140,255,0.15)", "&:hover": { background: "rgba(124,140,255,0.26)" } }}
+                              sx={{ background: "rgba(142,162,255,0.12)", "&:hover": { background: "rgba(142,162,255,0.22)" } }}
                               size="small"
                               aria-label="Copy URL"
                               onClick={() => {
@@ -316,9 +307,7 @@ export function MediaPageClient() {
             })}
           </Box>
         ) : (
-          <Typography variant="body2" color="text.secondary">
-            No media uploaded yet.
-          </Typography>
+          <AdminEmptyState title="No media uploaded" description="Upload images to start building your media library." />
         )}
       </AdminPanel>
 

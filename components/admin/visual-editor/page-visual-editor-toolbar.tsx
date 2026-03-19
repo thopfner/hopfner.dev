@@ -29,6 +29,7 @@ import { useVisualSectionPersistence } from "./use-visual-section-persistence"
 import { useSelectedSectionActions } from "./use-selected-section-actions"
 import { usePageCompositionActions } from "./use-page-composition-actions"
 import { formatType } from "@/components/admin/section-editor/payload"
+import { PageWorkspaceModeTabs } from "@/components/admin/ui"
 
 // ---------------------------------------------------------------------------
 // Page chooser
@@ -127,7 +128,7 @@ function PageChooser({ currentPageId, currentTitle }: {
                 }`}
               >
                 <span className="block font-medium truncate">{p.title}</span>
-                <span className="block text-[10px] text-[#909296] truncate">/{p.slug}</span>
+                <span className="block text-[11px] text-[#909296] truncate">/{p.slug}</span>
               </button>
             ))
           )}
@@ -170,39 +171,75 @@ export function VisualEditorToolbar() {
     : null
 
   return (
-    <div className="relative z-50 isolate flex flex-wrap items-center justify-between gap-y-1 min-h-[44px] px-3 border-b border-[var(--mantine-color-dark-4)] bg-[var(--mantine-color-dark-7)] shrink-0">
-      {/* Left: back + page chooser + public link */}
+    <div className="relative z-50 isolate flex flex-wrap items-center justify-between gap-y-1 min-h-[52px] px-4 py-1.5 border-b border-[var(--mantine-color-dark-4)] bg-[var(--mantine-color-dark-7)] shrink-0">
+      {/* Left: back + identity + mode + page chooser + public link */}
       <div className="flex items-center gap-2.5 min-w-0 py-1">
         <Link
-          href="/admin/pages"
+          href="/admin"
           className="flex items-center text-xs text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] transition-colors shrink-0"
           title="Back to pages"
         >
-          <IconArrowLeft size={14} />
+          <IconArrowLeft size={16} />
         </Link>
-        <div className="w-px h-4 bg-[var(--mantine-color-dark-4)] shrink-0" />
-        <PageChooser
-          currentPageId={pageState.pageId}
-          currentTitle={pageState.pageTitle}
-        />
-        <Link
-          href={`/${pageState.pageSlug}`}
-          target="_blank"
-          className="flex items-center gap-1 text-[10px] text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] transition-colors shrink-0"
-          title="Open public page"
-        >
-          <IconExternalLink size={11} />
-        </Link>
-        <div className="w-px h-4 bg-[var(--mantine-color-dark-4)] shrink-0" />
-        <button
-          ref={addBtnRef}
-          type="button"
-          onClick={() => { if (addBtnRef.current) setAddAnchorRect(addBtnRef.current.getBoundingClientRect()); setAddLibOpen(true) }}
-          className="flex items-center gap-1 text-[10px] font-medium text-blue-300 hover:text-blue-200 transition-colors shrink-0"
-        >
-          <IconPlus size={12} />
-          Add
-        </button>
+        <div className="w-px h-5 bg-[var(--mantine-color-dark-4)]/60 shrink-0" />
+        <div className="flex items-center gap-1.5">
+          <PageChooser
+            currentPageId={pageState.pageId}
+            currentTitle={pageState.pageTitle}
+          />
+          <span className="text-xs text-[var(--mantine-color-dimmed)] shrink-0 hidden sm:inline">/{pageState.pageSlug}</span>
+          <Link
+            href={`/${pageState.pageSlug}`}
+            target="_blank"
+            className="flex items-center gap-1 text-xs text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] transition-colors shrink-0"
+            title="Open public page"
+          >
+            <IconExternalLink size={13} />
+          </Link>
+        </div>
+        <PageWorkspaceModeTabs pageId={pageState.pageId} activeMode="visual" />
+      </div>
+
+      {/* Center: add + undo/redo + viewport switcher */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0.5 rounded-md border border-[var(--mantine-color-dark-4)] p-0.5 bg-[var(--mantine-color-dark-8)]">
+          <button
+            ref={addBtnRef}
+            type="button"
+            onClick={() => { if (addBtnRef.current) setAddAnchorRect(addBtnRef.current.getBoundingClientRect()); setAddLibOpen(true) }}
+            className="p-1 rounded text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] transition-colors"
+            title="Add section"
+          >
+            <IconPlus size={16} />
+          </button>
+          <div className="w-px h-4 bg-[var(--mantine-color-dark-4)]/40 shrink-0" />
+          <button type="button" onClick={undo} disabled={!canUndo} className="p-1 rounded text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Undo (⌘Z)">
+            <IconArrowBackUp size={16} />
+          </button>
+          <button type="button" onClick={redo} disabled={!canRedo} className="p-1 rounded text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Redo (⌘⇧Z)">
+            <IconArrowForwardUp size={16} />
+          </button>
+          <div className="w-px h-4 bg-[var(--mantine-color-dark-4)]/40 shrink-0" />
+          {([
+            { value: "desktop" as const, icon: IconDeviceDesktop },
+            { value: "tablet" as const, icon: IconDeviceTablet },
+            { value: "mobile" as const, icon: IconDeviceMobile },
+          ]).map(({ value, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setViewport(value)}
+              className={`p-1 rounded text-xs transition-all ${
+                viewport === value
+                  ? "bg-blue-500/20 text-blue-300"
+                  : "text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)]"
+              }`}
+              title={value}
+            >
+              <Icon size={14} />
+            </button>
+          ))}
+        </div>
         <SectionLibrary
           onSelect={(type) => addSection(type)}
           anchorRect={addAnchorRect}
@@ -211,44 +248,11 @@ export function VisualEditorToolbar() {
         />
       </div>
 
-      {/* Center: undo/redo + viewport switcher */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-0.5">
-          <button type="button" onClick={undo} disabled={!canUndo} className="p-1 rounded text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Undo (⌘Z)">
-            <IconArrowBackUp size={15} />
-          </button>
-          <button type="button" onClick={redo} disabled={!canRedo} className="p-1 rounded text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)] disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Redo (⌘⇧Z)">
-            <IconArrowForwardUp size={15} />
-          </button>
-        </div>
-      <div className="flex items-center gap-0.5 rounded-md border border-[var(--mantine-color-dark-4)] p-0.5 bg-[var(--mantine-color-dark-8)]">
-        {([
-          { value: "desktop" as const, icon: IconDeviceDesktop },
-          { value: "tablet" as const, icon: IconDeviceTablet },
-          { value: "mobile" as const, icon: IconDeviceMobile },
-        ]).map(({ value, icon: Icon }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setViewport(value)}
-            className={`p-1 rounded text-xs transition-all ${
-              viewport === value
-                ? "bg-blue-500/20 text-blue-300"
-                : "text-[var(--mantine-color-dimmed)] hover:text-[var(--mantine-color-text)]"
-            }`}
-            title={value}
-          >
-            <Icon size={14} />
-          </button>
-        ))}
-      </div>
-      </div>
-
       {/* Right: section actions + status */}
-      <div className="flex items-center gap-2 shrink-0 py-1">
+      <div className="flex items-center gap-2 shrink-0 py-1 min-h-[28px]">
         {/* Selected section context */}
         {selectedNode && (
-          <span className="text-[10px] text-[var(--mantine-color-dimmed)] truncate max-w-[120px] capitalize hidden sm:inline">
+          <span className="text-xs text-[var(--mantine-color-dimmed)] truncate max-w-[160px] capitalize hidden sm:inline">
             {selectedTypeLabel}
           </span>
         )}
@@ -256,15 +260,15 @@ export function VisualEditorToolbar() {
         {/* Section save/publish/discard */}
         {selectedNode && isDirty && (
           <>
-            <button type="button" onClick={handleSave} className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-500 transition-colors">
-              <IconDeviceFloppy size={12} />
+            <button type="button" onClick={handleSave} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded bg-blue-600 text-white hover:bg-blue-500 transition-colors">
+              <IconDeviceFloppy size={13} />
               Save
             </button>
-            <button type="button" onClick={handlePublish} className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded bg-green-600 text-white hover:bg-green-500 transition-colors">
-              <IconUpload size={12} />
+            <button type="button" onClick={handlePublish} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded bg-green-600 text-white hover:bg-green-500 transition-colors">
+              <IconUpload size={13} />
               Publish
             </button>
-            <button type="button" onClick={handleDiscard} className="text-[10px] font-medium px-1.5 py-1 rounded text-[var(--mantine-color-dimmed)] hover:text-red-400 hover:bg-red-500/10 transition-colors" title="Discard changes">
+            <button type="button" onClick={handleDiscard} className="text-xs font-medium px-2 py-1 rounded text-[var(--mantine-color-dimmed)] hover:text-red-400 hover:bg-red-500/10 transition-colors" title="Discard changes">
               <IconTrash size={12} />
             </button>
           </>
@@ -276,7 +280,7 @@ export function VisualEditorToolbar() {
             type="button"
             onClick={handleSaveOrder}
             disabled={savingOrder}
-            className="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/30 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/30 disabled:opacity-50 transition-colors"
           >
             <IconArrowsSort size={12} />
             {savingOrder ? "..." : "Order"}
@@ -284,11 +288,13 @@ export function VisualEditorToolbar() {
         )}
 
         {/* Status */}
-        {saveStatus === "saving" && <span className="text-[10px] text-[var(--mantine-color-dimmed)] animate-pulse">Saving...</span>}
-        {saveStatus === "saved" && <span className="flex items-center gap-0.5 text-[10px] text-green-400"><IconCheck size={12} />Saved</span>}
-        {saveStatus === "publishing" && <span className="text-[10px] text-[var(--mantine-color-dimmed)] animate-pulse">Publishing...</span>}
-        {saveStatus === "published" && <span className="flex items-center gap-0.5 text-[10px] text-green-400"><IconCheck size={12} />Published</span>}
-        {saveStatus === "error" && <span className="flex items-center gap-0.5 text-[10px] text-red-400" title={saveError ?? undefined}><IconAlertTriangle size={12} />Error</span>}
+        <span className="min-w-[60px] text-right">
+        {saveStatus === "saving" && <span className="text-xs text-[var(--mantine-color-dimmed)] animate-pulse">Saving...</span>}
+        {saveStatus === "saved" && <span className="flex items-center justify-end gap-0.5 text-xs text-green-400"><IconCheck size={13} />Saved</span>}
+        {saveStatus === "publishing" && <span className="text-xs text-[var(--mantine-color-dimmed)] animate-pulse">Publishing...</span>}
+        {saveStatus === "published" && <span className="flex items-center justify-end gap-0.5 text-xs text-green-400"><IconCheck size={13} />Published</span>}
+        {saveStatus === "error" && <span className="flex items-center justify-end gap-0.5 text-xs text-red-400" title={saveError ?? undefined}><IconAlertTriangle size={13} />Error</span>}
+        </span>
       </div>
     </div>
   )

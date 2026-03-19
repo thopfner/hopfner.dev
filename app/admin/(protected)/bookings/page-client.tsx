@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   Box,
+  Button,
   Chip,
-  CircularProgress,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -14,23 +15,22 @@ import {
   TableRow,
   Typography,
 } from "@mui/material"
+import useMediaQuery from "@mui/material/useMediaQuery"
+import { useTheme } from "@mui/material/styles"
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded"
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 
-type Intake = {
-  id: string
-  full_name: string
-  work_email: string
-  company: string | null
-  job_title: string | null
-  team_size: string | null
-  function_area: string | null
-  current_tools: string | null
-  main_bottleneck: string | null
-  desired_outcome_90d: string | null
-  status: string
-  cal_booking_uid: string | null
-  created_at: string
-  updated_at: string
-}
+import {
+  AdminPanel,
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+  CollectionPageHeader,
+  CollectionToolbar,
+} from "@/components/admin/ui"
+import { BookingDetailDrawer, type BookingIntake } from "@/components/admin/bookings/booking-detail-drawer"
+
+type Intake = BookingIntake
 
 const STATUS_COLORS: Record<string, "default" | "warning" | "success" | "error" | "info"> = {
   submitted: "warning",
@@ -49,76 +49,138 @@ function formatDate(iso: string) {
 }
 
 export function BookingsPageClient() {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+
   const [intakes, setIntakes] = useState<Intake[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [expanded, setExpanded] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetch("/admin/api/bookings")
-      .then((r) => r.json())
-      .then((d) => {
-        setIntakes(d.intakes ?? [])
-        setLoading(false)
-      })
-      .catch((e) => {
-        setError(e.message)
-        setLoading(false)
-      })
+  const selectedIntake = intakes.find((i) => i.id === selectedId) ?? null
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch("/admin/api/bookings")
+      const d = await res.json()
+      setIntakes(d.intakes ?? [])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load bookings")
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-        <CircularProgress size={28} />
-      </Box>
-    )
-  }
-
-  if (error) {
-    return (
-      <Typography color="error" sx={{ py: 4 }}>
-        Failed to load bookings: {error}
-      </Typography>
-    )
-  }
+  useEffect(() => {
+    void load()
+  }, [load])
 
   return (
-    <Box>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-        Booking Intakes
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {intakes.length} submission{intakes.length !== 1 ? "s" : ""}
-      </Typography>
+    <Stack spacing={2}>
+      <CollectionPageHeader
+        title="Bookings"
+        description="Intake submissions from the booking flow. Click a row to view details."
+      />
 
-      {intakes.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: "center" }}>
-          <Typography color="text.secondary">No intake submissions yet.</Typography>
-        </Paper>
-      ) : (
-        <TableContainer component={Paper} sx={{ bgcolor: "rgba(17,24,39,0.6)" }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Company</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Submitted</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {intakes.map((row) => (
-                <>
+      {error && <AdminErrorState message={error} onRetry={load} />}
+
+      <CollectionToolbar>
+        <Chip size="small" variant="outlined" label={`${intakes.length} submission${intakes.length !== 1 ? "s" : ""}`} />
+        <Box sx={{ flex: 1 }} />
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<RefreshRoundedIcon fontSize="small" />}
+          onClick={() => void load()}
+          disabled={loading}
+        >
+          Refresh
+        </Button>
+      </CollectionToolbar>
+
+      <AdminPanel sx={{ p: 0 }}>
+        {loading ? (
+          <AdminLoadingState message="Loading submissions…" />
+        ) : intakes.length === 0 ? (
+          <AdminEmptyState title="No submissions yet" description="Intake submissions will appear here when users complete the booking form." />
+        ) : isMobile ? (
+          /* ── Mobile cards ── */
+          <Stack spacing={1.25} sx={{ p: 1.25 }}>
+            {intakes.map((row) => (
+              <Paper
+                key={row.id}
+                variant="outlined"
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2,
+                  cursor: "pointer",
+                  transition: "border-color 0.15s, background 0.15s",
+                  ...(selectedId === row.id && {
+                    borderColor: "rgba(142,162,255,0.35)",
+                    bgcolor: "rgba(142,162,255,0.06)",
+                  }),
+                }}
+                onClick={() => setSelectedId(row.id)}
+              >
+                <Stack spacing={1}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={600}>{row.full_name}</Typography>
+                      <Typography variant="caption" color="text.secondary">{row.work_email}</Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+                      <Chip
+                        label={row.status}
+                        size="small"
+                        color={STATUS_COLORS[row.status] || "default"}
+                        variant="outlined"
+                        sx={{ textTransform: "capitalize" }}
+                      />
+                      <ChevronRightRoundedIcon sx={{ fontSize: 18, color: "text.secondary", opacity: 0.5 }} />
+                    </Box>
+                  </Box>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    {row.company && <Typography variant="caption" color="text.secondary">{row.company}</Typography>}
+                    <Typography variant="caption" color="text.secondary">{formatDate(row.created_at)}</Typography>
+                  </Stack>
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        ) : (
+          /* ── Desktop table ── */
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Company</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Submitted</TableCell>
+                  <TableCell sx={{ width: 32 }} />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {intakes.map((row) => (
                   <TableRow
                     key={row.id}
                     hover
-                    sx={{ cursor: "pointer", "& td": { borderBottom: expanded === row.id ? "none" : undefined } }}
-                    onClick={() => setExpanded(expanded === row.id ? null : row.id)}
+                    sx={{
+                      cursor: "pointer",
+                      transition: "background 0.15s",
+                      ...(selectedId === row.id && {
+                        bgcolor: "rgba(142,162,255,0.06)",
+                      }),
+                    }}
+                    onClick={() => setSelectedId(row.id)}
                   >
-                    <TableCell>{row.full_name}</TableCell>
-                    <TableCell sx={{ fontSize: 13 }}>{row.work_email}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>{row.full_name}</Typography>
+                    </TableCell>
+                    <TableCell>{row.work_email}</TableCell>
                     <TableCell>{row.company || "\u2014"}</TableCell>
                     <TableCell>
                       <Chip
@@ -126,62 +188,28 @@ export function BookingsPageClient() {
                         size="small"
                         color={STATUS_COLORS[row.status] || "default"}
                         variant="outlined"
-                        sx={{ fontSize: 12, fontWeight: 600, textTransform: "capitalize" }}
+                        sx={{ textTransform: "capitalize" }}
                       />
                     </TableCell>
-                    <TableCell sx={{ fontSize: 13, whiteSpace: "nowrap" }}>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
                       {formatDate(row.created_at)}
                     </TableCell>
+                    <TableCell sx={{ pr: 1.5 }}>
+                      <ChevronRightRoundedIcon sx={{ fontSize: 18, color: "text.secondary", opacity: 0.4 }} />
+                    </TableCell>
                   </TableRow>
-                  {expanded === row.id && (
-                    <TableRow key={`${row.id}-detail`}>
-                      <TableCell colSpan={5} sx={{ pt: 0, pb: 2, px: 3 }}>
-                        <Box
-                          sx={{
-                            display: "grid",
-                            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                            gap: 1.5,
-                            mt: 0.5,
-                            p: 2,
-                            borderRadius: 1,
-                            bgcolor: "rgba(255,255,255,0.03)",
-                            border: "1px solid rgba(255,255,255,0.06)",
-                          }}
-                        >
-                          <Detail label="Job title" value={row.job_title} />
-                          <Detail label="Team size" value={row.team_size} />
-                          <Detail label="Function area" value={row.function_area} />
-                          <Detail label="Current tools" value={row.current_tools} />
-                          <Detail label="Main bottleneck" value={row.main_bottleneck} />
-                          <Detail label="Desired outcome (90d)" value={row.desired_outcome_90d} />
-                          {row.cal_booking_uid && (
-                            <Detail label="Cal booking UID" value={row.cal_booking_uid} />
-                          )}
-                          <Detail label="Last updated" value={formatDate(row.updated_at)} />
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Box>
-  )
-}
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </AdminPanel>
 
-function Detail({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null
-  return (
-    <Box>
-      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-        {label}
-      </Typography>
-      <Typography variant="body2" sx={{ mt: 0.25 }}>
-        {value}
-      </Typography>
-    </Box>
+      <BookingDetailDrawer
+        intake={selectedIntake}
+        open={selectedId !== null && selectedIntake !== null}
+        onClose={() => setSelectedId(null)}
+      />
+    </Stack>
   )
 }

@@ -57,6 +57,7 @@ import {
 } from "@/lib/admin/ui-primitives"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError, toEditorErrorMessage } from "@/lib/cms/editor-error-message"
+import { WorkspaceHeader, WorkspacePanel, AdminLoadingState, AdminSubgroupHeader } from "@/components/admin/ui"
 
 type ButtonProps = Omit<MuiButtonProps, "variant" | "size" | "color"> & {
   variant?: "filled" | "light" | "default" | "subtle"
@@ -1254,12 +1255,12 @@ export function GlobalSectionsPage() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Title order={2} size="h3">Global sections</Title>
-        <Text c="dimmed" size="sm">Reusable sections with lifecycle, impact preview, and where-used map.</Text>
-      </div>
+      <WorkspaceHeader
+        title="Global Sections"
+        sx={{ mx: -2, mt: -2, mb: 0 }}
+      />
 
-      <Paper withBorder p="md" radius="md">
+      <WorkspacePanel title="Create Global Section" description="Add a new reusable section." compact>
         <Group align="end">
           <TextInput label="Key" placeholder="global-hero" value={key} onChange={(e) => setKey(e.currentTarget.value)} />
           <TextInput label="Label" placeholder="Global Hero" value={label} onChange={(e) => setLabel(e.currentTarget.value)} />
@@ -1275,12 +1276,10 @@ export function GlobalSectionsPage() {
           <Button onClick={createGlobal}>Create</Button>
         </Group>
         {error ? <Alert severity="error" variant="outlined" sx={{ mt: 1 }}>{error}</Alert> : null}
-      </Paper>
+      </WorkspacePanel>
 
-      <Paper withBorder p="md" radius="md">
+      <WorkspacePanel title="Site-Wide Formatting" description="These settings apply to the live site immediately when saved. No publish step required.">
         <Stack>
-          <Title order={4}>Formatting tokens (site-wide)</Title>
-          <Text size="xs" c="dimmed">These settings apply to the live site immediately when saved. No publish step required.</Text>
 
           <Paper withBorder p="sm" radius="md">
             <Stack gap="sm">
@@ -1364,6 +1363,8 @@ export function GlobalSectionsPage() {
                   </Group>
                   <Text size="xs" c="dimmed">System templates are read-only. User templates are editable.</Text>
 
+                  <Divider />
+                  <AdminSubgroupHeader label="Typography" />
                   <Select label="Font family" value={fontFamily} onChange={(v) => setFontFamily(v ?? FONT_STACKS[0].value)} data={[...FONT_STACKS, { value: "__custom", label: "Custom…" }]} />
                   {fontFamily === "__custom" ? <TextInput label="Custom font stack" value={customFontFamily} onChange={(e) => setCustomFontFamily(e.currentTarget.value)} placeholder="'Your Font', Inter, system-ui, sans-serif" /> : null}
                   <Select
@@ -1402,6 +1403,8 @@ export function GlobalSectionsPage() {
                       { value: "var(--font-geist-mono)", label: "Geist Mono" },
                     ]}
                   />
+                  <Divider />
+                  <AdminSubgroupHeader label="Type Scales & Weights" />
                   <Stack gap={4}>
                     <Text size="sm" fw={500}>Font scale ({fontScale.toFixed(2)}x)</Text>
                     <Slider label={(v) => `${v.toFixed(2)}x`} min={0.8} max={1.4} step={0.05} value={fontScale} onChange={setFontScale} />
@@ -1459,6 +1462,8 @@ export function GlobalSectionsPage() {
                     <TextInput label="Eyebrow tracking" value={eyebrowTracking} onChange={(e) => setEyebrowTracking(e.currentTarget.value)} placeholder="0.12em" />
                     <TextInput label="Metric tracking" value={metricTracking} onChange={(e) => setMetricTracking(e.currentTarget.value)} placeholder="-0.02em" />
                   </div>
+                  <Divider />
+                  <AdminSubgroupHeader label="Colors" />
                   <Select
                     label="Color mode"
                     value={colorMode}
@@ -1478,7 +1483,7 @@ export function GlobalSectionsPage() {
                   </div>
 
                   <Divider />
-                  <Text size="sm" fw={600}>Brand signature</Text>
+                  <AdminSubgroupHeader label="Brand Signature" />
                   <Select
                     label="Signature style"
                     value={signatureStyle}
@@ -1513,7 +1518,8 @@ export function GlobalSectionsPage() {
           </Paper>
 
           <Paper withBorder p="sm" radius="md" style={{ fontFamily: effectiveFontFamily || undefined, fontSize: `${fontScale}rem`, color: textColor || undefined, background: backgroundColor || undefined }}>
-            <Text fw={600}>Live preview (frontend token mapping)</Text>
+            <Text fw={600} size="sm" c="dimmed">Live Preview</Text>
+            <Text size="xs" c="dimmed">Shows how current token values render on the frontend</Text>
             <Stack gap={Math.max(6, Math.round(spaceScale * 8))} mt={8}>
               <div style={{ padding: `${Math.round(spaceScale * 12)}px`, borderRadius: `${Math.round(radiusScale * 10)}px`, boxShadow: `${shadowScale <= 0 ? "none" : `0 ${Math.round(10 * shadowScale)}px ${Math.round(28 * shadowScale)}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 36%, transparent)`}${innerShadowScale > 0 ? `${shadowScale > 0 ? ", " : ""}inset 0 1px ${Math.max(1, Math.round(2 * innerShadowScale))}px color-mix(in srgb, white 26%, transparent), inset 0 ${Math.max(2, Math.round(12 * innerShadowScale))}px ${Math.max(6, Math.round(20 * innerShadowScale))}px -${Math.max(2, Math.round(10 * innerShadowScale))}px color-mix(in srgb, ${shadowColor || accentColor || "#000"} 30%, transparent)` : ""}`,
                 border: `1px solid ${accentColor ? `color-mix(in srgb, ${accentColor} 45%, transparent)` : "rgba(127,127,127,.35)"}`, background: cardBackgroundColor || undefined }}>
@@ -1526,12 +1532,11 @@ export function GlobalSectionsPage() {
           </Paper>
 
         </Stack>
-      </Paper>
+      </WorkspacePanel>
 
-      <Paper withBorder p="md" radius="md">
+      <WorkspacePanel title="Sections & Impact" description="Manage global sections, see where they're used, and preview impact.">
         <Stack>
-          <Title order={4}>Where used + impact preview</Title>
-          {loading ? <Text c="dimmed" size="sm">Loading…</Text> : (
+          {loading ? <AdminLoadingState message="Loading global sections…" /> : (
             <>
               <Stack gap="sm" className="sm:hidden">
                 {rows.map((row) => {
@@ -1619,7 +1624,7 @@ export function GlobalSectionsPage() {
           <Divider />
           <Text size="xs" c="dimmed">Global editor supports draft → publish flow with version rollback.</Text>
         </Stack>
-      </Paper>
+      </WorkspacePanel>
 
       <Modal
         opened={applyTemplateConfirmOpen}

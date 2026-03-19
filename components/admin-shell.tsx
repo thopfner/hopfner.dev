@@ -28,11 +28,17 @@ import EmailRoundedIcon from "@mui/icons-material/EmailRounded"
 import FeedRoundedIcon from "@mui/icons-material/FeedRounded"
 
 import { createClient } from "@/lib/supabase/browser"
+import {
+  resolveAdminRouteMeta,
+  ADMIN_HEADER_HEIGHT,
+  ADMIN_HEADER_HEIGHT_VAR,
+} from "@/lib/admin/route-meta"
 
-const HEADER_HEIGHT = 56
 const DESKTOP_DRAWER_OPEN = 196
 const DESKTOP_DRAWER_CLOSED = 74
 const MOBILE_DRAWER_WIDTH = 240
+
+const DRAWER_TRANSITION = "width 200ms cubic-bezier(0.4, 0, 0.2, 1)"
 
 type NavItem = {
   href: string
@@ -41,14 +47,29 @@ type NavItem = {
   icon: ElementType
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "Pages", aria: "Pages", icon: ArticleRoundedIcon },
-  { href: "/admin/section-library", label: "Library", aria: "Section library", icon: AutoStoriesRoundedIcon },
-  { href: "/admin/global-sections", label: "Global", aria: "Global sections", icon: FolderRoundedIcon },
-  { href: "/admin/blog", label: "Blog", aria: "Blog", icon: FeedRoundedIcon },
-  { href: "/admin/media", label: "Media", aria: "Media", icon: CollectionsRoundedIcon },
-  { href: "/admin/bookings", label: "Bookings", aria: "Bookings", icon: CalendarMonthRoundedIcon },
-  { href: "/admin/email-templates", label: "Emails", aria: "Email templates", icon: EmailRoundedIcon },
+type NavGroup = {
+  label: string
+  items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Content",
+    items: [
+      { href: "/admin", label: "Pages", aria: "Pages", icon: ArticleRoundedIcon },
+      { href: "/admin/blog", label: "Blog", aria: "Blog", icon: FeedRoundedIcon },
+      { href: "/admin/media", label: "Media", aria: "Media", icon: CollectionsRoundedIcon },
+      { href: "/admin/bookings", label: "Bookings", aria: "Bookings", icon: CalendarMonthRoundedIcon },
+    ],
+  },
+  {
+    label: "Configure",
+    items: [
+      { href: "/admin/section-library", label: "Library", aria: "Section library", icon: AutoStoriesRoundedIcon },
+      { href: "/admin/global-sections", label: "Global", aria: "Global sections", icon: FolderRoundedIcon },
+      { href: "/admin/email-templates", label: "Emails", aria: "Email templates", icon: EmailRoundedIcon },
+    ],
+  },
 ]
 
 function isNavItemActive(pathname: string, href: string) {
@@ -57,6 +78,25 @@ function isNavItemActive(pathname: string, href: string) {
   }
   return pathname === href || pathname.startsWith(`${href}/`)
 }
+
+// ---------------------------------------------------------------------------
+// Route-class-driven content area styles
+// ---------------------------------------------------------------------------
+
+const CONTENT_STYLES = {
+  collection: {
+    p: { xs: 1.5, sm: 2.25 },
+  },
+  workspace: {
+    p: { xs: 1.5, sm: 2 },
+    background: "rgba(9,13,22,0.42)",
+    boxShadow: "inset 0 1px 0 rgba(142,162,255,0.10)",
+  },
+  immersive: {
+    p: { xs: 1.5, sm: 2.25 },
+    background: "transparent",
+  },
+} as const
 
 export function AdminShell({
   email,
@@ -76,10 +116,7 @@ export function AdminShell({
   const navOpen = isDesktop ? desktopNavOpen : mobileNavOpen
   const desktopDrawerWidth = desktopNavOpen ? DESKTOP_DRAWER_OPEN : DESKTOP_DRAWER_CLOSED
 
-  const currentTitle = useMemo(() => {
-    const current = NAV_ITEMS.find((item) => isNavItemActive(pathname, item.href))
-    return current?.label ?? "Admin"
-  }, [pathname])
+  const routeMeta = useMemo(() => resolveAdminRouteMeta(pathname), [pathname])
 
   async function onSignOut() {
     const supabase = createClient()
@@ -96,73 +133,104 @@ export function AdminShell({
     setMobileNavOpen((v) => !v)
   }
 
+  function renderNavItem(item: NavItem, showLabels: boolean) {
+    const active = isNavItemActive(pathname, item.href)
+    const Icon = item.icon
+
+    const node = (
+      <ListItemButton
+        selected={active}
+        onClick={() => {
+          router.push(item.href)
+          if (!isDesktop) setMobileNavOpen(false)
+        }}
+        aria-label={item.aria}
+        sx={{
+          minHeight: 40,
+          px: showLabels ? 1.25 : 0.75,
+          py: 0.5,
+          borderRadius: 1.5,
+          justifyContent: showLabels ? "flex-start" : "center",
+          border: "1px solid",
+          borderColor: active ? "rgba(124,140,255,0.55)" : "transparent",
+          background: active ? "linear-gradient(135deg, rgba(142,162,255,0.30), rgba(75,226,213,0.18))" : "transparent",
+          "&:hover": { backgroundColor: active ? "rgba(142,162,255,0.33)" : "rgba(148,163,184,0.16)" },
+        }}
+      >
+        <ListItemIcon
+          sx={{
+            minWidth: showLabels ? 30 : "auto",
+            mr: showLabels ? 0.75 : 0,
+            justifyContent: "center",
+            color: "inherit",
+          }}
+        >
+          <Icon sx={{ fontSize: 20 }} />
+        </ListItemIcon>
+        {showLabels ? (
+          <ListItemText
+            primary={item.label}
+            primaryTypographyProps={{ fontSize: 13, fontWeight: active ? 650 : 500 }}
+          />
+        ) : null}
+      </ListItemButton>
+    )
+
+    if (showLabels) return <Box key={item.href}>{node}</Box>
+
+    return (
+      <Tooltip key={item.href} title={item.label} placement="right">
+        <Box>{node}</Box>
+      </Tooltip>
+    )
+  }
+
   function renderNav(showLabels: boolean) {
     return (
       <Box sx={{ display: "flex", height: "100%", flexDirection: "column", p: 1 }}>
-        <List dense sx={{ py: 0, display: "flex", flexDirection: "column", gap: 0.75 }}>
-          {NAV_ITEMS.map((item) => {
-            const active = isNavItemActive(pathname, item.href)
-            const Icon = item.icon
-
-            const node = (
-              <ListItemButton
-                selected={active}
-                onClick={() => {
-                  router.push(item.href)
-                  if (!isDesktop) setMobileNavOpen(false)
-                }}
-                aria-label={item.aria}
+        {NAV_GROUPS.map((group, groupIdx) => (
+          <Box key={group.label} sx={{ mb: groupIdx < NAV_GROUPS.length - 1 ? 1 : 0 }}>
+            {showLabels ? (
+              <Typography
+                variant="overline"
                 sx={{
-                  minHeight: 40,
-                  px: showLabels ? 1.1 : 0.75,
-                  py: 0.5,
-                  borderRadius: 1.5,
-                  justifyContent: showLabels ? "flex-start" : "center",
-                  border: "1px solid",
-                  borderColor: active ? "rgba(124,140,255,0.55)" : "transparent",
-                  background: active ? "linear-gradient(135deg, rgba(142,162,255,0.30), rgba(75,226,213,0.18))" : "transparent",
-                  "&:hover": { backgroundColor: active ? "rgba(142,162,255,0.33)" : "rgba(148,163,184,0.16)" },
+                  display: "block",
+                  px: 1.25,
+                  pt: groupIdx === 0 ? 0.75 : 1,
+                  pb: 0.75,
+                  fontSize: "0.6875rem",
+                  fontWeight: 650,
+                  letterSpacing: "0.08em",
+                  color: "text.secondary",
+                  opacity: 0.72,
+                  lineHeight: 1,
                 }}
               >
-                <ListItemIcon
-                  sx={{
-                    minWidth: showLabels ? 32 : "auto",
-                    mr: showLabels ? 1 : 0,
-                    justifyContent: "center",
-                    color: "inherit",
-                  }}
-                >
-                  <Icon fontSize="small" />
-                </ListItemIcon>
-                {showLabels ? (
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
-                  />
-                ) : null}
-              </ListItemButton>
-            )
-
-            if (showLabels) return <Box key={item.href}>{node}</Box>
-
-            return (
-              <Tooltip key={item.href} title={item.label} placement="right">
-                <Box>{node}</Box>
-              </Tooltip>
-            )
-          })}
-        </List>
+                {group.label}
+              </Typography>
+            ) : (
+              groupIdx > 0 && (
+                <Divider sx={{ my: 0.75, borderColor: "rgba(142,162,255,0.12)" }} />
+              )
+            )}
+            <List dense sx={{ py: 0, display: "flex", flexDirection: "column", gap: 0.25 }}>
+              {group.items.map((item) => renderNavItem(item, showLabels))}
+            </List>
+          </Box>
+        ))}
 
         <Box sx={{ mt: "auto", pt: 1 }}>
-          <Divider sx={{ mb: 1 }} />
+          <Divider sx={{ mb: 1, borderColor: "rgba(142,162,255,0.12)" }} />
           {showLabels ? (
             <Button
               fullWidth
               variant="outlined"
               color="inherit"
-              startIcon={<LogoutRoundedIcon fontSize="small" />}
+              size="small"
+              startIcon={<LogoutRoundedIcon sx={{ fontSize: 16 }} />}
               onClick={onSignOut}
               aria-label="Sign out"
+              sx={{ fontSize: "0.8125rem", fontWeight: 500, py: 0.5 }}
             >
               Sign out
             </Button>
@@ -179,7 +247,7 @@ export function AdminShell({
                   borderRadius: 1,
                 }}
               >
-                <LogoutRoundedIcon fontSize="small" />
+                <LogoutRoundedIcon sx={{ fontSize: 16 }} />
               </IconButton>
             </Tooltip>
           )}
@@ -188,14 +256,24 @@ export function AdminShell({
     )
   }
 
+  const contentSx = CONTENT_STYLES[routeMeta.routeClass]
+
   return (
-    <Box sx={{ display: "flex", minHeight: "100dvh", width: "100%", background: "radial-gradient(1200px 600px at 10% -10%, rgba(124,140,255,0.22), transparent 45%), radial-gradient(900px 480px at 90% -10%, rgba(75,226,213,0.18), transparent 45%), #090d16" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100dvh",
+        width: "100%",
+        background: "radial-gradient(1200px 600px at 10% -10%, rgba(124,140,255,0.22), transparent 45%), radial-gradient(900px 480px at 90% -10%, rgba(75,226,213,0.18), transparent 45%), #090d16",
+        [ADMIN_HEADER_HEIGHT_VAR]: `${ADMIN_HEADER_HEIGHT}px`,
+      }}
+    >
       <AppBar
         position="fixed"
         color="transparent"
         elevation={0}
         sx={{
-          height: HEADER_HEIGHT,
+          height: ADMIN_HEADER_HEIGHT,
           justifyContent: "center",
           borderBottom: "1px solid",
           borderColor: "divider",
@@ -225,26 +303,76 @@ export function AdminShell({
             >
               <MenuRoundedIcon fontSize="small" />
             </IconButton>
-            <Typography variant="subtitle2" sx={{ whiteSpace: "nowrap", fontWeight: 800, letterSpacing: "0.012em", color: "#e9eeff" }}>
-              hopfner.dev CMS
-            </Typography>
             <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: { xs: "none", sm: "inline" }, whiteSpace: "nowrap" }}
+              variant="subtitle2"
+              sx={{
+                whiteSpace: "nowrap",
+                fontWeight: 700,
+                fontSize: "0.8125rem",
+                letterSpacing: "0.01em",
+                color: "text.secondary",
+                display: { xs: "none", sm: "inline" },
+              }}
             >
-              {currentTitle}
+              hopfner.dev
+            </Typography>
+            <Box
+              sx={{
+                display: { xs: "none", sm: "block" },
+                width: "1px",
+                height: 16,
+                bgcolor: "divider",
+                flexShrink: 0,
+              }}
+            />
+            {routeMeta.parentLabel && (
+              <>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    whiteSpace: "nowrap",
+                    fontWeight: 500,
+                    color: "text.secondary",
+                    display: { xs: "none", sm: "inline" },
+                  }}
+                >
+                  {routeMeta.parentLabel}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    opacity: 0.4,
+                    display: { xs: "none", sm: "inline" },
+                  }}
+                >
+                  /
+                </Typography>
+              </>
+            )}
+            <Typography
+              variant="subtitle2"
+              sx={{
+                whiteSpace: "nowrap",
+                fontWeight: 700,
+                fontSize: "0.9375rem",
+                letterSpacing: "-0.01em",
+                color: "#e9eeff",
+              }}
+            >
+              {routeMeta.title}
             </Typography>
           </Box>
+
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            noWrap
+            sx={{ display: { xs: "none", sm: "block" }, maxWidth: 300 }}
+          >
+            {email}
+          </Typography>
         </Box>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          noWrap
-          sx={{ display: { xs: "none", sm: "block" }, maxWidth: 300 }}
-        >
-          {email}
-        </Typography>
       </AppBar>
 
       <Drawer
@@ -254,16 +382,18 @@ export function AdminShell({
           display: { xs: "none", sm: "block" },
           width: desktopDrawerWidth,
           flexShrink: 0,
+          transition: DRAWER_TRANSITION,
           "& .MuiDrawer-paper": {
             width: desktopDrawerWidth,
-            top: HEADER_HEIGHT,
-            height: `calc(100% - ${HEADER_HEIGHT}px)`,
+            transition: DRAWER_TRANSITION,
+            top: ADMIN_HEADER_HEIGHT,
+            height: `calc(100% - ${ADMIN_HEADER_HEIGHT}px)`,
             boxSizing: "border-box",
             overflowX: "hidden",
             borderRight: "1px solid",
             borderColor: "divider",
             bgcolor: "rgba(17,24,39,0.92)",
-            backdropFilter: "blur(6px)",
+            backdropFilter: "blur(8px)",
           },
         }}
       >
@@ -279,13 +409,13 @@ export function AdminShell({
           display: { xs: "block", sm: "none" },
           "& .MuiDrawer-paper": {
             width: MOBILE_DRAWER_WIDTH,
-            top: HEADER_HEIGHT,
-            height: `calc(100% - ${HEADER_HEIGHT}px)`,
+            top: ADMIN_HEADER_HEIGHT,
+            height: `calc(100% - ${ADMIN_HEADER_HEIGHT}px)`,
             boxSizing: "border-box",
             borderRight: "1px solid",
             borderColor: "divider",
             bgcolor: "rgba(17,24,39,0.92)",
-            backdropFilter: "blur(6px)",
+            backdropFilter: "blur(8px)",
           },
         }}
       >
@@ -294,12 +424,13 @@ export function AdminShell({
 
       <Box
         component="main"
+        data-route-class={routeMeta.routeClass}
         sx={{
           flexGrow: 1,
           minWidth: 0,
-          mt: `${HEADER_HEIGHT}px`,
+          mt: `${ADMIN_HEADER_HEIGHT}px`,
           ml: 0,
-          p: { xs: 1.5, sm: 2.25 },
+          ...contentSx,
         }}
       >
         <div className="admin-content">{children}</div>

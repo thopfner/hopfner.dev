@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import {
+  Alert,
   Button,
   Link as MuiLink,
   Paper,
@@ -13,6 +14,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 import { createClient } from "@/lib/supabase/browser"
+import { ADMIN_BORDERS, ADMIN_BLUR } from "@/components/admin/ui"
 
 type Notice = { kind: "error" | "info" | "success"; message: string }
 
@@ -70,7 +72,19 @@ export function LoginForm() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md items-center px-4 py-10">
+    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-4 py-10">
+      <Typography
+        variant="overline"
+        sx={{
+          mb: 2,
+          fontWeight: 650,
+          letterSpacing: "0.08em",
+          color: "text.secondary",
+          opacity: 0.6,
+        }}
+      >
+        hopfner.dev CMS
+      </Typography>
       <Paper
         variant="outlined"
         sx={{
@@ -79,8 +93,8 @@ export function LoginForm() {
           borderRadius: 2,
           background:
             "linear-gradient(165deg, rgba(17,24,39,0.9), rgba(10,15,27,0.86))",
-          borderColor: "rgba(142,162,255,0.3)",
-          backdropFilter: "blur(10px)",
+          borderColor: ADMIN_BORDERS.strong,
+          backdropFilter: ADMIN_BLUR.overlay,
           boxShadow: "0 22px 56px rgba(2,6,23,0.5)",
         }}
       >
@@ -101,6 +115,7 @@ export function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
+            size="small"
             fullWidth
           />
 
@@ -111,23 +126,18 @@ export function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             type="password"
+            size="small"
             fullWidth
           />
 
-          {notice ? (
-            <Typography
-              variant="body2"
-              color={
-                notice.kind === "error"
-                  ? "error.main"
-                  : notice.kind === "success"
-                    ? "success.main"
-                    : "text.secondary"
-              }
+          {notice && (
+            <Alert
+              severity={notice.kind === "error" ? "error" : notice.kind === "success" ? "success" : "info"}
+              variant="outlined"
             >
               {notice.message}
-            </Typography>
-          ) : null}
+            </Alert>
+          )}
 
           <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
             <MuiLink component={Link} href="/admin/setup" underline="hover" variant="body2">
