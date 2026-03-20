@@ -31,10 +31,12 @@ export default async function MarketingLayout({
         <AnalyticsScripts gaId={GA_ID} shouldLoad={analyticsAllowed} />
       )}
       {children}
-      <CookieConsentClient
-        requireConsent={requireConsent}
-        initialConsent={consent}
-      />
+      {GA_ID && (
+        <CookieConsentClient
+          requireConsent={requireConsent}
+          initialConsent={consent}
+        />
+      )}
     </>
   )
 }

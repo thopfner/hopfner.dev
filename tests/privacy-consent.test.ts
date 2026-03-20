@@ -52,6 +52,29 @@ describe("consent cookie serialization", () => {
     expect(parseConsent(bad)).toBeNull()
   })
 
+  it("returns null for unknown source value", () => {
+    const bad = encodeURIComponent(JSON.stringify({
+      version: 1, necessary: true, analytics: true, timestamp: "x", source: "hacked"
+    }))
+    expect(parseConsent(bad)).toBeNull()
+  })
+
+  it("returns null for missing source", () => {
+    const bad = encodeURIComponent(JSON.stringify({
+      version: 1, necessary: true, analytics: true, timestamp: "x"
+    }))
+    expect(parseConsent(bad)).toBeNull()
+  })
+
+  it("accepts all valid source values", () => {
+    for (const source of ["accept_all", "reject_all", "preferences"]) {
+      const val = encodeURIComponent(JSON.stringify({
+        version: 1, necessary: true, analytics: true, timestamp: "x", source
+      }))
+      expect(parseConsent(val)).not.toBeNull()
+    }
+  })
+
   it("defaultConsentState has analytics false", () => {
     const d = defaultConsentState()
     expect(d.version).toBe(CONSENT_VERSION)

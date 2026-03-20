@@ -20,7 +20,8 @@ function writeConsentCookie(analytics: boolean, source: ConsentSource) {
     timestamp: new Date().toISOString(),
     source,
   }
-  document.cookie = `${CONSENT_COOKIE_NAME}=${serializeConsent(state)}; path=/; max-age=${CONSENT_COOKIE_MAX_AGE}; SameSite=Lax`
+  const secure = window.location.protocol === "https:" ? "; Secure" : ""
+  document.cookie = `${CONSENT_COOKIE_NAME}=${serializeConsent(state)}; path=/; max-age=${CONSENT_COOKIE_MAX_AGE}; SameSite=Lax${secure}`
 }
 
 export function CookieConsentClient({

@@ -33,6 +33,8 @@ export function serializeConsent(state: ConsentState): string {
   return encodeURIComponent(JSON.stringify(state))
 }
 
+const VALID_SOURCES = new Set<ConsentSource>(["accept_all", "reject_all", "preferences"])
+
 export function parseConsent(cookieValue: string | undefined | null): ConsentState | null {
   if (!cookieValue) return null
   try {
@@ -44,7 +46,8 @@ export function parseConsent(cookieValue: string | undefined | null): ConsentSta
       parsed.version === CONSENT_VERSION &&
       parsed.necessary === true &&
       typeof parsed.analytics === "boolean" &&
-      typeof parsed.timestamp === "string"
+      typeof parsed.timestamp === "string" &&
+      VALID_SOURCES.has(parsed.source)
     ) {
       return parsed as ConsentState
     }

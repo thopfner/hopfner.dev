@@ -241,3 +241,55 @@ describe("CookieConsentClient", () => {
     expect(screen.getByText("Cookie preferences")).toBeDefined()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Production hardening (v4)
+// ---------------------------------------------------------------------------
+describe("Secure cookie writing", () => {
+  it("writes cookie successfully under non-HTTPS (development)", () => {
+    // In jsdom (non-HTTPS), the cookie should be writable without Secure flag
+    Object.defineProperty(window, "location", {
+      writable: true,
+      value: { ...window.location, protocol: "http:", reload: reloadMock },
+    })
+    render(
+      <CookieConsentClient requireConsent={true} initialConsent={null} />
+    )
+    fireEvent.click(screen.getByText("Accept all"))
+    expect(document.cookie).toContain("cookie_consent=")
+  })
+
+  it("cookie write path derives Secure flag from protocol", () => {
+    const fs = require("fs")
+    const path = require("path")
+    const source = fs.readFileSync(
+      path.resolve("components/marketing/consent/cookie-consent-client.tsx"),
+      "utf-8"
+    )
+    // Must check protocol to decide Secure flag
+    expect(source).toContain('window.location.protocol === "https:"')
+    expect(source).toContain("; Secure")
+    // Must NOT unconditionally force Secure (would break local dev)
+    expect(source).not.toMatch(/; Secure"?\s*\n/)
+  })
+})
+
+describe("Consent UI suppression when no optional tracking", () => {
+  it("layout only renders CookieConsentClient when GA_ID exists", () => {
+    // Structural proof: layout wraps CookieConsentClient in GA_ID conditional
+    const fs = require("fs")
+    const path = require("path")
+    const source = fs.readFileSync(
+      path.resolve("app/(marketing)/layout.tsx"),
+      "utf-8"
+    )
+    // The CookieConsentClient must be inside a {GA_ID && ...} block
+    expect(source).toContain("GA_ID && (")
+    expect(source).toContain("<CookieConsentClient")
+    // Verify GA_ID guard comes before CookieConsentClient
+    const gaGuardIdx = source.indexOf("GA_ID && (", source.indexOf("{children}"))
+    const clientIdx = source.indexOf("<CookieConsentClient")
+    expect(gaGuardIdx).toBeLessThan(clientIdx)
+    expect(gaGuardIdx).toBeGreaterThan(-1)
+  })
+})
