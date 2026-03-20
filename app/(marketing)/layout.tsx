@@ -1,6 +1,6 @@
 import { cookies, headers } from "next/headers"
 import { AnalyticsScripts } from "@/components/marketing/consent/analytics-scripts"
-import { CookieConsentClient } from "@/components/marketing/consent/cookie-consent-client"
+import { ConsentProvider } from "@/components/marketing/consent/consent-context"
 import {
   CONSENT_COOKIE_NAME,
   parseConsent,
@@ -30,12 +30,15 @@ export default async function MarketingLayout({
       {GA_ID && (
         <AnalyticsScripts gaId={GA_ID} shouldLoad={analyticsAllowed} />
       )}
-      {children}
-      {GA_ID && (
-        <CookieConsentClient
+      {GA_ID ? (
+        <ConsentProvider
           requireConsent={requireConsent}
           initialConsent={consent}
-        />
+        >
+          {children}
+        </ConsentProvider>
+      ) : (
+        children
       )}
     </>
   )

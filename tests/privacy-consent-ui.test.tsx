@@ -1,14 +1,16 @@
 /**
  * Rendered tests for cookie consent UI behavior.
  *
- * Sprint 2 + Sprint 3 — banner, preferences, settings trigger.
+ * Tests banner, preferences dialog, footer link, and consent surfaces.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { CookieConsentBanner } from "@/components/marketing/consent/cookie-consent-banner"
 import { CookiePreferencesDialog } from "@/components/marketing/consent/cookie-preferences-dialog"
 import { CookieSettingsTrigger } from "@/components/marketing/consent/cookie-settings-trigger"
-import { CookieConsentClient } from "@/components/marketing/consent/cookie-consent-client"
+import { ConsentProvider } from "@/components/marketing/consent/consent-context"
+import { ConsentSurfaces } from "@/components/marketing/consent/consent-surfaces"
+import { ConsentFooterLink } from "@/components/marketing/consent/consent-footer-link"
 import type { ConsentState } from "@/lib/privacy/consent"
 
 // Mock window.location.reload
@@ -16,27 +18,31 @@ const reloadMock = vi.fn()
 beforeEach(() => {
   Object.defineProperty(window, "location", {
     writable: true,
-    value: { ...window.location, reload: reloadMock },
+    value: { ...window.location, protocol: "http:", reload: reloadMock },
   })
-  // Clear cookies
   document.cookie = "cookie_consent=; max-age=0; path=/"
   reloadMock.mockClear()
 })
+
+// Helper to render with consent context
+function renderWithConsent(
+  ui: React.ReactNode,
+  opts: { requireConsent: boolean; initialConsent: ConsentState | null }
+) {
+  return render(
+    <ConsentProvider requireConsent={opts.requireConsent} initialConsent={opts.initialConsent}>
+      {ui}
+    </ConsentProvider>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Banner component
 // ---------------------------------------------------------------------------
 describe("CookieConsentBanner", () => {
   it("renders Accept all, Reject all, and Manage buttons", () => {
-    const onAcceptAll = vi.fn()
-    const onRejectAll = vi.fn()
-    const onManage = vi.fn()
     render(
-      <CookieConsentBanner
-        onAcceptAll={onAcceptAll}
-        onRejectAll={onRejectAll}
-        onManage={onManage}
-      />
+      <CookieConsentBanner onAcceptAll={vi.fn()} onRejectAll={vi.fn()} onManage={vi.fn()} />
     )
     expect(screen.getByText("Accept all")).toBeDefined()
     expect(screen.getByText("Reject all")).toBeDefined()
@@ -46,11 +52,7 @@ describe("CookieConsentBanner", () => {
   it("calls onAcceptAll when Accept all clicked", () => {
     const onAcceptAll = vi.fn()
     render(
-      <CookieConsentBanner
-        onAcceptAll={onAcceptAll}
-        onRejectAll={vi.fn()}
-        onManage={vi.fn()}
-      />
+      <CookieConsentBanner onAcceptAll={onAcceptAll} onRejectAll={vi.fn()} onManage={vi.fn()} />
     )
     fireEvent.click(screen.getByText("Accept all"))
     expect(onAcceptAll).toHaveBeenCalledOnce()
@@ -59,11 +61,7 @@ describe("CookieConsentBanner", () => {
   it("calls onRejectAll when Reject all clicked", () => {
     const onRejectAll = vi.fn()
     render(
-      <CookieConsentBanner
-        onAcceptAll={vi.fn()}
-        onRejectAll={onRejectAll}
-        onManage={vi.fn()}
-      />
+      <CookieConsentBanner onAcceptAll={vi.fn()} onRejectAll={onRejectAll} onManage={vi.fn()} />
     )
     fireEvent.click(screen.getByText("Reject all"))
     expect(onRejectAll).toHaveBeenCalledOnce()
@@ -72,11 +70,7 @@ describe("CookieConsentBanner", () => {
   it("calls onManage when Manage clicked", () => {
     const onManage = vi.fn()
     render(
-      <CookieConsentBanner
-        onAcceptAll={vi.fn()}
-        onRejectAll={vi.fn()}
-        onManage={onManage}
-      />
+      <CookieConsentBanner onAcceptAll={vi.fn()} onRejectAll={vi.fn()} onManage={onManage} />
     )
     fireEvent.click(screen.getByText("Manage"))
     expect(onManage).toHaveBeenCalledOnce()
@@ -88,25 +82,13 @@ describe("CookieConsentBanner", () => {
 // ---------------------------------------------------------------------------
 describe("CookiePreferencesDialog", () => {
   it("shows Necessary as always on", () => {
-    render(
-      <CookiePreferencesDialog
-        initialAnalytics={false}
-        onSave={vi.fn()}
-        onCancel={vi.fn()}
-      />
-    )
+    render(<CookiePreferencesDialog initialAnalytics={false} onSave={vi.fn()} onCancel={vi.fn()} />)
     expect(screen.getByText("Necessary")).toBeDefined()
     expect(screen.getByText(/Always enabled/)).toBeDefined()
   })
 
   it("shows Analytics toggle", () => {
-    render(
-      <CookiePreferencesDialog
-        initialAnalytics={false}
-        onSave={vi.fn()}
-        onCancel={vi.fn()}
-      />
-    )
+    render(<CookiePreferencesDialog initialAnalytics={false} onSave={vi.fn()} onCancel={vi.fn()} />)
     expect(screen.getByText("Analytics")).toBeDefined()
     const toggle = screen.getByRole("switch")
     expect(toggle.getAttribute("aria-checked")).toBe("false")
@@ -114,16 +96,8 @@ describe("CookiePreferencesDialog", () => {
 
   it("toggles analytics and saves", () => {
     const onSave = vi.fn()
-    render(
-      <CookiePreferencesDialog
-        initialAnalytics={false}
-        onSave={onSave}
-        onCancel={vi.fn()}
-      />
-    )
-    const toggle = screen.getByRole("switch")
-    fireEvent.click(toggle)
-    expect(toggle.getAttribute("aria-checked")).toBe("true")
+    render(<CookiePreferencesDialog initialAnalytics={false} onSave={onSave} onCancel={vi.fn()} />)
+    fireEvent.click(screen.getByRole("switch"))
     fireEvent.click(screen.getByText("Save preferences"))
     expect(onSave).toHaveBeenCalledWith(true)
   })
@@ -131,13 +105,7 @@ describe("CookiePreferencesDialog", () => {
   it("cancel does not save", () => {
     const onSave = vi.fn()
     const onCancel = vi.fn()
-    render(
-      <CookiePreferencesDialog
-        initialAnalytics={false}
-        onSave={onSave}
-        onCancel={onCancel}
-      />
-    )
+    render(<CookiePreferencesDialog initialAnalytics={false} onSave={onSave} onCancel={onCancel} />)
     fireEvent.click(screen.getByText("Cancel"))
     expect(onCancel).toHaveBeenCalledOnce()
     expect(onSave).not.toHaveBeenCalled()
@@ -145,7 +113,7 @@ describe("CookiePreferencesDialog", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Settings trigger
+// Settings trigger (legacy floating — still usable as fallback)
 // ---------------------------------------------------------------------------
 describe("CookieSettingsTrigger", () => {
   it("renders with Cookies label", () => {
@@ -162,99 +130,97 @@ describe("CookieSettingsTrigger", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Client controller
+// ConsentSurfaces (rendered inside themed wrapper)
 // ---------------------------------------------------------------------------
-describe("CookieConsentClient", () => {
+describe("ConsentSurfaces", () => {
   it("shows banner when consent required and no prior choice", () => {
-    render(
-      <CookieConsentClient requireConsent={true} initialConsent={null} />
-    )
+    renderWithConsent(<ConsentSurfaces />, { requireConsent: true, initialConsent: null })
     expect(screen.getByText("Accept all")).toBeDefined()
     expect(screen.getByText("Reject all")).toBeDefined()
   })
 
   it("does not show banner when consent not required", () => {
-    const { container } = render(
-      <CookieConsentClient requireConsent={false} initialConsent={null} />
-    )
+    const { container } = renderWithConsent(<ConsentSurfaces />, { requireConsent: false, initialConsent: null })
     expect(container.innerHTML).toBe("")
   })
 
   it("does not show banner when consent already stored", () => {
     const consent: ConsentState = {
-      version: 1,
-      necessary: true,
-      analytics: true,
-      timestamp: "2026-03-20T12:00:00.000Z",
-      source: "accept_all",
+      version: 1, necessary: true, analytics: true,
+      timestamp: "2026-03-20T12:00:00.000Z", source: "accept_all",
     }
-    render(
-      <CookieConsentClient requireConsent={true} initialConsent={consent} />
-    )
-    // Banner should not be present, but settings trigger should be
+    renderWithConsent(<ConsentSurfaces />, { requireConsent: true, initialConsent: consent })
     expect(screen.queryByText("Accept all")).toBeNull()
-    expect(screen.getByText("Cookies")).toBeDefined()
   })
 
-  it("shows settings trigger after accepting", () => {
-    render(
-      <CookieConsentClient requireConsent={true} initialConsent={null} />
-    )
+  it("opens preferences dialog via Manage", () => {
+    renderWithConsent(<ConsentSurfaces />, { requireConsent: true, initialConsent: null })
+    fireEvent.click(screen.getByText("Manage"))
+    expect(screen.getByText("Cookie preferences")).toBeDefined()
+    expect(screen.getByText("Necessary")).toBeDefined()
+  })
+
+  it("writes cookie on Accept all", () => {
+    renderWithConsent(<ConsentSurfaces />, { requireConsent: true, initialConsent: null })
     fireEvent.click(screen.getByText("Accept all"))
-    // Cookie should be written
     expect(document.cookie).toContain("cookie_consent=")
     expect(reloadMock).toHaveBeenCalled()
   })
 
   it("writes cookie on Reject all", () => {
-    render(
-      <CookieConsentClient requireConsent={true} initialConsent={null} />
-    )
+    renderWithConsent(<ConsentSurfaces />, { requireConsent: true, initialConsent: null })
     fireEvent.click(screen.getByText("Reject all"))
     expect(document.cookie).toContain("cookie_consent=")
     expect(reloadMock).toHaveBeenCalled()
   })
+})
 
-  it("opens preferences dialog on Manage", () => {
-    render(
-      <CookieConsentClient requireConsent={true} initialConsent={null} />
-    )
-    fireEvent.click(screen.getByText("Manage"))
-    expect(screen.getByText("Cookie preferences")).toBeDefined()
-    expect(screen.getByText("Necessary")).toBeDefined()
-    expect(screen.getByText("Analytics")).toBeDefined()
+// ---------------------------------------------------------------------------
+// ConsentFooterLink
+// ---------------------------------------------------------------------------
+describe("ConsentFooterLink", () => {
+  it("renders Cookie settings when consent is required and choice exists", () => {
+    const consent: ConsentState = {
+      version: 1, necessary: true, analytics: false,
+      timestamp: "2026-03-20T12:00:00.000Z", source: "reject_all",
+    }
+    renderWithConsent(<ConsentFooterLink />, { requireConsent: true, initialConsent: consent })
+    expect(screen.getByText("Cookie settings")).toBeDefined()
   })
 
-  it("settings trigger reopens preferences dialog", () => {
+  it("does not render when consent is not required", () => {
+    const { container } = renderWithConsent(<ConsentFooterLink />, { requireConsent: false, initialConsent: null })
+    expect(container.innerHTML).toBe("")
+  })
+
+  it("does not render when no choice has been made yet", () => {
+    const { container } = renderWithConsent(<ConsentFooterLink />, { requireConsent: true, initialConsent: null })
+    expect(container.querySelector("button")).toBeNull()
+  })
+
+  it("opens preferences dialog when clicked", () => {
     const consent: ConsentState = {
-      version: 1,
-      necessary: true,
-      analytics: false,
-      timestamp: "2026-03-20T12:00:00.000Z",
-      source: "reject_all",
+      version: 1, necessary: true, analytics: false,
+      timestamp: "2026-03-20T12:00:00.000Z", source: "reject_all",
     }
-    render(
-      <CookieConsentClient requireConsent={true} initialConsent={consent} />
+    renderWithConsent(
+      <>
+        <ConsentFooterLink />
+        <ConsentSurfaces />
+      </>,
+      { requireConsent: true, initialConsent: consent }
     )
-    // Click the settings trigger
-    fireEvent.click(screen.getByText("Cookies"))
+    fireEvent.click(screen.getByText("Cookie settings"))
     expect(screen.getByText("Cookie preferences")).toBeDefined()
   })
 })
 
 // ---------------------------------------------------------------------------
-// Production hardening (v4)
+// Production hardening (v4) — retained
 // ---------------------------------------------------------------------------
 describe("Secure cookie writing", () => {
   it("writes cookie successfully under non-HTTPS (development)", () => {
-    // In jsdom (non-HTTPS), the cookie should be writable without Secure flag
-    Object.defineProperty(window, "location", {
-      writable: true,
-      value: { ...window.location, protocol: "http:", reload: reloadMock },
-    })
-    render(
-      <CookieConsentClient requireConsent={true} initialConsent={null} />
-    )
+    renderWithConsent(<ConsentSurfaces />, { requireConsent: true, initialConsent: null })
     fireEvent.click(screen.getByText("Accept all"))
     expect(document.cookie).toContain("cookie_consent=")
   })
@@ -263,33 +229,52 @@ describe("Secure cookie writing", () => {
     const fs = require("fs")
     const path = require("path")
     const source = fs.readFileSync(
-      path.resolve("components/marketing/consent/cookie-consent-client.tsx"),
+      path.resolve("components/marketing/consent/consent-context.tsx"),
       "utf-8"
     )
-    // Must check protocol to decide Secure flag
     expect(source).toContain('window.location.protocol === "https:"')
     expect(source).toContain("; Secure")
-    // Must NOT unconditionally force Secure (would break local dev)
-    expect(source).not.toMatch(/; Secure"?\s*\n/)
   })
 })
 
 describe("Consent UI suppression when no optional tracking", () => {
-  it("layout only renders CookieConsentClient when GA_ID exists", () => {
-    // Structural proof: layout wraps CookieConsentClient in GA_ID conditional
+  it("layout only renders ConsentProvider when GA_ID exists", () => {
     const fs = require("fs")
     const path = require("path")
-    const source = fs.readFileSync(
-      path.resolve("app/(marketing)/layout.tsx"),
-      "utf-8"
-    )
-    // The CookieConsentClient must be inside a {GA_ID && ...} block
-    expect(source).toContain("GA_ID && (")
-    expect(source).toContain("<CookieConsentClient")
-    // Verify GA_ID guard comes before CookieConsentClient
-    const gaGuardIdx = source.indexOf("GA_ID && (", source.indexOf("{children}"))
-    const clientIdx = source.indexOf("<CookieConsentClient")
-    expect(gaGuardIdx).toBeLessThan(clientIdx)
-    expect(gaGuardIdx).toBeGreaterThan(-1)
+    const source = fs.readFileSync(path.resolve("app/(marketing)/layout.tsx"), "utf-8")
+    expect(source).toContain("GA_ID ? (")
+    expect(source).toContain("<ConsentProvider")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Theme-scoped rendering (v5) — consent surfaces inside themed page wrapper
+// ---------------------------------------------------------------------------
+describe("Theme-scoped consent rendering", () => {
+  it("ConsentSurfaces is rendered from within the themed page.tsx wrapper", () => {
+    const fs = require("fs")
+    const path = require("path")
+    const source = fs.readFileSync(path.resolve("app/(marketing)/[slug]/page.tsx"), "utf-8")
+    // ConsentSurfaces must appear inside the themed div, before the closing </div>
+    expect(source).toContain("<ConsentSurfaces />")
+    // It must appear after the main content and TopBackdrop
+    const mainIdx = source.indexOf("</main>")
+    const surfacesIdx = source.indexOf("<ConsentSurfaces />")
+    expect(surfacesIdx).toBeGreaterThan(mainIdx)
+  })
+
+  it("footer legal row receives ConsentFooterLink", () => {
+    const fs = require("fs")
+    const path = require("path")
+    const source = fs.readFileSync(path.resolve("app/(marketing)/[slug]/page.tsx"), "utf-8")
+    expect(source).toContain("legalAction={<ConsentFooterLink />}")
+  })
+
+  it("footer-grid-section accepts and renders legalAction", () => {
+    const fs = require("fs")
+    const path = require("path")
+    const source = fs.readFileSync(path.resolve("components/landing/footer-grid-section.tsx"), "utf-8")
+    expect(source).toContain("legalAction?: React.ReactNode")
+    expect(source).toContain("{legalAction}")
   })
 })

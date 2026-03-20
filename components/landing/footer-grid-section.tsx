@@ -35,6 +35,7 @@ export function FooterGridSection({
   cards,
   brandText,
   legal,
+  legalAction,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -46,6 +47,7 @@ export function FooterGridSection({
   cards: FooterCard[]
   brandText?: string
   legal?: { copyright?: string; links?: FooterLink[] }
+  legalAction?: React.ReactNode
 }) {
   const legalLinks = (legal?.links ?? []).filter((l) => hasContent(l.label))
 
@@ -189,7 +191,7 @@ export function FooterGridSection({
         <div className="space-y-3 border-t border-border/30 pt-6">
           <div className="flex flex-col gap-2 text-[11px] tracking-wide text-muted-foreground/60 sm:flex-row sm:items-center sm:justify-between">
             {legal?.copyright ? <EditableTextSlot as="p" fieldPath="content.legal.copyright">{legal.copyright}</EditableTextSlot> : null}
-            {legalLinks.length > 0 ? (
+            {legalLinks.length > 0 || legalAction ? (
               <div className="flex flex-wrap gap-x-4 gap-y-1">
                 {legalLinks.map((lnk, legalIdx) => (
                   <EditableLinkSlot
@@ -205,6 +207,7 @@ export function FooterGridSection({
                     </Link>
                   </EditableLinkSlot>
                 ))}
+                {legalAction}
               </div>
             ) : null}
           </div>

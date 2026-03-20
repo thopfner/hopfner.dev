@@ -30,6 +30,8 @@ import { createClient as createServerSupabase } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import type { CSSProperties } from "react"
+import { ConsentSurfaces } from "@/components/marketing/consent/consent-surfaces"
+import { ConsentFooterLink } from "@/components/marketing/consent/consent-footer-link"
 
 export const dynamic = "force-dynamic"
 
@@ -979,6 +981,7 @@ export default async function MarketingPage({
                     copyright: asString(legal.copyright),
                     links: legalLinks,
                   }}
+                  legalAction={<ConsentFooterLink />}
                 />
               )
             }
@@ -1122,6 +1125,7 @@ export default async function MarketingPage({
           })}
         </main>
       </TopBackdrop>
+      <ConsentSurfaces />
     </div>
   )
 }
