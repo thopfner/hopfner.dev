@@ -16,8 +16,8 @@ type FooterCard = {
   links?: FooterLink[]
   groups?: FooterLinkGroup[]
   subscribe?: { enabled?: boolean; placeholder?: string; buttonLabel?: string }
-  ctaPrimary?: { label?: string; href?: string }
-  ctaSecondary?: { label?: string; href?: string }
+  ctaPrimary?: { label?: string; href?: string; enabled?: boolean }
+  ctaSecondary?: { label?: string; href?: string; enabled?: boolean }
 }
 
 function hasContent(s: string | undefined | null): boolean {
@@ -81,12 +81,14 @@ export function FooterGridSection({
             const subscribeEnabled = card.subscribe?.enabled === true
             const subscribePlaceholder = card.subscribe?.placeholder?.trim() || "Email address"
             const subscribeButtonLabel = card.subscribe?.buttonLabel?.trim() || "Subscribe"
+            const cta1Enabled = (card.ctaPrimary as Record<string, unknown> | undefined)?.enabled !== false
             const cta1Label = card.ctaPrimary?.label?.trim() || ""
             const cta1Href = card.ctaPrimary?.href?.trim() || ""
+            const cta2Enabled = (card.ctaSecondary as Record<string, unknown> | undefined)?.enabled !== false
             const cta2Label = card.ctaSecondary?.label?.trim() || ""
             const cta2Href = card.ctaSecondary?.href?.trim() || ""
             const hasLinks = linksMode === "grouped" ? groups.length > 0 : flatLinks.length > 0
-            const hasCta = (cta1Label && cta1Href) || (cta2Label && cta2Href)
+            const hasCta = (cta1Enabled && cta1Label && cta1Href) || (cta2Enabled && cta2Label && cta2Href)
 
             return (
               <div key={idx} className="space-y-5" style={panelStyle}>
@@ -166,12 +168,12 @@ export function FooterGridSection({
                 {/* CTAs */}
                 {hasCta ? (
                   <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                    {cta1Label && cta1Href ? (
+                    {cta1Enabled && cta1Label && cta1Href ? (
                       <Button size="sm" variant="gradient" asChild>
                         <Link href={cta1Href}><EditableLinkSlot labelPath={`content.cards.${idx}.ctaPrimary.label`} hrefPath={`content.cards.${idx}.ctaPrimary.href`}>{cta1Label}</EditableLinkSlot></Link>
                       </Button>
                     ) : null}
-                    {cta2Label && cta2Href ? (
+                    {cta2Enabled && cta2Label && cta2Href ? (
                       <Button size="sm" variant="outline" asChild>
                         <Link href={cta2Href}><EditableLinkSlot labelPath={`content.cards.${idx}.ctaSecondary.label`} hrefPath={`content.cards.${idx}.ctaSecondary.href`}>{cta2Label}</EditableLinkSlot></Link>
                       </Button>

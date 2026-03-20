@@ -6,6 +6,7 @@ import { resolveSectionUi } from "@/lib/design-system/resolve"
 import { SkipAnimationProvider } from "@/components/landing/motion-primitives"
 import { VisualEditingProvider, type FieldPath } from "@/components/landing/visual-editing-context"
 import { tiptapJsonToSanitizedHtml } from "@/lib/cms/rich-text"
+import { getSharedCtaEnabled } from "@/lib/cms/cta-visibility"
 
 // ---------------------------------------------------------------------------
 // Safe accessors
@@ -442,6 +443,8 @@ function SectionRenderer({
             : undefined
           }
           ui={ui}
+          ctaPrimaryEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
+          ctaSecondaryEnabled={getSharedCtaEnabled(content, "ctaSecondary")}
         />
       )
     }
@@ -644,6 +647,8 @@ function SectionRenderer({
           }}
           layoutVariant={layoutVariant}
           ui={ui}
+          ctaPrimaryEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
+          ctaSecondaryEnabled={getSharedCtaEnabled(content, "ctaSecondary")}
         />
       )
     }
@@ -714,6 +719,7 @@ function SectionRenderer({
           testimonial={testimonial}
           ctaLabel={ctaPrimaryLabel}
           ctaHref={ctaPrimaryHref}
+          ctaPrimaryEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
           ui={ui}
         />
       )
@@ -739,6 +745,7 @@ function SectionRenderer({
           stats={stats}
           ctaLabel={ctaPrimaryLabel}
           ctaHref={ctaPrimaryHref}
+          ctaPrimaryEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
           ui={ui}
         />
       )
@@ -798,11 +805,11 @@ function SectionRenderer({
             })(),
             ctaPrimary: (() => {
               const cta = asRecord(cardRec.ctaPrimary)
-              return { label: s(cta.label), href: s(cta.href) }
+              return { label: s(cta.label), href: s(cta.href), ...(cta.enabled === false ? { enabled: false } : {}) }
             })(),
             ctaSecondary: (() => {
               const cta = asRecord(cardRec.ctaSecondary)
-              return { label: s(cta.label), href: s(cta.href) }
+              return { label: s(cta.label), href: s(cta.href), ...(cta.enabled === false ? { enabled: false } : {}) }
             })(),
           }
         })
@@ -844,6 +851,7 @@ function SectionRenderer({
             label: ctaPrimaryLabel || "Book a call",
             href: ctaPrimaryHref || "#contact",
           }}
+          ctaEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
         />
       )
     }

@@ -28,6 +28,7 @@ export function ProofClusterSection({
   testimonial,
   ctaLabel,
   ctaHref,
+  ctaPrimaryEnabled,
   ui,
 }: {
   sectionId?: string
@@ -44,6 +45,7 @@ export function ProofClusterSection({
   testimonial?: { quote: string; author: string; role: string; imageUrl?: string }
   ctaLabel?: string
   ctaHref?: string
+  ctaPrimaryEnabled?: boolean
   ui?: ResolvedSectionUi
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
@@ -52,7 +54,7 @@ export function ProofClusterSection({
   const hasMetrics = metrics.length > 0
   const hasProofCard = proofCard && proofCard.title.trim().length > 0
   const hasTestimonial = testimonial && testimonial.quote.trim().length > 0
-  const hasCta = (ctaLabel ?? "").trim().length > 0 && (ctaHref ?? "").trim().length > 0
+  const hasCta = (ctaPrimaryEnabled !== false) && (ctaLabel ?? "").trim().length > 0 && (ctaHref ?? "").trim().length > 0
   const density = ui?.density ?? "standard"
   const gridGap = ui?.gridGap ?? "standard"
   const labelStyle = ui?.labelStyle ?? "default"

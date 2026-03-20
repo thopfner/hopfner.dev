@@ -30,6 +30,8 @@ export function FinalCtaSection({
   layoutVariant = "centered",
   eyebrow,
   ui,
+  ctaPrimaryEnabled = true,
+  ctaSecondaryEnabled = true,
 }: {
   sectionId?: string
   sectionClassName?: string
@@ -45,6 +47,8 @@ export function FinalCtaSection({
   layoutVariant?: LayoutVariant
   eyebrow?: string
   ui?: ResolvedSectionUi
+  ctaPrimaryEnabled?: boolean
+  ctaSecondaryEnabled?: boolean
 }) {
   const card = resolveCardPresentation(ui, { mode: "cta" })
   const ctaJustify = containerClassName?.includes("text-center")
@@ -79,10 +83,12 @@ export function FinalCtaSection({
               <EditableTextSlot as="p" fieldPath="meta.title" className={cn("text-sm font-semibold text-foreground sm:text-base", HEADING_TREATMENT_CLASSES[ui?.headingTreatment ?? "default"])}>{headline}</EditableTextSlot>
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
-              <Button size="sm" variant="gradient" asChild>
-                <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
-              </Button>
-              {secondaryCta.label ? (
+              {ctaPrimaryEnabled && (
+                <Button size="sm" variant="gradient" asChild>
+                  <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
+                </Button>
+              )}
+              {ctaSecondaryEnabled && secondaryCta.label ? (
                 <Button size="sm" variant="outline" asChild>
                   <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
                 </Button>
@@ -131,10 +137,12 @@ export function FinalCtaSection({
                   ) : null}
                 </div>
                 <div className="flex flex-col items-start justify-center gap-3 sm:items-end">
-                  <Button variant="gradient" asChild>
-                    <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
-                  </Button>
-                  {secondaryCta.label ? (
+                  {ctaPrimaryEnabled && (
+                    <Button variant="gradient" asChild>
+                      <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
+                    </Button>
+                  )}
+                  {ctaSecondaryEnabled && secondaryCta.label ? (
                     <Button variant="outline" asChild>
                       <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
                     </Button>
@@ -185,10 +193,12 @@ export function FinalCtaSection({
                 <EditableTextSlot as="p" fieldPath="content.body" className="mx-auto max-w-xl text-sm text-muted-foreground" multiline>{body}</EditableTextSlot>
               ) : null}
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <Button variant="gradient" asChild>
-                  <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
-                </Button>
-                {secondaryCta.label ? (
+                {ctaPrimaryEnabled && (
+                  <Button variant="gradient" asChild>
+                    <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
+                  </Button>
+                )}
+                {ctaSecondaryEnabled && secondaryCta.label ? (
                   <Button variant="outline" asChild>
                     <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
                   </Button>
@@ -235,12 +245,16 @@ export function FinalCtaSection({
               <EditableTextSlot as="p" fieldPath="content.body" className="text-base text-muted-foreground" multiline>{body}</EditableTextSlot>
             )}
             <div className={cn("flex flex-wrap items-center gap-2", ctaJustify)}>
-              <Button variant="gradient" asChild>
-                <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
-              </Button>
+              {ctaPrimaryEnabled && (
+                <Button variant="gradient" asChild>
+                  <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
+                </Button>
+              )}
+              {ctaSecondaryEnabled && (
+                <Button variant="outline" asChild>
+                  <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>

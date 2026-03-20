@@ -13,6 +13,12 @@ import { MediaPickerMenu } from "@/components/media-picker-menu"
 import { LinkMenuField } from "./fields/link-menu-field"
 import type { EditorDraftMeta, LinkMenuResourceProps } from "./types"
 import { inputValueFromEvent } from "./payload"
+import {
+  isSharedCtaToggleSupported,
+  getSharedCtaEnabled,
+  setSharedCtaEnabled,
+  type CtaKey,
+} from "@/lib/cms/cta-visibility"
 
 // ---------------------------------------------------------------------------
 // Section basics — title + subtitle
@@ -69,6 +75,26 @@ type SectionActionsPanelProps = {
   showCtaPrimary: boolean
   showCtaSecondary: boolean
   linkMenuProps: LinkMenuResourceProps
+  /** Required for CTA visibility toggle support */
+  sectionType?: string
+  content?: Record<string, unknown>
+  onContentChange?: (updater: (prev: Record<string, unknown>) => Record<string, unknown>) => void
+}
+
+function CtaToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <Group gap="xs" style={{ gridColumn: "1 / -1" }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        style={{ accentColor: "var(--mantine-color-blue-6)" }}
+      />
+      <Text size="xs" c={checked ? undefined : "dimmed"}>
+        {label}
+      </Text>
+    </Group>
+  )
 }
 
 export const SectionActionsPanel = memo(function SectionActionsPanel({
@@ -77,8 +103,21 @@ export const SectionActionsPanel = memo(function SectionActionsPanel({
   showCtaPrimary,
   showCtaSecondary,
   linkMenuProps,
+  sectionType,
+  content,
+  onContentChange,
 }: SectionActionsPanelProps) {
   if (!showCtaPrimary && !showCtaSecondary) return null
+
+  const canTogglePrimary = sectionType ? isSharedCtaToggleSupported(sectionType, "ctaPrimary") : false
+  const canToggleSecondary = sectionType ? isSharedCtaToggleSupported(sectionType, "ctaSecondary") : false
+  const primaryEnabled = content ? getSharedCtaEnabled(content, "ctaPrimary") : true
+  const secondaryEnabled = content ? getSharedCtaEnabled(content, "ctaSecondary") : true
+
+  const toggleCta = (key: CtaKey, enabled: boolean) => {
+    onContentChange?.((prev) => setSharedCtaEnabled(prev, key, enabled))
+  }
+
   return (
     <Paper withBorder p="md" radius="md">
       <Stack gap="sm">
@@ -86,11 +125,19 @@ export const SectionActionsPanel = memo(function SectionActionsPanel({
           Actions
         </Text>
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+          {showCtaPrimary && canTogglePrimary && onContentChange ? (
+            <CtaToggle
+              label="Show primary CTA"
+              checked={primaryEnabled}
+              onChange={(v) => toggleCta("ctaPrimary", v)}
+            />
+          ) : null}
           {showCtaPrimary ? (
             <TextInput
               label="Primary CTA label"
               value={meta.ctaPrimaryLabel}
               onChange={(e) => onMetaField("ctaPrimaryLabel", inputValueFromEvent(e))}
+              disabled={canTogglePrimary && !primaryEnabled}
             />
           ) : null}
           {showCtaPrimary ? (
@@ -105,6 +152,14 @@ export const SectionActionsPanel = memo(function SectionActionsPanel({
               anchorsLoadingByPageId={linkMenuProps.anchorsLoadingByPageId}
               ensurePagesLoaded={linkMenuProps.ensurePagesLoaded}
               ensureAnchorsLoaded={linkMenuProps.ensureAnchorsLoaded}
+              disabled={canTogglePrimary && !primaryEnabled}
+            />
+          ) : null}
+          {showCtaSecondary && canToggleSecondary && onContentChange ? (
+            <CtaToggle
+              label="Show secondary CTA"
+              checked={secondaryEnabled}
+              onChange={(v) => toggleCta("ctaSecondary", v)}
             />
           ) : null}
           {showCtaSecondary ? (
@@ -112,6 +167,7 @@ export const SectionActionsPanel = memo(function SectionActionsPanel({
               label="Secondary CTA label"
               value={meta.ctaSecondaryLabel}
               onChange={(e) => onMetaField("ctaSecondaryLabel", inputValueFromEvent(e))}
+              disabled={canToggleSecondary && !secondaryEnabled}
             />
           ) : null}
           {showCtaSecondary ? (
@@ -126,6 +182,7 @@ export const SectionActionsPanel = memo(function SectionActionsPanel({
               anchorsLoadingByPageId={linkMenuProps.anchorsLoadingByPageId}
               ensurePagesLoaded={linkMenuProps.ensurePagesLoaded}
               ensureAnchorsLoaded={linkMenuProps.ensureAnchorsLoaded}
+              disabled={canToggleSecondary && !secondaryEnabled}
             />
           ) : null}
         </SimpleGrid>

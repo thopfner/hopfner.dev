@@ -201,10 +201,11 @@ describe("footer_grid global section content controls", () => {
     expect(globalPanelSource).toContain("CTA 2 Link")
   })
 
-  it("has subscribe toggle, placeholder, button label", () => {
-    expect(globalPanelSource).toContain("subscribeEnabled")
-    expect(globalPanelSource).toContain("subscribePlaceholder")
-    expect(globalPanelSource).toContain("subscribeButtonLabel")
+  it("does not expose stale top-level subscribe controls", () => {
+    // The top-level subscribe block was removed — subscribe is per-card only
+    expect(globalPanelSource).not.toMatch(/onContentChange\("subscribeEnabled"/)
+    expect(globalPanelSource).not.toMatch(/onContentChange\("subscribePlaceholder"/)
+    expect(globalPanelSource).not.toMatch(/onContentChange\("subscribeButtonLabel"/)
   })
 
   it("renders FooterGridContent for footer_grid section type", () => {

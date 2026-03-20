@@ -24,6 +24,7 @@ import type {
   CmsSectionTypeDefaultsMap,
 } from "@/lib/cms/types"
 import { resolveSectionUi } from "@/lib/design-system/resolve"
+import { getSharedCtaEnabled } from "@/lib/cms/cta-visibility"
 import { loadSectionPresetsFromClient } from "@/lib/design-system/loaders"
 import { createClient as createServerSupabase } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
@@ -573,6 +574,7 @@ export default async function MarketingPage({
             links={headerLinks}
             logo={headerLogo}
             cta={headerCta}
+            ctaEnabled={getSharedCtaEnabled(headerContent, "ctaPrimary")}
             topBackdropEnabled={pageBackdropEnabled}
             navOverlayOpacity={topNavOverlayOpacity}
             containerClassName={cn(
@@ -734,6 +736,8 @@ export default async function MarketingPage({
                     : undefined
                   }
                   ui={ui}
+                  ctaPrimaryEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
+                  ctaSecondaryEnabled={getSharedCtaEnabled(content, "ctaSecondary")}
                 />
               )
             }
@@ -902,6 +906,8 @@ export default async function MarketingPage({
                   }}
                   layoutVariant={ctaLayout}
                   eyebrow={asString(content.eyebrow)}
+                  ctaPrimaryEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
+                  ctaSecondaryEnabled={getSharedCtaEnabled(content, "ctaSecondary")}
                 />
               )
             }
@@ -938,11 +944,11 @@ export default async function MarketingPage({
                     })(),
                     ctaPrimary: (() => {
                       const cta = asRecord(cardRec.ctaPrimary)
-                      return { label: asString(cta.label), href: asString(cta.href) }
+                      return { label: asString(cta.label), href: asString(cta.href), ...(cta.enabled === false ? { enabled: false } : {}) }
                     })(),
                     ctaSecondary: (() => {
                       const cta = asRecord(cardRec.ctaSecondary)
-                      return { label: asString(cta.label), href: asString(cta.href) }
+                      return { label: asString(cta.label), href: asString(cta.href), ...(cta.enabled === false ? { enabled: false } : {}) }
                     })(),
                   }
                 })
@@ -1040,6 +1046,7 @@ export default async function MarketingPage({
                   testimonial={testimonial}
                   ctaLabel={pickText(v.cta_primary_label, defaults?.default_cta_primary_label)}
                   ctaHref={pickText(v.cta_primary_href, defaults?.default_cta_primary_href)}
+                  ctaPrimaryEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
                 />
               )
             }
@@ -1092,6 +1099,7 @@ export default async function MarketingPage({
                   stats={stats}
                   ctaLabel={pickText(v.cta_primary_label, defaults?.default_cta_primary_label)}
                   ctaHref={pickText(v.cta_primary_href, defaults?.default_cta_primary_href)}
+                  ctaPrimaryEnabled={getSharedCtaEnabled(content, "ctaPrimary")}
                 />
               )
             }

@@ -33,8 +33,10 @@ type ComposerBlock = {
   faqs?: Array<{ q: string; a: string; aRichText?: unknown }>
   ctaPrimaryLabel?: string
   ctaPrimaryHref?: string
+  ctaPrimaryEnabled?: boolean
   ctaSecondaryLabel?: string
   ctaSecondaryHref?: string
+  ctaSecondaryEnabled?: boolean
   // New block fields
   logos?: Array<{ label: string; imageUrl?: string }>
   metrics?: Array<{ value: string; label: string; icon?: string }>
@@ -242,12 +244,17 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
   }
 
   if (b.type === "cta") {
+    const priEnabled = b.ctaPrimaryEnabled !== false
+    const secEnabled = b.ctaSecondaryEnabled !== false
+    if (!priEnabled && !secEnabled) return null
     return (
       <div key={b.id} className="flex flex-wrap items-center gap-2">
-        <Button asChild variant="gradient" size="sm">
-          <Link href={b.ctaPrimaryHref || "#"}>{b.ctaPrimaryLabel || "Primary"}</Link>
-        </Button>
-        {b.ctaSecondaryLabel ? (
+        {priEnabled && (
+          <Button asChild variant="gradient" size="sm">
+            <Link href={b.ctaPrimaryHref || "#"}>{b.ctaPrimaryLabel || "Primary"}</Link>
+          </Button>
+        )}
+        {secEnabled && b.ctaSecondaryLabel ? (
           <Button asChild variant="outline" size="sm">
             <Link href={b.ctaSecondaryHref || "#"}>{b.ctaSecondaryLabel}</Link>
           </Button>
@@ -481,12 +488,17 @@ function renderBlock(b: ComposerBlock, panelStyle?: CSSProperties, semantics?: S
   }
 
   // Fallback for unknown types - render as CTA
+  const fbPriEnabled = b.ctaPrimaryEnabled !== false
+  const fbSecEnabled = b.ctaSecondaryEnabled !== false
+  if (!fbPriEnabled && !fbSecEnabled) return null
   return (
     <div key={b.id} className="flex flex-wrap items-center gap-2">
-      <Button asChild variant="gradient" size="sm">
-        <Link href={b.ctaPrimaryHref || "#"}>{b.ctaPrimaryLabel || "Primary"}</Link>
-      </Button>
-      {b.ctaSecondaryLabel ? (
+      {fbPriEnabled && (
+        <Button asChild variant="gradient" size="sm">
+          <Link href={b.ctaPrimaryHref || "#"}>{b.ctaPrimaryLabel || "Primary"}</Link>
+        </Button>
+      )}
+      {fbSecEnabled && b.ctaSecondaryLabel ? (
         <Button asChild variant="outline" size="sm">
           <Link href={b.ctaSecondaryHref || "#"}>{b.ctaSecondaryLabel}</Link>
         </Button>

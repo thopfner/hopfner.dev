@@ -75,6 +75,8 @@ export function HeroSection({
   textAlign,
   rightColumnAlign,
   ui,
+  ctaPrimaryEnabled = true,
+  ctaSecondaryEnabled = true,
   // Legacy prop — prefer ui.headingTreatment
   headingTreatment: headingTreatmentLegacy,
 }: {
@@ -111,6 +113,8 @@ export function HeroSection({
   textAlign?: "left" | "center"
   rightColumnAlign?: "left" | "center"
   ui?: ResolvedSectionUi
+  ctaPrimaryEnabled?: boolean
+  ctaSecondaryEnabled?: boolean
   headingTreatment?: ResolvedSectionUi["headingTreatment"]
 }) {
   const sectionStyleWithMinHeight: CSSProperties = {
@@ -188,18 +192,25 @@ export function HeroSection({
   const blockDelay = (position: number) => fixedEndDelay + position * 0.15
 
   // --- Moveable block renderers ---
-  const renderCtasBlock = (delay: number, justify: string) => (
-    <HeroEntrance key="ctas" delay={delay}>
-      <div className={cn("flex flex-wrap items-center gap-2", justify)}>
-        <Button size="lg" variant="gradient" asChild>
-          <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
-        </Button>
-        <Button size="lg" variant="outline" asChild>
-          <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
-        </Button>
-      </div>
-    </HeroEntrance>
-  )
+  const renderCtasBlock = (delay: number, justify: string) => {
+    if (!ctaPrimaryEnabled && !ctaSecondaryEnabled) return null
+    return (
+      <HeroEntrance key="ctas" delay={delay}>
+        <div className={cn("flex flex-wrap items-center gap-2", justify)}>
+          {ctaPrimaryEnabled && (
+            <Button size="lg" variant="gradient" asChild>
+              <Link href={primaryCta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{primaryCta.label}<span className="cta-arrow ml-1">&rarr;</span></EditableLinkSlot></Link>
+            </Button>
+          )}
+          {ctaSecondaryEnabled && (
+            <Button size="lg" variant="outline" asChild>
+              <Link href={secondaryCta.href}><EditableLinkSlot labelPath="meta.ctaSecondaryLabel" hrefPath="meta.ctaSecondaryHref">{secondaryCta.label}</EditableLinkSlot></Link>
+            </Button>
+          )}
+        </div>
+      </HeroEntrance>
+    )
+  }
   const renderStatsBlock = (delay: number, justify: string) =>
     hasHeroStats ? (
       <HeroEntrance key="stats" delay={delay}>

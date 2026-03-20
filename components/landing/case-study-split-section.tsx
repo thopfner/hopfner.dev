@@ -35,6 +35,7 @@ export function CaseStudySplitSection({
   stats,
   ctaLabel,
   ctaHref,
+  ctaPrimaryEnabled,
   ui,
 }: {
   sectionId?: string
@@ -56,6 +57,7 @@ export function CaseStudySplitSection({
   stats: Array<{ value: string; label: string }>
   ctaLabel?: string
   ctaHref?: string
+  ctaPrimaryEnabled?: boolean
   ui?: ResolvedSectionUi
 }) {
   const hasEyebrow = (eyebrow ?? "").trim().length > 0
@@ -65,7 +67,7 @@ export function CaseStudySplitSection({
   const hasComparison = beforeItems.length > 0 || afterItems.length > 0
   const hasMedia = (mediaImageUrl ?? "").trim().length > 0 || (mediaTitle ?? "").trim().length > 0
   const hasStats = stats.length > 0
-  const hasCta = (ctaLabel ?? "").trim().length > 0 && (ctaHref ?? "").trim().length > 0
+  const hasCta = (ctaPrimaryEnabled !== false) && (ctaLabel ?? "").trim().length > 0 && (ctaHref ?? "").trim().length > 0
   const density = ui?.density ?? "standard"
   const gridGap = ui?.gridGap ?? "standard"
   const labelStyle = ui?.labelStyle ?? "default"

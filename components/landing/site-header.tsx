@@ -17,6 +17,7 @@ export function SiteHeader({
   links,
   logo,
   cta,
+  ctaEnabled = true,
   containerClassName,
   topBackdropEnabled,
   navOverlayOpacity = 0.18,
@@ -24,6 +25,7 @@ export function SiteHeader({
   links: HeaderNavLink[]
   logo?: { url: string; alt: string; widthPx: number }
   cta: { label: string; href: string }
+  ctaEnabled?: boolean
   containerClassName?: string
   topBackdropEnabled?: boolean
   navOverlayOpacity?: number
@@ -196,9 +198,11 @@ export function SiteHeader({
           </ul>
         </nav>
 
-        <Button size="default" variant="gradient" asChild className="hidden shrink-0 md:inline-flex">
-          <Link href={cta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{cta.label}</EditableLinkSlot></Link>
-        </Button>
+        {ctaEnabled && (
+          <Button size="default" variant="gradient" asChild className="hidden shrink-0 md:inline-flex">
+            <Link href={cta.href}><EditableLinkSlot labelPath="meta.ctaPrimaryLabel" hrefPath="meta.ctaPrimaryHref">{cta.label}</EditableLinkSlot></Link>
+          </Button>
+        )}
 
         <div className="relative md:hidden" ref={mobileMenuRef}>
           <Button

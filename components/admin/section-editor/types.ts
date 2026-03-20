@@ -160,8 +160,10 @@ export type ComposerBlock = {
   faqs?: Array<{ q: string; a: string }>
   ctaPrimaryLabel?: string
   ctaPrimaryHref?: string
+  ctaPrimaryEnabled?: boolean
   ctaSecondaryLabel?: string
   ctaSecondaryHref?: string
+  ctaSecondaryEnabled?: boolean
 }
 
 export type ComposerColumn = { id: string; blocks: ComposerBlock[] }

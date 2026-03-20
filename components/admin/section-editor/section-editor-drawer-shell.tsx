@@ -368,6 +368,9 @@ export function SectionEditorDrawerShell({
                   showCtaPrimary={showCtaPrimary}
                   showCtaSecondary={showCtaSecondary}
                   linkMenuProps={linkMenuProps}
+                  sectionType={type ?? undefined}
+                  content={draft.content}
+                  onContentChange={actions.setContent}
                 />
 
                 {/* 4. Section content */}

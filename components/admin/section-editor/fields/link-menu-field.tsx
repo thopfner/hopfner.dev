@@ -31,6 +31,7 @@ export function LinkMenuField({
   anchorsLoadingByPageId,
   ensurePagesLoaded,
   ensureAnchorsLoaded,
+  disabled,
 }: {
   label: string
   value: string
@@ -42,6 +43,7 @@ export function LinkMenuField({
   anchorsLoadingByPageId: Record<string, boolean>
   ensurePagesLoaded: () => Promise<void>
   ensureAnchorsLoaded: (pageId: string) => Promise<void>
+  disabled?: boolean
 }) {
   const [opened, setOpened] = useState(false)
   const [screen, setScreen] = useState<LinkMenuScreen>("root")
@@ -111,6 +113,7 @@ export function LinkMenuField({
           placeholder="Choose link..."
           rightSection={<IconChevronDown size={16} />}
           rightSectionPointerEvents="none"
+          disabled={disabled}
         />
       </Menu.Target>
 

@@ -85,8 +85,10 @@ type ComposerBlock = {
   faqs?: Array<{ q: string; a: string }>
   ctaPrimaryLabel?: string
   ctaPrimaryHref?: string
+  ctaPrimaryEnabled?: boolean
   ctaSecondaryLabel?: string
   ctaSecondaryHref?: string
+  ctaSecondaryEnabled?: boolean
   // New block fields
   logos?: Array<{ label: string; imageUrl?: string }>
   metrics?: Array<{ value: string; label: string; icon?: string }>
@@ -1826,10 +1828,22 @@ export function SectionLibraryPage() {
 
                                                 {b.type === "cta" ? (
                                                   <SimpleGrid cols={2} spacing="xs">
-                                                    <TextInput size="xs" label="Primary label" value={b.ctaPrimaryLabel ?? ""} onChange={(e) => updateBlock(b.id, { ctaPrimaryLabel: e.currentTarget.value })} />
-                                                    <TextInput size="xs" label="Primary href" value={b.ctaPrimaryHref ?? ""} onChange={(e) => updateBlock(b.id, { ctaPrimaryHref: e.currentTarget.value })} />
-                                                    <TextInput size="xs" label="Secondary label" value={b.ctaSecondaryLabel ?? ""} onChange={(e) => updateBlock(b.id, { ctaSecondaryLabel: e.currentTarget.value })} />
-                                                    <TextInput size="xs" label="Secondary href" value={b.ctaSecondaryHref ?? ""} onChange={(e) => updateBlock(b.id, { ctaSecondaryHref: e.currentTarget.value })} />
+                                                    <Box sx={{ gridColumn: "1 / -1" }}>
+                                                      <FormControlLabel
+                                                        control={<MuiSwitch size="small" checked={(b as Record<string, unknown>).ctaPrimaryEnabled !== false} onChange={(e) => updateBlock(b.id, { ctaPrimaryEnabled: e.target.checked })} />}
+                                                        label={<Typography variant="caption">Show primary CTA</Typography>}
+                                                      />
+                                                    </Box>
+                                                    <TextInput size="xs" label="Primary label" value={b.ctaPrimaryLabel ?? ""} onChange={(e) => updateBlock(b.id, { ctaPrimaryLabel: e.currentTarget.value })} disabled={(b as Record<string, unknown>).ctaPrimaryEnabled === false} />
+                                                    <TextInput size="xs" label="Primary href" value={b.ctaPrimaryHref ?? ""} onChange={(e) => updateBlock(b.id, { ctaPrimaryHref: e.currentTarget.value })} disabled={(b as Record<string, unknown>).ctaPrimaryEnabled === false} />
+                                                    <Box sx={{ gridColumn: "1 / -1" }}>
+                                                      <FormControlLabel
+                                                        control={<MuiSwitch size="small" checked={(b as Record<string, unknown>).ctaSecondaryEnabled !== false} onChange={(e) => updateBlock(b.id, { ctaSecondaryEnabled: e.target.checked })} />}
+                                                        label={<Typography variant="caption">Show secondary CTA</Typography>}
+                                                      />
+                                                    </Box>
+                                                    <TextInput size="xs" label="Secondary label" value={b.ctaSecondaryLabel ?? ""} onChange={(e) => updateBlock(b.id, { ctaSecondaryLabel: e.currentTarget.value })} disabled={(b as Record<string, unknown>).ctaSecondaryEnabled === false} />
+                                                    <TextInput size="xs" label="Secondary href" value={b.ctaSecondaryHref ?? ""} onChange={(e) => updateBlock(b.id, { ctaSecondaryHref: e.currentTarget.value })} disabled={(b as Record<string, unknown>).ctaSecondaryEnabled === false} />
                                                   </SimpleGrid>
                                                 ) : null}
 

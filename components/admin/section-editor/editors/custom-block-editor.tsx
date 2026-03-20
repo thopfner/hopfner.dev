@@ -5,6 +5,7 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Checkbox,
   Group,
   Paper,
   SegmentedControl,
@@ -30,6 +31,9 @@ import { LinkMenuField } from "../fields/link-menu-field"
 import { ImageFieldPicker } from "@/components/image-field-picker"
 import { useBufferedField } from "../hooks/use-buffered-field"
 import type { ComposerBlock, LinkMenuResourceProps } from "../types"
+import {
+  getComposerBlockCtaEnabled,
+} from "@/lib/cms/cta-visibility"
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -484,12 +488,23 @@ function CtaBlock({
   setCustomBlockPatch: CustomBlockEditorProps["setCustomBlockPatch"]
   linkMenuProps: LinkMenuResourceProps
 }) {
+  const priEnabled = getComposerBlockCtaEnabled(merged, "ctaPrimary")
+  const secEnabled = getComposerBlockCtaEnabled(merged, "ctaSecondary")
+
   return (
     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+      <Group gap="xs" style={{ gridColumn: "1 / -1" }}>
+        <Checkbox
+          label="Show primary CTA"
+          checked={priEnabled}
+          onChange={(e) => setCustomBlockPatch(block.id, { ctaPrimaryEnabled: e.currentTarget.checked })}
+        />
+      </Group>
       <TextInput
         label="Primary CTA label"
         value={asString(merged.ctaPrimaryLabel)}
         onChange={(e) => setCustomBlockPatch(block.id, { ctaPrimaryLabel: inputValueFromEvent(e) })}
+        disabled={!priEnabled}
       />
       <LinkMenuField
         label="Primary CTA link"
@@ -502,11 +517,20 @@ function CtaBlock({
         anchorsLoadingByPageId={linkMenuProps.anchorsLoadingByPageId}
         ensurePagesLoaded={linkMenuProps.ensurePagesLoaded}
         ensureAnchorsLoaded={linkMenuProps.ensureAnchorsLoaded}
+        disabled={!priEnabled}
       />
+      <Group gap="xs" style={{ gridColumn: "1 / -1" }}>
+        <Checkbox
+          label="Show secondary CTA"
+          checked={secEnabled}
+          onChange={(e) => setCustomBlockPatch(block.id, { ctaSecondaryEnabled: e.currentTarget.checked })}
+        />
+      </Group>
       <TextInput
         label="Secondary CTA label"
         value={asString(merged.ctaSecondaryLabel)}
         onChange={(e) => setCustomBlockPatch(block.id, { ctaSecondaryLabel: inputValueFromEvent(e) })}
+        disabled={!secEnabled}
       />
       <LinkMenuField
         label="Secondary CTA link"
@@ -519,6 +543,7 @@ function CtaBlock({
         anchorsLoadingByPageId={linkMenuProps.anchorsLoadingByPageId}
         ensurePagesLoaded={linkMenuProps.ensurePagesLoaded}
         ensureAnchorsLoaded={linkMenuProps.ensureAnchorsLoaded}
+        disabled={!secEnabled}
       />
     </SimpleGrid>
   )

@@ -24,22 +24,26 @@ import { useVisualEditorStore } from "./page-visual-editor-store"
 import { useVisualSectionPersistence } from "./use-visual-section-persistence"
 import { MediaField } from "./page-visual-editor-media-field"
 import type { EditorDraft } from "@/components/admin/section-editor/types"
+import {
+  getSharedCtaEnabled,
+  getFooterCardCtaEnabled,
+} from "@/lib/cms/cta-visibility"
 
 // ---------------------------------------------------------------------------
 // Small UI helpers (same style as inspector)
 // ---------------------------------------------------------------------------
 
-function GInput({ label, value, onChange, placeholder, multiline }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean
+function GInput({ label, value, onChange, placeholder, multiline, disabled }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean; disabled?: boolean
 }) {
-  const cls = "w-full bg-[var(--mantine-color-dark-6)] text-[var(--mantine-color-text)] border border-[var(--mantine-color-dark-4)] rounded text-xs px-2 py-1.5 outline-none focus:border-blue-500/50 transition-colors placeholder:text-[var(--mantine-color-dimmed)]"
+  const cls = "w-full bg-[var(--mantine-color-dark-6)] text-[var(--mantine-color-text)] border border-[var(--mantine-color-dark-4)] rounded text-xs px-2 py-1.5 outline-none focus:border-blue-500/50 transition-colors placeholder:text-[var(--mantine-color-dimmed)] disabled:opacity-40 disabled:cursor-not-allowed"
   return (
     <div>
       <label className="block text-[10px] font-medium text-[var(--mantine-color-dimmed)] mb-0.5 uppercase tracking-wider">{label}</label>
       {multiline ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={2} className={cls + " resize-none"} />
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={2} className={cls + " resize-none"} disabled={disabled} />
       ) : (
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cls} />
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cls} disabled={disabled} />
       )}
     </div>
   )
@@ -149,6 +153,15 @@ function GArrayEditor({ label, items, fields, onUpdate }: {
 // ---------------------------------------------------------------------------
 
 const s = (v: unknown) => typeof v === "string" ? v : ""
+
+function GToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-1.5 cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="accent-blue-500" />
+      <span className={`text-[10px] font-medium uppercase tracking-wider ${checked ? "text-[var(--mantine-color-text)]" : "text-[var(--mantine-color-dimmed)]"}`}>{label}</span>
+    </label>
+  )
+}
 const arr = (v: unknown): Record<string, unknown>[] =>
   Array.isArray(v) ? v.map((i) => (i && typeof i === "object" ? i as Record<string, unknown> : {})) : []
 
@@ -156,11 +169,14 @@ const arr = (v: unknown): Record<string, unknown>[] =>
 // Nav links content editor
 // ---------------------------------------------------------------------------
 
-function NavLinksContent({ content, onContentChange }: {
+function NavLinksContent({ content, onContentChange, meta, onMetaChange }: {
   content: Record<string, unknown>
   onContentChange: (key: string, value: unknown) => void
+  meta: { ctaPrimaryLabel: string; ctaPrimaryHref: string }
+  onMetaChange: (key: string, value: string) => void
 }) {
   const logo = content.logo && typeof content.logo === "object" ? content.logo as Record<string, unknown> : {}
+  const ctaEnabled = getSharedCtaEnabled(content, "ctaPrimary")
 
   return (
     <>
@@ -177,6 +193,12 @@ function NavLinksContent({ content, onContentChange }: {
         <GArrayEditor label="Links" items={arr(content.links)}
           fields={[{ key: "label", label: "Label" }, { key: "href", label: "Link URL" }, { key: "anchorId", label: "Anchor ID" }]}
           onUpdate={(items) => onContentChange("links", items)} />
+      </GCollapsible>
+
+      <GCollapsible label="Header CTA" defaultOpen>
+        <GToggle label="Show CTA" checked={ctaEnabled} onChange={(v) => onContentChange("ctaPrimaryEnabled", v)} />
+        <GInput label="CTA Label" value={meta.ctaPrimaryLabel} onChange={(v) => onMetaChange("ctaPrimaryLabel", v)} placeholder="Book a call" disabled={!ctaEnabled} />
+        <GInput label="CTA Link" value={meta.ctaPrimaryHref} onChange={(v) => onMetaChange("ctaPrimaryHref", v)} placeholder="#contact" disabled={!ctaEnabled} />
       </GCollapsible>
     </>
   )
@@ -215,6 +237,23 @@ function FooterGridContent({ content, onContentChange }: {
               <GArrayEditor label="Links" items={cardLinks}
                 fields={[{ key: "label", label: "Label" }, { key: "href", label: "Link URL" }]}
                 onUpdate={(items) => updateCard("links", items)} />
+              {/* Per-card CTA toggles */}
+              {(() => {
+                const ctaPri = card.ctaPrimary && typeof card.ctaPrimary === "object" ? card.ctaPrimary as Record<string, unknown> : {}
+                const ctaSec = card.ctaSecondary && typeof card.ctaSecondary === "object" ? card.ctaSecondary as Record<string, unknown> : {}
+                return (
+                  <>
+                    <GToggle label="Show CTA 1" checked={getFooterCardCtaEnabled(card, "ctaPrimary")}
+                      onChange={(v) => updateCard("ctaPrimary", { ...ctaPri, enabled: v })} />
+                    <GInput label="CTA 1 Label" value={s(ctaPri.label)} onChange={(v) => updateCard("ctaPrimary", { ...ctaPri, label: v })} disabled={!getFooterCardCtaEnabled(card, "ctaPrimary")} />
+                    <GInput label="CTA 1 Link" value={s(ctaPri.href)} onChange={(v) => updateCard("ctaPrimary", { ...ctaPri, href: v })} disabled={!getFooterCardCtaEnabled(card, "ctaPrimary")} />
+                    <GToggle label="Show CTA 2" checked={getFooterCardCtaEnabled(card, "ctaSecondary")}
+                      onChange={(v) => updateCard("ctaSecondary", { ...ctaSec, enabled: v })} />
+                    <GInput label="CTA 2 Label" value={s(ctaSec.label)} onChange={(v) => updateCard("ctaSecondary", { ...ctaSec, label: v })} disabled={!getFooterCardCtaEnabled(card, "ctaSecondary")} />
+                    <GInput label="CTA 2 Link" value={s(ctaSec.href)} onChange={(v) => updateCard("ctaSecondary", { ...ctaSec, href: v })} disabled={!getFooterCardCtaEnabled(card, "ctaSecondary")} />
+                  </>
+                )
+              })()}
               <div className="flex gap-1 pt-1">
                 <button type="button" onClick={() => {
                   const next = [...cards]
@@ -245,24 +284,8 @@ function FooterGridContent({ content, onContentChange }: {
           onUpdate={(items) => onContentChange("legal", { ...legal, links: items })} />
       </GCollapsible>
 
-      <GCollapsible label="CTAs" defaultOpen={false}>
-        <GInput label="CTA 1 Label" value={s((content.cta1 as Record<string, unknown> | undefined)?.label as string ?? "")}
-          onChange={(v) => onContentChange("cta1", { ...(content.cta1 && typeof content.cta1 === "object" ? content.cta1 as Record<string, unknown> : {}), label: v })} />
-        <GInput label="CTA 1 Link" value={s((content.cta1 as Record<string, unknown> | undefined)?.href as string ?? "")}
-          onChange={(v) => onContentChange("cta1", { ...(content.cta1 && typeof content.cta1 === "object" ? content.cta1 as Record<string, unknown> : {}), href: v })} />
-        <GInput label="CTA 2 Label" value={s((content.cta2 as Record<string, unknown> | undefined)?.label as string ?? "")}
-          onChange={(v) => onContentChange("cta2", { ...(content.cta2 && typeof content.cta2 === "object" ? content.cta2 as Record<string, unknown> : {}), label: v })} />
-        <GInput label="CTA 2 Link" value={s((content.cta2 as Record<string, unknown> | undefined)?.href as string ?? "")}
-          onChange={(v) => onContentChange("cta2", { ...(content.cta2 && typeof content.cta2 === "object" ? content.cta2 as Record<string, unknown> : {}), href: v })} />
-      </GCollapsible>
-
-      <GCollapsible label="Subscribe" defaultOpen={false}>
-        <GSelect label="Enabled" value={content.subscribeEnabled === true ? "on" : "off"}
-          options={[{ value: "off", label: "Off" }, { value: "on", label: "On" }]}
-          onChange={(v) => onContentChange("subscribeEnabled", v === "on")} />
-        <GInput label="Placeholder" value={s(content.subscribePlaceholder)} onChange={(v) => onContentChange("subscribePlaceholder", v)} placeholder="Email Address" />
-        <GInput label="Button Label" value={s(content.subscribeButtonLabel)} onChange={(v) => onContentChange("subscribeButtonLabel", v)} placeholder="Subscribe" />
-      </GCollapsible>
+      {/* Per-card CTA controls are now inline in each footer card above.
+         Subscribe editing is per-card only (footer-card-row.tsx). */}
     </>
   )
 }
@@ -301,6 +324,12 @@ export function GlobalSectionPanel({ node }: { node: VisualSectionNode }) {
   const updateContent = useCallback((key: string, value: unknown) => {
     if (!effectiveDraft || !originalDraft) return
     const newDraft: EditorDraft = { ...effectiveDraft, content: { ...effectiveDraft.content, [key]: value } }
+    setDirtyDraft(node.sectionId, newDraft, originalDraft)
+  }, [node.sectionId, effectiveDraft, originalDraft, setDirtyDraft])
+
+  const updateMeta = useCallback((key: string, value: string) => {
+    if (!effectiveDraft || !originalDraft) return
+    const newDraft: EditorDraft = { ...effectiveDraft, meta: { ...effectiveDraft.meta, [key]: value } }
     setDirtyDraft(node.sectionId, newDraft, originalDraft)
   }, [node.sectionId, effectiveDraft, originalDraft, setDirtyDraft])
 
@@ -353,7 +382,12 @@ export function GlobalSectionPanel({ node }: { node: VisualSectionNode }) {
       {hasEditableContent && effectiveDraft && (
         <>
           {node.sectionType === "nav_links" && (
-            <NavLinksContent content={effectiveDraft.content} onContentChange={updateContent} />
+            <NavLinksContent
+              content={effectiveDraft.content}
+              onContentChange={updateContent}
+              meta={{ ctaPrimaryLabel: effectiveDraft.meta.ctaPrimaryLabel, ctaPrimaryHref: effectiveDraft.meta.ctaPrimaryHref }}
+              onMetaChange={updateMeta}
+            />
           )}
           {node.sectionType === "footer_grid" && (
             <FooterGridContent content={effectiveDraft.content} onContentChange={updateContent} />

@@ -17,6 +17,10 @@ import {
 } from "@/components/mui-compat"
 import { IconPlus, IconX } from "@tabler/icons-react"
 import { asString, asRecord, asArray } from "../payload"
+import {
+  getFooterCardCtaEnabled,
+  setFooterCardCtaEnabled,
+} from "@/lib/cms/cta-visibility"
 import { LinkMenuField } from "../fields/link-menu-field"
 import type { LinkMenuResourceProps } from "../types"
 import { useBufferedField } from "../hooks/use-buffered-field"
@@ -565,11 +569,22 @@ export const FooterCardRow = React.memo(function FooterCardRow({
         ) : null}
 
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+          <Group gap="xs" style={{ gridColumn: "1 / -1" }}>
+            <Checkbox
+              label="Show CTA 1"
+              checked={getFooterCardCtaEnabled(r, "ctaPrimary")}
+              onChange={(e) => {
+                const updated = setFooterCardCtaEnabled(r, "ctaPrimary", e.currentTarget.checked)
+                onPatchCard(index, { ctaPrimary: updated.ctaPrimary })
+              }}
+            />
+          </Group>
           <TextInput
             label="CTA 1 label"
             value={ctaPrimaryLabelField.value}
             onChange={(e) => ctaPrimaryLabelField.onChange(e.currentTarget.value)}
             onBlur={ctaPrimaryLabelField.onBlur}
+            disabled={!getFooterCardCtaEnabled(r, "ctaPrimary")}
           />
           <LinkMenuField
             label="CTA 1 link"
@@ -582,12 +597,24 @@ export const FooterCardRow = React.memo(function FooterCardRow({
             anchorsLoadingByPageId={linkMenuProps.anchorsLoadingByPageId}
             ensurePagesLoaded={linkMenuProps.ensurePagesLoaded}
             ensureAnchorsLoaded={linkMenuProps.ensureAnchorsLoaded}
+            disabled={!getFooterCardCtaEnabled(r, "ctaPrimary")}
           />
+          <Group gap="xs" style={{ gridColumn: "1 / -1" }}>
+            <Checkbox
+              label="Show CTA 2"
+              checked={getFooterCardCtaEnabled(r, "ctaSecondary")}
+              onChange={(e) => {
+                const updated = setFooterCardCtaEnabled(r, "ctaSecondary", e.currentTarget.checked)
+                onPatchCard(index, { ctaSecondary: updated.ctaSecondary })
+              }}
+            />
+          </Group>
           <TextInput
             label="CTA 2 label"
             value={ctaSecondaryLabelField.value}
             onChange={(e) => ctaSecondaryLabelField.onChange(e.currentTarget.value)}
             onBlur={ctaSecondaryLabelField.onBlur}
+            disabled={!getFooterCardCtaEnabled(r, "ctaSecondary")}
           />
           <LinkMenuField
             label="CTA 2 link"
@@ -600,6 +627,7 @@ export const FooterCardRow = React.memo(function FooterCardRow({
             anchorsLoadingByPageId={linkMenuProps.anchorsLoadingByPageId}
             ensurePagesLoaded={linkMenuProps.ensurePagesLoaded}
             ensureAnchorsLoaded={linkMenuProps.ensureAnchorsLoaded}
+            disabled={!getFooterCardCtaEnabled(r, "ctaSecondary")}
           />
         </SimpleGrid>
       </Stack>

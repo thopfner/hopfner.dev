@@ -36,6 +36,11 @@ import { MediaField } from "./page-visual-editor-media-field"
 import { TipTapJsonEditor } from "@/components/admin/section-editor/fields/tiptap-json-editor"
 import type { VisualSectionNode } from "./page-visual-editor-types"
 import { resolveHeroBlockOrder, BLOCK_LABELS } from "@/lib/admin/hero-block-order"
+import {
+  isSharedCtaToggleSupported,
+  getSharedCtaEnabled,
+  setSharedCtaEnabled,
+} from "@/lib/cms/cta-visibility"
 
 // ---------------------------------------------------------------------------
 // Option sets (matching form editor)
@@ -160,17 +165,17 @@ function InspectorSlider({ label, value, min, max, step, onChange }: {
   )
 }
 
-function InspectorInput({ label, value, onChange, placeholder, multiline }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean
+function InspectorInput({ label, value, onChange, placeholder, multiline, disabled }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean; disabled?: boolean
 }) {
-  const cls = "w-full bg-[var(--mantine-color-dark-6)] text-[var(--mantine-color-text)] border border-[var(--mantine-color-dark-4)] rounded text-xs px-2 py-1.5 outline-none focus:border-blue-500/50 transition-colors placeholder:text-[var(--mantine-color-dimmed)]"
+  const cls = "w-full bg-[var(--mantine-color-dark-6)] text-[var(--mantine-color-text)] border border-[var(--mantine-color-dark-4)] rounded text-xs px-2 py-1.5 outline-none focus:border-blue-500/50 transition-colors placeholder:text-[var(--mantine-color-dimmed)] disabled:opacity-40 disabled:cursor-not-allowed"
   return (
     <div>
       <label className="block text-[10px] font-medium text-[var(--mantine-color-dimmed)] mb-0.5 uppercase tracking-wider">{label}</label>
       {multiline ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={2} className={cls + " resize-none"} />
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={2} className={cls + " resize-none"} disabled={disabled} />
       ) : (
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cls} />
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cls} disabled={disabled} />
       )}
     </div>
   )
@@ -181,6 +186,16 @@ function InspectorDivider({ label }: { label: string }) {
     <div className="pt-2">
       <div className="text-[10px] font-semibold text-[var(--mantine-color-dimmed)] uppercase tracking-wider border-b border-[var(--mantine-color-dark-4)] pb-1">{label}</div>
     </div>
+  )
+}
+
+function InspectorToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-1.5 cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
+        className="accent-blue-500" />
+      <span className={`text-[10px] font-medium uppercase tracking-wider ${checked ? "text-[var(--mantine-color-text)]" : "text-[var(--mantine-color-dimmed)]"}`}>{label}</span>
+    </label>
   )
 }
 
@@ -842,25 +857,38 @@ export function VisualEditorInspector() {
         </CollapsibleGroup>
 
         {/* ── ACTIONS (CTA + Background) ── */}
-        {(metaVisibility.ctaPrimary || metaVisibility.ctaSecondary || metaVisibility.backgroundMedia) && (
-          <CollapsibleGroup label="Actions" defaultOpen>
-            {metaVisibility.ctaPrimary && (
-              <>
-                <InspectorInput label="CTA Label" value={effectiveDraft.meta.ctaPrimaryLabel} onChange={(v) => updateMeta("ctaPrimaryLabel", v)} placeholder="e.g. Get started" />
-                <InspectorInput label="CTA Link" value={effectiveDraft.meta.ctaPrimaryHref} onChange={(v) => updateMeta("ctaPrimaryHref", v)} placeholder="e.g. /contact" />
-              </>
-            )}
-            {metaVisibility.ctaSecondary && (
-              <>
-                <InspectorInput label="Secondary CTA Label" value={effectiveDraft.meta.ctaSecondaryLabel} onChange={(v) => updateMeta("ctaSecondaryLabel", v)} />
-                <InspectorInput label="Secondary CTA Link" value={effectiveDraft.meta.ctaSecondaryHref} onChange={(v) => updateMeta("ctaSecondaryHref", v)} />
-              </>
-            )}
-            {metaVisibility.backgroundMedia && (
-              <MediaField label="Background Media" value={effectiveDraft.meta.backgroundMediaUrl} onChange={(v) => updateMeta("backgroundMediaUrl", v)} />
-            )}
-          </CollapsibleGroup>
-        )}
+        {(metaVisibility.ctaPrimary || metaVisibility.ctaSecondary || metaVisibility.backgroundMedia) && (() => {
+          const sType = selectedNode.sectionType
+          const canTogglePri = isSharedCtaToggleSupported(sType, "ctaPrimary")
+          const canToggleSec = isSharedCtaToggleSupported(sType, "ctaSecondary")
+          const priEnabled = getSharedCtaEnabled(effectiveDraft.content, "ctaPrimary")
+          const secEnabled = getSharedCtaEnabled(effectiveDraft.content, "ctaSecondary")
+          return (
+            <CollapsibleGroup label="Actions" defaultOpen>
+              {metaVisibility.ctaPrimary && (
+                <>
+                  {canTogglePri && (
+                    <InspectorToggle label="Show primary CTA" checked={priEnabled} onChange={(v) => updateContent("ctaPrimaryEnabled", v)} />
+                  )}
+                  <InspectorInput label="CTA Label" value={effectiveDraft.meta.ctaPrimaryLabel} onChange={(v) => updateMeta("ctaPrimaryLabel", v)} placeholder="e.g. Get started" disabled={canTogglePri && !priEnabled} />
+                  <InspectorInput label="CTA Link" value={effectiveDraft.meta.ctaPrimaryHref} onChange={(v) => updateMeta("ctaPrimaryHref", v)} placeholder="e.g. /contact" disabled={canTogglePri && !priEnabled} />
+                </>
+              )}
+              {metaVisibility.ctaSecondary && (
+                <>
+                  {canToggleSec && (
+                    <InspectorToggle label="Show secondary CTA" checked={secEnabled} onChange={(v) => updateContent("ctaSecondaryEnabled", v)} />
+                  )}
+                  <InspectorInput label="Secondary CTA Label" value={effectiveDraft.meta.ctaSecondaryLabel} onChange={(v) => updateMeta("ctaSecondaryLabel", v)} disabled={canToggleSec && !secEnabled} />
+                  <InspectorInput label="Secondary CTA Link" value={effectiveDraft.meta.ctaSecondaryHref} onChange={(v) => updateMeta("ctaSecondaryHref", v)} disabled={canToggleSec && !secEnabled} />
+                </>
+              )}
+              {metaVisibility.backgroundMedia && (
+                <MediaField label="Background Media" value={effectiveDraft.meta.backgroundMediaUrl} onChange={(v) => updateMeta("backgroundMediaUrl", v)} />
+              )}
+            </CollapsibleGroup>
+          )
+        })()}
 
         {/* ── STYLE ── */}
         {(hasAnySupportedDesignToken || hasAnyComponentToken) && (
