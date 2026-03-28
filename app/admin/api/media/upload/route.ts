@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server"
 
 import { requireAdmin } from "@/lib/auth/require-admin"
+import {
+  buildCmsMediaStoragePath,
+  finalizeCmsMediaMetadata,
+  resolveCmsMediaBucket,
+} from "@/lib/cms/commands/media"
 import { getSupabaseAdmin } from "@/lib/supabase/server-admin"
 
 export const runtime = "nodejs"
@@ -8,14 +13,17 @@ export const runtime = "nodejs"
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const ALLOWED_MIME_PREFIX = "image/"
 
-function sanitizeFilename(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_")
+function getTrimmedFormValue(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== "string") return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
 }
 
-function getYearMonthParts(date = new Date()): { year: string; month: string } {
-  const year = String(date.getUTCFullYear())
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0")
-  return { year, month }
+function getNumericFormValue(value: FormDataEntryValue | null): number | undefined {
+  const raw = getTrimmedFormValue(value)
+  if (!raw) return undefined
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) ? parsed : undefined
 }
 
 export async function POST(request: Request) {
@@ -50,10 +58,8 @@ export async function POST(request: Request) {
       )
     }
 
-    const bucket = process.env.SUPABASE_STORAGE_BUCKET || "cms-media"
-    const { year, month } = getYearMonthParts()
-    const safeFilename = sanitizeFilename(file.name || "upload.bin")
-    const path = `cms/${year}/${month}/${crypto.randomUUID()}-${safeFilename}`
+    const bucket = resolveCmsMediaBucket()
+    const path = buildCmsMediaStoragePath(file.name || "upload.bin")
 
     const bytes = Buffer.from(await file.arrayBuffer())
 
@@ -69,6 +75,24 @@ export async function POST(request: Request) {
     }
 
     const { data: publicUrlData } = supabaseAdmin.storage.from(bucket).getPublicUrl(path)
+
+    if (getTrimmedFormValue(formData.get("finalizeMetadata")) === "true") {
+      const mimeType = getTrimmedFormValue(formData.get("mimeType")) ?? (file.type || "application/octet-stream")
+      try {
+        await finalizeCmsMediaMetadata(supabaseAdmin, {
+          bucket,
+          path,
+          mimeType,
+          sizeBytes: getNumericFormValue(formData.get("sizeBytes")) ?? file.size,
+          width: getNumericFormValue(formData.get("width")) ?? null,
+          height: getNumericFormValue(formData.get("height")) ?? null,
+          alt: getTrimmedFormValue(formData.get("alt")),
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to finalize media metadata."
+        console.warn(`[CMS] Media upload metadata finalization failed for ${bucket}/${path}: ${message}`)
+      }
+    }
 
     return NextResponse.json({
       bucket,

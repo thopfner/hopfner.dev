@@ -63,6 +63,11 @@ export function resolveAdminRouteMeta(pathname: string): AdminRouteMeta {
     return { routeClass: "workspace", title: "Email Templates", group: "Configure" }
   }
 
+  // Workspace: agent
+  if (pathname.startsWith("/admin/agent")) {
+    return { routeClass: "workspace", title: "Agent", group: "Configure" }
+  }
+
   // Collection: blog
   if (pathname.startsWith("/admin/blog")) {
     return { routeClass: "collection", title: "Blog", group: "Content" }

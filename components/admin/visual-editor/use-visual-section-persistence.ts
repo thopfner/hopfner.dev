@@ -8,15 +8,38 @@
 import { useCallback } from "react"
 import { createClient } from "@/lib/supabase/browser"
 import {
-  draftToPayload,
-  formattingToJsonb,
-  normalizeFormatting,
+  publishCmsSectionDraft,
+  reorderCmsSections,
+  saveCmsSectionDraft,
+  type CmsCommandVersionRow,
+} from "@/lib/cms/commands"
+import {
   validateClassTokens,
 } from "@/components/admin/section-editor/payload"
 import type { EditorDraft, SectionVersionRow } from "@/components/admin/section-editor/types"
 import type { VisualSectionNode, VisualPageState } from "./page-visual-editor-types"
 
 type SaveResult = { success: true; version: SectionVersionRow } | { success: false; error: string }
+
+function toSectionVersionRow(version: CmsCommandVersionRow): SectionVersionRow {
+  return {
+    id: version.id,
+    owner_id: version.ownerId,
+    version: version.version,
+    status: version.status,
+    title: version.title,
+    subtitle: version.subtitle,
+    cta_primary_label: version.ctaPrimaryLabel,
+    cta_primary_href: version.ctaPrimaryHref,
+    cta_secondary_label: version.ctaSecondaryLabel,
+    cta_secondary_href: version.ctaSecondaryHref,
+    background_media_url: version.backgroundMediaUrl,
+    formatting: version.formatting,
+    content: version.content,
+    created_at: version.createdAt,
+    published_at: version.publishedAt,
+  }
+}
 
 export function useVisualSectionPersistence(pageState: VisualPageState | null) {
   const saveDraft = useCallback(async (
@@ -51,40 +74,21 @@ export function useVisualSectionPersistence(pageState: VisualPageState | null) {
       }
     }
 
-    // Convert draft → payload
-    const payload = draftToPayload(draft, node.sectionType)
-
-    // Archive existing draft if any
-    if (node.draftVersion) {
-      await supabase
-        .from("section_versions")
-        .update({ status: "archived" })
-        .eq("id", node.draftVersion.id)
-    }
-
-    // Determine next version number
-    const latestVersion = Math.max(
-      node.draftVersion?.version ?? 0,
-      node.publishedVersion?.version ?? 0,
-    )
-
-    // Insert new draft version
-    const { data, error } = await supabase
-      .from("section_versions")
-      .insert({
-        section_id: node.sectionId,
-        version: latestVersion + 1,
-        status: "draft",
-        ...payload,
+    try {
+      const version = await saveCmsSectionDraft(supabase, {
+        scope: "page",
+        sectionId: node.sectionId,
+        sectionType: node.sectionType,
+        draft,
+        allowedClasses: pageState.tailwindWhitelist,
       })
-      .select()
-      .single()
-
-    if (error || !data) {
-      return { success: false, error: error?.message ?? "Failed to save draft" }
+      return { success: true, version: toSectionVersionRow(version) }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to save draft",
+      }
     }
-
-    return { success: true, version: data as SectionVersionRow }
   }, [pageState])
 
   const publishDraft = useCallback(async (
@@ -100,48 +104,32 @@ export function useVisualSectionPersistence(pageState: VisualPageState | null) {
 
     const supabase = createClient()
 
-    // Publish the draft via RPC (must pass both p_section_id and p_version_id)
-    const { data, error } = await supabase.rpc("publish_section_version", {
-      p_section_id: node.sectionId,
-      p_version_id: saveResult.version.id,
-    })
-
-    if (error) {
-      return { success: false, error: error.message }
+    try {
+      const version = await publishCmsSectionDraft(supabase, {
+        scope: "page",
+        sectionId: node.sectionId,
+        versionId: saveResult.version.id,
+      })
+      return { success: true, version: toSectionVersionRow(version) }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Published but failed to fetch updated version",
+      }
     }
-
-    // Fetch the published version
-    const { data: published, error: fetchErr } = await supabase
-      .from("section_versions")
-      .select("*")
-      .eq("id", saveResult.version.id)
-      .single()
-
-    if (fetchErr || !published) {
-      return { success: false, error: "Published but failed to fetch updated version" }
-    }
-
-    return { success: true, version: published as SectionVersionRow }
   }, [pageState, saveDraft])
 
   const saveOrder = useCallback(async (order: string[]): Promise<{ success: boolean; error?: string }> => {
     const supabase = createClient()
-
-    // Update positions for all sections
-    const updates = order.map((sectionId, index) =>
-      supabase
-        .from("sections")
-        .update({ position: index })
-        .eq("id", sectionId)
-    )
-
-    const results = await Promise.all(updates)
-    const failed = results.find((r) => r.error)
-    if (failed?.error) {
-      return { success: false, error: failed.error.message }
+    try {
+      await reorderCmsSections(supabase, { order })
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to save order",
+      }
     }
-
-    return { success: true }
   }, [])
 
   return { saveDraft, publishDraft, saveOrder }

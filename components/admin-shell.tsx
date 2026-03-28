@@ -26,6 +26,7 @@ import FolderRoundedIcon from "@mui/icons-material/FolderRounded"
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded"
 import EmailRoundedIcon from "@mui/icons-material/EmailRounded"
 import FeedRoundedIcon from "@mui/icons-material/FeedRounded"
+import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded"
 
 import { createClient } from "@/lib/supabase/browser"
 import {
@@ -68,6 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/section-library", label: "Library", aria: "Section library", icon: AutoStoriesRoundedIcon },
       { href: "/admin/global-sections", label: "Global", aria: "Global sections", icon: FolderRoundedIcon },
       { href: "/admin/email-templates", label: "Emails", aria: "Email templates", icon: EmailRoundedIcon },
+      { href: "/admin/agent", label: "Agent", aria: "Agent workspace", icon: SmartToyRoundedIcon },
     ],
   },
 ]

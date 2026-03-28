@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 
 import { requireAdmin } from "@/lib/auth/require-admin"
-import { restoreFromSnapshot, type SnapshotPayload } from "@/lib/cms/blueprint-apply"
+import { restoreFromSnapshot } from "@/lib/cms/blueprint-apply"
+import type { SnapshotPayload } from "@/lib/cms/content-snapshots"
 import { getSupabaseAdmin } from "@/lib/supabase/server-admin"
 
 export const runtime = "nodejs"

@@ -6,6 +6,10 @@ import { isControlSupported, type SemanticControl } from "@/lib/design-system/ca
 import { SECTION_PRESETS, type SectionPreset } from "@/lib/design-system/presets"
 import { loadSectionPresetsFromClient, loadCapabilitiesFromClient } from "@/lib/design-system/loaders"
 import type { SectionCapability } from "@/lib/design-system/capabilities"
+import {
+  publishCmsSectionDraft,
+  saveCmsSectionDraft,
+} from "@/lib/cms/commands/sections"
 import { uploadMedia } from "@/lib/media/upload"
 import type {
   SectionRow,
@@ -19,16 +23,12 @@ import type {
   EditorDraft,
 } from "./types"
 import {
-  asRecord,
-  asString,
   isBuiltinSectionType,
   normalizeSectionType,
   normalizeComposerSchema,
   versionRowToPayload,
   defaultsToPayload,
-  validateClassTokens,
   payloadToDraft,
-  draftToPayload,
   getImageSize,
 } from "./payload"
 
@@ -73,7 +73,6 @@ export function useSectionEditorResources(
   const supabase = useMemo(() => createClient(), [])
   const versionTable = scope === "global" ? "global_section_versions" : "section_versions"
   const ownerIdColumn = scope === "global" ? "global_section_id" : "section_id"
-  const publishRpc = scope === "global" ? "publish_global_section_version" : "publish_section_version"
   const restoreRpc = scope === "global" ? "rollback_global_section_to_version" : "restore_section_version"
   const versionSelect = `id, ${ownerIdColumn}, version, status, title, subtitle, cta_primary_label, cta_primary_href, cta_secondary_label, cta_secondary_href, background_media_url, formatting, content, created_at, published_at`
 
@@ -141,7 +140,6 @@ export function useSectionEditorResources(
   const isCustomComposedType = Boolean(normalizedType && !isBuiltinSectionType(normalizedType))
 
   // Published / draft derivations
-  const published = useMemo(() => versions.find((v) => v.status === "published") ?? null, [versions])
   const drafts = useMemo(() => versions.filter((v) => v.status === "draft").sort((a, b) => b.version - a.version), [versions])
   const activeDraft = drafts[0] ?? null
 
@@ -350,50 +348,13 @@ export function useSectionEditorResources(
       setError(null)
       setLoading(true)
       try {
-        const containerValidation = validateClassTokens(draft.formatting.containerClass, allowedClasses)
-        const sectionValidation = validateClassTokens(draft.formatting.sectionClass, allowedClasses)
-        const mobileContainerValidation = draft.formatting.mobile
-          ? validateClassTokens(draft.formatting.mobile.containerClass, allowedClasses)
-          : { invalid: [] as string[] }
-        const mobileSectionValidation = draft.formatting.mobile
-          ? validateClassTokens(draft.formatting.mobile.sectionClass, allowedClasses)
-          : { invalid: [] as string[] }
-
-        const invalid = [
-          ...containerValidation.invalid,
-          ...sectionValidation.invalid,
-          ...mobileContainerValidation.invalid,
-          ...mobileSectionValidation.invalid,
-        ]
-        if (invalid.length) {
-          setError(`Invalid Tailwind classes: ${invalid.join(", ")}`)
-          return
-        }
-
-        const payload = draftToPayload(draft, normalizedType)
-
-        const { error: archiveError } = await supabase
-          .from(versionTable)
-          .update({ status: "archived" })
-          .eq(ownerIdColumn, section.id)
-          .eq("status", "draft")
-        if (archiveError) throw new Error(archiveError.message)
-
-        const { data: maxRow } = await supabase
-          .from(versionTable)
-          .select("version")
-          .eq(ownerIdColumn, section.id)
-          .order("version", { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        const nextVersion = ((maxRow?.version as number) ?? 0) + 1
-        const { error: insertError } = await supabase.from(versionTable).insert({
-          [ownerIdColumn]: section.id,
-          version: nextVersion,
-          status: "draft",
-          ...payload,
+        await saveCmsSectionDraft(supabase, {
+          scope,
+          sectionId: section.id,
+          sectionType: normalizedType,
+          draft,
+          allowedClasses,
         })
-        if (insertError) throw new Error(insertError.message)
 
         await onSuccess()
       } catch (e) {
@@ -402,7 +363,7 @@ export function useSectionEditorResources(
         setLoading(false)
       }
     },
-    [section, supabase, versionTable, ownerIdColumn, allowedClasses, normalizedType]
+    [section, supabase, allowedClasses, normalizedType, scope]
   )
 
   // ---------------------------------------------------------------------------
@@ -415,64 +376,18 @@ export function useSectionEditorResources(
       setError(null)
       setLoading(true)
       try {
-        // 1. Validate Tailwind classes (same as saveDraft)
-        const containerValidation = validateClassTokens(draft.formatting.containerClass, allowedClasses)
-        const sectionValidation = validateClassTokens(draft.formatting.sectionClass, allowedClasses)
-        const mobileContainerValidation = draft.formatting.mobile
-          ? validateClassTokens(draft.formatting.mobile.containerClass, allowedClasses)
-          : { invalid: [] as string[] }
-        const mobileSectionValidation = draft.formatting.mobile
-          ? validateClassTokens(draft.formatting.mobile.sectionClass, allowedClasses)
-          : { invalid: [] as string[] }
-
-        const invalid = [
-          ...containerValidation.invalid,
-          ...sectionValidation.invalid,
-          ...mobileContainerValidation.invalid,
-          ...mobileSectionValidation.invalid,
-        ]
-        if (invalid.length) {
-          setError(`Invalid Tailwind classes: ${invalid.join(", ")}`)
-          return
-        }
-
-        // 2. Save as draft
-        const payload = draftToPayload(draft, normalizedType)
-
-        const { error: archiveError } = await supabase
-          .from(versionTable)
-          .update({ status: "archived" })
-          .eq(ownerIdColumn, section.id)
-          .eq("status", "draft")
-        if (archiveError) throw new Error(archiveError.message)
-
-        const { data: maxRow } = await supabase
-          .from(versionTable)
-          .select("version")
-          .eq(ownerIdColumn, section.id)
-          .order("version", { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        const nextVersion = ((maxRow?.version as number) ?? 0) + 1
-        const { data: insertedRow, error: insertError } = await supabase
-          .from(versionTable)
-          .insert({
-            [ownerIdColumn]: section.id,
-            version: nextVersion,
-            status: "draft",
-            ...payload,
-          })
-          .select("id")
-          .single()
-        if (insertError) throw new Error(insertError.message)
-
-        // 3. Publish the newly created draft
-        const publishArgs =
-          scope === "global"
-            ? { p_global_section_id: section.id, p_version_id: insertedRow.id, p_publish_at: new Date().toISOString() }
-            : { p_section_id: section.id, p_version_id: insertedRow.id }
-        const { error: rpcError } = await supabase.rpc(publishRpc, publishArgs)
-        if (rpcError) throw new Error(rpcError.message)
+        const savedDraft = await saveCmsSectionDraft(supabase, {
+          scope,
+          sectionId: section.id,
+          sectionType: normalizedType,
+          draft,
+          allowedClasses,
+        })
+        await publishCmsSectionDraft(supabase, {
+          scope,
+          sectionId: section.id,
+          versionId: savedDraft.id,
+        })
 
         await onSuccess()
       } catch (e) {
@@ -481,7 +396,7 @@ export function useSectionEditorResources(
         setLoading(false)
       }
     },
-    [section, supabase, versionTable, ownerIdColumn, allowedClasses, scope, publishRpc, normalizedType]
+    [section, supabase, allowedClasses, scope, normalizedType]
   )
 
   // ---------------------------------------------------------------------------
@@ -502,12 +417,11 @@ export function useSectionEditorResources(
       setError(null)
       setLoading(true)
       try {
-        const publishArgs =
-          scope === "global"
-            ? { p_global_section_id: section.id, p_version_id: activeDraft.id, p_publish_at: new Date().toISOString() }
-            : { p_section_id: section.id, p_version_id: activeDraft.id }
-        const { error: rpcError } = await supabase.rpc(publishRpc, publishArgs)
-        if (rpcError) throw new Error(rpcError.message)
+        await publishCmsSectionDraft(supabase, {
+          scope,
+          sectionId: section.id,
+          versionId: activeDraft.id,
+        })
 
         await onSuccess()
       } catch (e) {
@@ -516,7 +430,7 @@ export function useSectionEditorResources(
         setLoading(false)
       }
     },
-    [section, activeDraft, scope, supabase, publishRpc]
+    [section, activeDraft, scope, supabase]
   )
 
   // ---------------------------------------------------------------------------
@@ -589,30 +503,25 @@ export function useSectionEditorResources(
 
   const uploadToCmsMediaFn = useCallback(
     async (file: File) => {
-      const { bucket, path, url } = await uploadMedia(file)
+      const { width, height } = await getImageSize(file)
+      const { bucket, path, url } = await uploadMedia(file, {
+        metadata: {
+          mimeType: file.type,
+          sizeBytes: file.size,
+          width: width ?? null,
+          height: height ?? null,
+          alt: null,
+        },
+      })
+
       const publicUrl = url ?? ""
       if (!publicUrl) {
         throw new Error("Upload succeeded but no public URL was returned.")
       }
 
-      const { width, height } = await getImageSize(file)
-
-      const { error: mediaError } = await supabase.from("media").insert({
-        bucket,
-        path,
-        mime_type: file.type,
-        size_bytes: file.size,
-        width: width ?? null,
-        height: height ?? null,
-        alt: null,
-      })
-      if (mediaError) {
-        console.warn("Failed to insert media metadata:", mediaError.message)
-      }
-
       return { publicUrl, bucket, path }
     },
-    [supabase]
+    []
   )
 
   return {

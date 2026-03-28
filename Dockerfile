@@ -21,6 +21,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN set -a \
     && eval "$(grep -v '^\s*#' .env.local | sed '/^\s*$/d')" \
     && npm run build \
+    && npm run build:worker \
     ; rc=$? \
     ; if [ $rc -ne 0 ]; then \
         echo "" ; \
@@ -57,6 +58,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
+COPY --from=build /app/.worker-dist ./.worker-dist
 
 USER nextjs
 

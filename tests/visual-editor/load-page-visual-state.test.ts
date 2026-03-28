@@ -1,3 +1,4 @@
+import fs from "fs"
 import { describe, it, expect } from "vitest"
 import {
   normalizeSectionType,
@@ -8,9 +9,20 @@ import {
   formattingToJsonb,
   deepMerge,
 } from "@/components/admin/section-editor/payload"
+import { publishCmsSectionDraft } from "@/lib/cms/commands"
 import { resolveEffectivePreview } from "@/lib/admin/visual-editor/resolve-effective-visual-section"
 import type { SectionVersionRow, SectionTypeDefault, EditorDraft } from "@/components/admin/section-editor/types"
 import type { VisualSectionNode } from "@/components/admin/visual-editor/page-visual-editor-types"
+
+const sectionEditorResourcesSource = fs.readFileSync(
+  "components/admin/section-editor/use-section-editor-resources.ts",
+  "utf-8"
+)
+
+const visualPersistenceSource = fs.readFileSync(
+  "components/admin/visual-editor/use-visual-section-persistence.ts",
+  "utf-8"
+)
 
 // ---------------------------------------------------------------------------
 // Section type normalization
@@ -471,6 +483,127 @@ describe("publish RPC argument shape", () => {
     const args = { p_section_id: sectionId, p_version_id: versionId }
     expect(args).toHaveProperty("p_section_id", sectionId)
     expect(args).toHaveProperty("p_version_id", versionId)
+  })
+
+  it("shared page publish command preserves the page RPC argument shape", async () => {
+    const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const fakeClient = {
+      rpc: async (fn: string, args: Record<string, unknown>) => {
+        rpcCalls.push({ fn, args })
+        return { error: null }
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: {
+                id: "v1",
+                section_id: "s1",
+                version: 3,
+                status: "published",
+                title: "Title",
+                subtitle: null,
+                cta_primary_label: null,
+                cta_primary_href: null,
+                cta_secondary_label: null,
+                cta_secondary_href: null,
+                background_media_url: null,
+                formatting: {},
+                content: {},
+                created_at: "2026-01-01T00:00:00Z",
+                published_at: "2026-01-01T00:00:00Z",
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as Parameters<typeof publishCmsSectionDraft>[0]
+
+    await publishCmsSectionDraft(fakeClient, {
+      scope: "page",
+      sectionId: "s1",
+      versionId: "v1",
+    })
+
+    expect(rpcCalls).toHaveLength(1)
+    expect(rpcCalls[0]).toEqual({
+      fn: "publish_section_version",
+      args: { p_section_id: "s1", p_version_id: "v1" },
+    })
+  })
+
+  it("shared global publish command preserves the global RPC argument shape", async () => {
+    const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const fakeClient = {
+      rpc: async (fn: string, args: Record<string, unknown>) => {
+        rpcCalls.push({ fn, args })
+        return { error: null }
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: {
+                id: "gv1",
+                global_section_id: "g1",
+                version: 5,
+                status: "published",
+                title: "Global",
+                subtitle: null,
+                cta_primary_label: null,
+                cta_primary_href: null,
+                cta_secondary_label: null,
+                cta_secondary_href: null,
+                background_media_url: null,
+                formatting: {},
+                content: {},
+                created_at: "2026-01-01T00:00:00Z",
+                published_at: "2026-01-01T00:00:00Z",
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as Parameters<typeof publishCmsSectionDraft>[0]
+
+    await publishCmsSectionDraft(fakeClient, {
+      scope: "global",
+      sectionId: "g1",
+      versionId: "gv1",
+    })
+
+    expect(rpcCalls).toHaveLength(1)
+    expect(rpcCalls[0].fn).toBe("publish_global_section_version")
+    expect(rpcCalls[0].args).toMatchObject({
+      p_global_section_id: "g1",
+      p_version_id: "gv1",
+    })
+    expect(typeof rpcCalls[0].args.p_publish_at).toBe("string")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Checkpoint B rewires
+// ---------------------------------------------------------------------------
+
+describe("Checkpoint B consumer rewires", () => {
+  it("section editor delegates save and publish through shared commands", () => {
+    expect(sectionEditorResourcesSource).toContain("@/lib/cms/commands/sections")
+    expect(sectionEditorResourcesSource).toContain("saveCmsSectionDraft")
+    expect(sectionEditorResourcesSource).toContain("publishCmsSectionDraft")
+    expect(sectionEditorResourcesSource).toContain("await saveCmsSectionDraft(supabase, {")
+    expect(sectionEditorResourcesSource).toContain("await publishCmsSectionDraft(supabase, {")
+  })
+
+  it("visual persistence delegates save/publish/reorder through shared commands", () => {
+    expect(visualPersistenceSource).toContain("@/lib/cms/commands")
+    expect(visualPersistenceSource).toContain("saveCmsSectionDraft")
+    expect(visualPersistenceSource).toContain("publishCmsSectionDraft")
+    expect(visualPersistenceSource).toContain("reorderCmsSections")
+    expect(visualPersistenceSource).toContain('scope: "page"')
+    expect(visualPersistenceSource).toContain("version: toSectionVersionRow(version)")
   })
 })
 

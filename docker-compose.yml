@@ -1,11 +1,19 @@
+x-app-build: &app-build
+  context: .
+  args:
+    PORT: ${PORT:-3010}
+
+x-app-env: &app-env
+  - .env.local
+
+x-app-image: &app-image hopfner-dev-local:latest
+
 services:
   app:
-    build:
-      context: .
-      args:
-        PORT: ${PORT:-3010}
-    env_file:
-      - .env.local
+    image: *app-image
+    build: *app-build
+    env_file: *app-env
+    init: true
     ports:
       - "${PORT:-3010}:${PORT:-3010}"
     restart: unless-stopped
@@ -15,3 +23,19 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+  worker:
+    image: *app-image
+    build: *app-build
+    env_file: *app-env
+    init: true
+    command: ["node", ".worker-dist/scripts/agent-worker.js"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", ".worker-dist/scripts/agent-worker.js", "--check"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      app:
+        condition: service_healthy

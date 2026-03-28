@@ -29,6 +29,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 
 import { AdminPanel, AdminEmptyState, AdminErrorState, AdminLoadingState, CollectionPageHeader, CollectionToolbar, ADMIN_SURFACES, ADMIN_BORDERS, ADMIN_BLUR } from "@/components/admin/ui"
+import { createCmsPage, validateCmsPageSlug } from "@/lib/cms/commands/pages"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError, toEditorErrorMessage } from "@/lib/cms/editor-error-message"
 
@@ -111,18 +112,6 @@ function Toast({ items, onDismiss }: { items: ToastItem[]; onDismiss: (id: strin
       ))}
     </Box>
   )
-}
-
-function validateSlug(raw: string): string | null {
-  const slug = raw.trim()
-  if (!slug) return "Slug is required."
-  if (slug !== slug.toLowerCase()) return "Slug must be lowercase."
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-    return "Slug must use only a-z, 0-9, and hyphens (no spaces)."
-  }
-  const reserved = new Set(["admin", "_next", "api", "well-known"])
-  if (reserved.has(slug)) return `Slug "${slug}" is reserved.`
-  return null
 }
 
 export function PagesList() {
@@ -217,7 +206,7 @@ export function PagesList() {
     try {
       const slug = newSlug.trim().toLowerCase()
       const title = newTitle.trim()
-      const slugError = validateSlug(slug)
+      const slugError = validateCmsPageSlug(slug)
       if (slugError) {
         setCreateError(slugError)
         pushToast(slugError, "error")
@@ -229,10 +218,10 @@ export function PagesList() {
         pushToast(msg, "error")
         return
       }
-      const { error: insertError } = await supabase.from("pages").insert({ slug, title })
-
-      if (insertError) {
-        const msg = toEditorErrorMessage(insertError, "Failed to create page.")
+      try {
+        await createCmsPage(supabase, { slug, title })
+      } catch (error) {
+        const msg = toEditorErrorMessage(error, "Failed to create page.")
         setCreateError(msg)
         pushToast(msg, "error")
         return

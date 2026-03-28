@@ -55,6 +55,11 @@ import {
   type AdminUiSpace as MantineSpace,
   type AdminSelectData as SelectData,
 } from "@/lib/admin/ui-primitives"
+import {
+  applyDesignThemePreset,
+  createDesignThemePreset,
+  updateDesignThemePreset,
+} from "@/lib/cms/commands/themes"
 import { createClient } from "@/lib/supabase/browser"
 import { applyEditorError, toEditorErrorMessage } from "@/lib/cms/editor-error-message"
 import { WorkspaceHeader, WorkspacePanel, AdminLoadingState, AdminSubgroupHeader } from "@/components/admin/ui"
@@ -903,21 +908,14 @@ export function GlobalSectionsPage() {
     setError(null)
     try {
       const payload = buildCurrentSettingsPayload()
-      const themeKey = newTemplateName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
-      const { data, error } = await supabase
-        .from("design_theme_presets")
-        .insert({
-          key: themeKey,
-          name: newTemplateName.trim(),
-          description: newTemplateDescription.trim() || null,
-          tokens: payload.tokens ?? payload,
-          is_system: false,
-        })
-        .select("id")
-        .single()
-      if (error) throw new Error(error.message)
+      const saved = await createDesignThemePreset(supabase, {
+        key: newTemplateName,
+        name: newTemplateName,
+        description: newTemplateDescription,
+        settings: payload,
+      })
       await load()
-      if (data?.id) setSelectedTemplateId(String(data.id))
+      setSelectedTemplateId(saved.id)
       setCustomizeBaselineFingerprint(settingsFingerprint(payload))
       setNewTemplateName("")
       setNewTemplateDescription("")
@@ -939,15 +937,12 @@ export function GlobalSectionsPage() {
     setError(null)
     try {
       const payload = buildCurrentSettingsPayload()
-      const { error } = await supabase
-        .from("design_theme_presets")
-        .update({
-          name: templateName.trim() || selectedTemplate.name,
-          description: templateDescription.trim() || null,
-          tokens: payload.tokens ?? payload,
-        })
-        .eq("id", selectedTemplate.id)
-      if (error) throw new Error(error.message)
+      await updateDesignThemePreset(supabase, {
+        id: selectedTemplate.id,
+        name: templateName.trim() || selectedTemplate.name,
+        description: templateDescription,
+        settings: payload,
+      })
       setCustomizeBaselineFingerprint(settingsFingerprint(payload))
       await load()
     } catch (e) {
@@ -981,22 +976,7 @@ export function GlobalSectionsPage() {
     setTemplateBusy(true)
     setError(null)
     try {
-      const { data: existing, error: existingError } = await supabase
-        .from("site_formatting_settings")
-        .select("settings")
-        .eq("id", "default")
-        .maybeSingle()
-      if (existingError) throw new Error(existingError.message)
-
-      const existingSettings = asRecord(existing?.settings)
-      const merged = deepMerge(existingSettings, asRecord(selectedTemplate.settings))
-      ;(merged as Record<string, unknown>)._appliedTemplateId = selectedTemplate.id
-
-      const { error } = await supabase.from("site_formatting_settings").upsert({
-        id: "default",
-        settings: merged,
-      })
-      if (error) throw new Error(error.message)
+      await applyDesignThemePreset(supabase, selectedTemplate.id)
       setCustomizeBaselineFingerprint(settingsFingerprint(asRecord(selectedTemplate.settings)))
       await load()
     } catch (e) {

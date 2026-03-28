@@ -1,25 +1,43 @@
+import type { AnchorHTMLAttributes, ReactNode } from "react"
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { PagesList } from "@/app/admin/(protected)/pages-list"
 
+type MockLinkProps = {
+  children: ReactNode
+  href: string | { pathname?: string }
+} & AnchorHTMLAttributes<HTMLAnchorElement>
+
 vi.mock("next/link", () => ({
-  default: ({ children, href, ...rest }: any) => (
+  default: ({ children, href, ...rest }: MockLinkProps) => (
     <a href={typeof href === "string" ? href : "#"} {...rest}>
       {children}
     </a>
   ),
 }))
 
-const insertMock = vi.fn()
+const createCmsPageMock = vi.fn()
+const supabaseMock = {}
 
 vi.mock("@/lib/supabase/browser", () => ({
-  createClient: () => ({
-    from: () => ({
-      insert: insertMock,
-    }),
-  }),
+  createClient: () => supabaseMock,
+}))
+
+vi.mock("@/lib/cms/commands/pages", () => ({
+  createCmsPage: (...args: unknown[]) => createCmsPageMock(...args),
+  validateCmsPageSlug: (raw: string) => {
+    const slug = raw.trim()
+    if (!slug) return "Slug is required."
+    if (slug !== slug.toLowerCase()) return "Slug must be lowercase."
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      return "Slug must use only a-z, 0-9, and hyphens (no spaces)."
+    }
+    const reserved = new Set(["admin", "_next", "api", "well-known"])
+    if (reserved.has(slug)) return `Slug "${slug}" is reserved.`
+    return null
+  },
 }))
 
 type OverviewPayload = {
@@ -66,11 +84,11 @@ describe("PagesList create modal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    insertMock.mockResolvedValue({ error: null })
+    createCmsPageMock.mockResolvedValue({ id: "p-2", slug: "about", title: "About" })
   })
 
   it("opens and closes the create sidebar modal", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okJson(initialOverview)) as any)
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okJson(initialOverview) as unknown as Response))
 
     render(<PagesList />)
 
@@ -90,7 +108,7 @@ describe("PagesList create modal", () => {
   })
 
   it("shows validation errors for invalid slug and missing title", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okJson(initialOverview)) as any)
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okJson(initialOverview) as unknown as Response))
 
     render(<PagesList />)
     await screen.findByText("Total: 1")
@@ -108,11 +126,11 @@ describe("PagesList create modal", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: /^create page$/i }))
 
     expect(await within(dialog).findByText(/slug must use only a-z, 0-9, and hyphens/i)).toBeInTheDocument()
-    expect(insertMock).not.toHaveBeenCalled()
+    expect(createCmsPageMock).not.toHaveBeenCalled()
   })
 
   it("uses admin edit links for page rows", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okJson(initialOverview)) as any)
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okJson(initialOverview) as unknown as Response))
 
     render(<PagesList />)
 
@@ -150,7 +168,7 @@ describe("PagesList create modal", () => {
       .mockResolvedValueOnce(okJson(initialOverview))
       .mockResolvedValueOnce(okJson(refreshedOverview))
 
-    vi.stubGlobal("fetch", fetchMock as any)
+    vi.stubGlobal("fetch", fetchMock as typeof fetch)
 
     render(<PagesList />)
     await screen.findByText("Total: 1")
@@ -165,7 +183,7 @@ describe("PagesList create modal", () => {
 
     await userEvent.keyboard("{Enter}")
 
-    await waitFor(() => expect(insertMock).toHaveBeenCalledWith({ slug: "about", title: "About" }))
+    await waitFor(() => expect(createCmsPageMock).toHaveBeenCalledWith(supabaseMock, { slug: "about", title: "About" }))
     await waitFor(() => {
       expect(screen.queryByRole("dialog", { name: /create page/i })).not.toBeInTheDocument()
     })

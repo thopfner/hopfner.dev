@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
+    "build:worker": "tsc -p tsconfig.worker.json",
     "start": "next start",
+    "worker:check": "npm run build:worker && node -r ./scripts/register-worker-aliases.cjs .worker-dist/scripts/agent-worker.js --check",
+    "worker:start": "npm run build:worker && node -r ./scripts/register-worker-aliases.cjs .worker-dist/scripts/agent-worker.js",
+    "worker:once": "npm run build:worker && node -r ./scripts/register-worker-aliases.cjs .worker-dist/scripts/agent-worker.js --once",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",

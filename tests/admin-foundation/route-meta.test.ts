@@ -19,6 +19,7 @@ describe("resolveAdminRouteMeta title resolution", () => {
     ["/admin/section-library", "Section Library"],
     ["/admin/global-sections", "Global Sections"],
     ["/admin/email-templates", "Email Templates"],
+    ["/admin/agent", "Agent"],
     ["/admin/blog", "Blog"],
     ["/admin/media", "Media"],
     ["/admin/bookings", "Bookings"],
@@ -53,6 +54,7 @@ describe("resolveAdminRouteMeta route class", () => {
     ["/admin/section-library", "workspace"],
     ["/admin/global-sections", "workspace"],
     ["/admin/email-templates", "workspace"],
+    ["/admin/agent", "workspace"],
     ["/admin/pages/abc123/visual", "immersive"],
   ]
 
@@ -86,6 +88,7 @@ describe("resolveAdminRouteMeta parent label", () => {
     expect(resolveAdminRouteMeta("/admin/section-library").parentLabel).toBeUndefined()
     expect(resolveAdminRouteMeta("/admin/global-sections").parentLabel).toBeUndefined()
     expect(resolveAdminRouteMeta("/admin/email-templates").parentLabel).toBeUndefined()
+    expect(resolveAdminRouteMeta("/admin/agent").parentLabel).toBeUndefined()
   })
 })
 
@@ -103,6 +106,7 @@ describe("resolveAdminRouteMeta group", () => {
     expect(resolveAdminRouteMeta("/admin/section-library").group).toBe("Configure")
     expect(resolveAdminRouteMeta("/admin/global-sections").group).toBe("Configure")
     expect(resolveAdminRouteMeta("/admin/email-templates").group).toBe("Configure")
+    expect(resolveAdminRouteMeta("/admin/agent").group).toBe("Configure")
   })
 
   it("page editor belongs to Content", () => {
@@ -198,5 +202,11 @@ describe("AdminShell uses route-meta helper", () => {
 
   it("renders parentLabel for deep routes", () => {
     expect(shellSource).toContain("routeMeta.parentLabel")
+  })
+
+  it("includes Agent in the Configure nav group", () => {
+    expect(shellSource).toContain('href: "/admin/agent"')
+    expect(shellSource).toContain('label: "Agent"')
+    expect(shellSource).toContain('aria: "Agent workspace"')
   })
 })

@@ -1,4 +1,10 @@
+import fs from "fs"
 import { describe, it, expect } from "vitest"
+
+const compositionSource = fs.readFileSync(
+  "components/admin/visual-editor/use-page-composition-actions.ts",
+  "utf-8"
+)
 
 // ---------------------------------------------------------------------------
 // Phase 1: Composition actions
@@ -9,6 +15,20 @@ describe("page composition actions", () => {
     const mod = await import("@/components/admin/visual-editor/use-page-composition-actions")
     expect(mod.usePageCompositionActions).toBeDefined()
     expect(typeof mod.usePageCompositionActions).toBe("function")
+  })
+
+  it("delegates add/duplicate/reorder flows to the shared command layer", () => {
+    expect(compositionSource).toContain("@/lib/cms/commands/sections")
+    expect(compositionSource).toContain("addCmsSection")
+    expect(compositionSource).toContain("duplicateCmsSection")
+    expect(compositionSource).toContain("reorderCmsSections")
+    expect(compositionSource).toContain("await addCmsSection(supabase")
+    expect(compositionSource).toContain("await duplicateCmsSection(supabase")
+    expect(compositionSource).toContain("await reorderCmsSections(supabase, { order: remainingOrder })")
+  })
+
+  it("no longer seeds section_versions directly inside the hook", () => {
+    expect(compositionSource).not.toContain('.from("section_versions").insert(')
   })
 
   it("section library module is importable", async () => {

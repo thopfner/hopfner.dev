@@ -1,0 +1,48 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".worker-dist",
+    "rootDir": ".",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "declaration": false,
+    "sourceMap": false,
+    "incremental": false,
+    "isolatedModules": false,
+    "allowJs": false,
+    "paths": {
+      "@/components/admin/formatting-controls": [
+        "./lib/agent/worker-stubs/formatting-controls"
+      ],
+      "@/components/admin/section-editor/types": [
+        "./lib/agent/worker-stubs/section-editor-types"
+      ],
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "scripts/agent-worker.ts",
+    "lib/cms/content-snapshots.ts",
+    "lib/cms/commands/pages.ts",
+    "lib/agent/jobs/constants.ts",
+    "lib/agent/jobs/errors.ts",
+    "lib/agent/jobs/handlers.ts",
+    "lib/agent/jobs/lifecycle.ts",
+    "lib/agent/jobs/types.ts",
+    "lib/agent/jobs/worker-config.ts",
+    "lib/agent/jobs/worker-runtime.ts",
+    "lib/agent/jobs/worker-service.ts",
+    "lib/agent/planning/build-draft-plan.ts",
+    "lib/agent/planning/index.ts",
+    "lib/agent/planning/types.ts",
+    "lib/agent/execution/idempotency.ts",
+    "lib/agent/execution/apply-draft-plan.ts",
+    "lib/agent/execution/index.ts",
+    "lib/agent/execution/snapshots.ts",
+    "lib/agent/execution/types.ts"
+  ]
+}
